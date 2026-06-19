@@ -1,0 +1,344 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); background: transparent; }
+.rq-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); position: sticky; top: 0; z-index: 10; }
+.rq-logo { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: 17px; color: var(--color-text-primary); }
+.logo-dot { width: 28px; height: 28px; border-radius: 8px; background: #3C3489; display: flex; align-items: center; justify-content: center; color: #EEEDFE; font-size: 13px; font-weight: 500; }
+.nav-links { display: flex; gap: 6px; }
+.nav-link { font-size: 13px; color: var(--color-text-secondary); padding: 6px 12px; border-radius: var(--border-radius-md); cursor: pointer; border: none; background: transparent; }
+.nav-link:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.nav-cta { font-size: 13px; background: #3C3489; color: #EEEDFE; padding: 6px 14px; border-radius: var(--border-radius-md); border: none; cursor: pointer; font-weight: 500; }
+.hero { padding: 56px 24px 40px; text-align: center; }
+.hero-badge { display: inline-flex; align-items: center; gap: 6px; background: #EEEDFE; color: #3C3489; font-size: 12px; padding: 4px 12px; border-radius: 20px; margin-bottom: 20px; }
+.hero-badge i { font-size: 13px; }
+.hero h1 { font-size: 38px; font-weight: 500; color: var(--color-text-primary); line-height: 1.2; margin-bottom: 14px; }
+.hero h1 span { color: #534AB7; }
+.hero p { font-size: 15px; color: var(--color-text-secondary); max-width: 480px; margin: 0 auto 28px; line-height: 1.6; }
+.hero-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.btn-primary { background: #3C3489; color: #EEEDFE; padding: 10px 22px; border-radius: var(--border-radius-md); border: none; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.btn-secondary { background: transparent; color: var(--color-text-primary); padding: 10px 22px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.app-preview { margin: 36px 16px 0; background: var(--color-background-secondary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 16px; }
+.preview-tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+.ptab { font-size: 12px; padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; color: var(--color-text-secondary); background: transparent; }
+.ptab.active { background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-tertiary); font-weight: 500; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.order-screen { background: var(--color-background-primary); border-radius: var(--border-radius-md); overflow: hidden; }
+.screen-header { background: #3C3489; color: #EEEDFE; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+.screen-header i { font-size: 18px; }
+.screen-header .sh-title { font-size: 14px; font-weight: 500; }
+.screen-header .sh-sub { font-size: 11px; opacity: 0.75; }
+.screen-body { padding: 14px 16px; }
+.loc-bar { display: flex; align-items: center; gap: 8px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; margin-bottom: 12px; border: 0.5px solid var(--color-border-tertiary); }
+.loc-bar i { font-size: 16px; color: #534AB7; }
+.loc-bar span { font-size: 13px; color: var(--color-text-secondary); }
+.loc-bar strong { font-size: 13px; color: var(--color-text-primary); }
+.section-label { font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.category-row { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 2px; }
+.cat-chip { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); cursor: pointer; min-width: 60px; white-space: nowrap; }
+.cat-chip.active { background: #EEEDFE; border-color: #AFA9EC; }
+.cat-chip i { font-size: 18px; color: var(--color-text-secondary); }
+.cat-chip.active i { color: #534AB7; }
+.cat-chip span { font-size: 11px; color: var(--color-text-secondary); }
+.cat-chip.active span { color: #3C3489; }
+.request-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.request-card:hover { border-color: var(--color-border-secondary); }
+.rc-icon { width: 40px; height: 40px; border-radius: var(--border-radius-md); background: #EEEDFE; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rc-icon i { font-size: 20px; color: #534AB7; }
+.rc-info { flex: 1; }
+.rc-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+.rc-sub { font-size: 12px; color: var(--color-text-secondary); }
+.rc-price { font-size: 13px; font-weight: 500; color: #3C3489; }
+.submit-btn { width: 100%; background: #3C3489; color: #EEEDFE; padding: 12px; border-radius: var(--border-radius-md); border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+.radar-screen { background: var(--color-background-primary); border-radius: var(--border-radius-md); overflow: hidden; }
+.radar-header { background: #085041; color: #E1F5EE; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+.radar-body { padding: 14px 16px; }
+.radar-visual { background: var(--color-background-secondary); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; height: 180px; position: relative; overflow: hidden; }
+.radar-ring { border-radius: 50%; border: 1px solid var(--color-border-tertiary); position: absolute; }
+.radar-center { width: 14px; height: 14px; border-radius: 50%; background: #1D9E75; position: absolute; z-index: 3; }
+.radar-ping { width: 12px; height: 12px; border-radius: 50%; background: #534AB7; position: absolute; z-index: 2; }
+.radar-ping::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid #534AB7; opacity: 0.4; }
+.alert-card { border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+.alert-card.urgent { border-color: #F0997B; background: #FAECE7; }
+.alert-card.active-sos { border-color: #AFA9EC; background: #EEEDFE; }
+.ac-badge { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ac-badge.red { background: #F5C4B3; }
+.ac-badge.red i { color: #993C1D; font-size: 16px; }
+.ac-badge.purple { background: #CECBF6; }
+.ac-badge.purple i { color: #3C3489; font-size: 16px; }
+.ac-info { flex: 1; }
+.ac-title { font-size: 12px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1px; }
+.ac-sub { font-size: 11px; color: var(--color-text-secondary); }
+.ac-action { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer; }
+.ac-action.teal { background: #9FE1CB; color: #085041; }
+.ac-action.purple { background: #CECBF6; color: #26215C; }
+.broadcast-btn { width: 100%; padding: 12px; border-radius: var(--border-radius-md); border: 0.5px dashed #1D9E75; background: transparent; color: #0F6E56; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; }
+
+.runner-screen { background: var(--color-background-primary); border-radius: var(--border-radius-md); overflow: hidden; }
+.runner-header { background: #185FA5; color: #E6F1FB; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+.runner-body { padding: 14px 16px; }
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.stat-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px; text-align: center; }
+.stat-num { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.stat-lbl { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+.job-card { border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); padding: 12px; margin-bottom: 8px; }
+.job-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.job-badge { font-size: 11px; padding: 3px 8px; border-radius: 5px; font-weight: 500; }
+.job-badge.new { background: #B5D4F4; color: #042C53; }
+.job-badge.inprog { background: #9FE1CB; color: #04342C; }
+.job-meta { font-size: 12px; color: var(--color-text-secondary); display: flex; flex-direction: column; gap: 4px; }
+.job-meta span { display: flex; align-items: center; gap: 5px; }
+.job-meta i { font-size: 13px; color: var(--color-text-secondary); }
+.accept-btn { width: 100%; background: #185FA5; color: #E6F1FB; padding: 10px; border-radius: var(--border-radius-md); border: none; font-size: 13px; font-weight: 500; cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+.how-section { padding: 32px 24px; border-top: 0.5px solid var(--color-border-tertiary); }
+.section-title { font-size: 20px; font-weight: 500; color: var(--color-text-primary); text-align: center; margin-bottom: 8px; }
+.section-sub { font-size: 14px; color: var(--color-text-secondary); text-align: center; margin-bottom: 24px; }
+.steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.step-card { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 16px; border: 0.5px solid var(--color-border-tertiary); }
+.step-num { font-size: 11px; font-weight: 500; color: #534AB7; background: #EEEDFE; display: inline-flex; width: 22px; height: 22px; border-radius: 6px; align-items: center; justify-content: center; margin-bottom: 10px; }
+.step-icon { font-size: 22px; color: var(--color-text-secondary); margin-bottom: 8px; display: block; }
+.step-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.step-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+
+.features-section { padding: 32px 24px; border-top: 0.5px solid var(--color-border-tertiary); }
+.features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 24px; }
+.feat-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 16px; }
+.feat-icon-wrap { width: 36px; height: 36px; border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.feat-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.feat-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+
+.footer { padding: 24px; border-top: 0.5px solid var(--color-border-tertiary); text-align: center; background: var(--color-background-secondary); }
+.footer-logo { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
+.footer-sub { font-size: 12px; color: var(--color-text-secondary); }
+.adzu-tag { display: inline-flex; align-items: center; gap: 4px; background: #EEEDFE; color: #534AB7; font-size: 11px; padding: 3px 10px; border-radius: 12px; margin-top: 8px; }
+</style>
+
+<nav class="rq-nav">
+  <div class="rq-logo">
+    <div class="logo-dot">R:</div>
+    Re:Quest
+  </div>
+  <div class="nav-links">
+    <button class="nav-link" onclick="scrollTo(0,500)">How it works</button>
+    <button class="nav-link" onclick="scrollTo(0,900)">Features</button>
+    <button class="nav-link" onclick="sendPrompt('I want to sign up as a runner for Re:Quest')">Become a runner ↗</button>
+  </div>
+  <button class="nav-cta" onclick="sendPrompt('How do I get started with Re:Quest?')">Get started</button>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge"><i class="ti ti-map-pin" aria-hidden="true"></i> ADZU Campus Only</div>
+  <h1>Campus errands,<br><span>done in minutes.</span></h1>
+  <p>Too tired to run to the canteen? Forgot your calculator before an exam? Re:Quest connects you with fellow student runners right on campus.</p>
+  <div class="hero-btns">
+    <button class="btn-primary" onclick="sendPrompt('Walk me through making my first request on Re:Quest')"><i class="ti ti-bolt" aria-hidden="true"></i> Make a request</button>
+    <button class="btn-secondary" onclick="sendPrompt('How do I join as a runner on Re:Quest?')"><i class="ti ti-run" aria-hidden="true"></i> Be a runner</button>
+  </div>
+</section>
+
+<div class="app-preview">
+  <div class="preview-tabs" role="tablist">
+    <button class="ptab active" onclick="switchTab('order',this)" role="tab" aria-selected="true">Request food/item</button>
+    <button class="ptab" onclick="switchTab('radar',this)" role="tab" aria-selected="false">Radar SOS</button>
+    <button class="ptab" onclick="switchTab('runner',this)" role="tab" aria-selected="false">Runner view</button>
+  </div>
+
+  <div id="tab-order" class="tab-content active">
+    <div class="order-screen">
+      <div class="screen-header">
+        <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+        <div>
+          <div class="sh-title">New request</div>
+          <div class="sh-sub">Runners nearby will see this</div>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="loc-bar">
+          <i class="ti ti-map-pin" aria-hidden="true"></i>
+          <span>Delivering to:</span>&nbsp;<strong>5th Floor, Engineering Building</strong>
+        </div>
+        <div class="section-label">What do you need?</div>
+        <div class="category-row">
+          <div class="cat-chip active"><i class="ti ti-tools-kitchen-2" aria-hidden="true"></i><span>Food</span></div>
+          <div class="cat-chip"><i class="ti ti-coffee" aria-hidden="true"></i><span>Drinks</span></div>
+          <div class="cat-chip"><i class="ti ti-notebook" aria-hidden="true"></i><span>Supplies</span></div>
+          <div class="cat-chip"><i class="ti ti-pill" aria-hidden="true"></i><span>Medicine</span></div>
+          <div class="cat-chip"><i class="ti ti-dots" aria-hidden="true"></i><span>Other</span></div>
+        </div>
+        <div class="section-label">Popular requests</div>
+        <div class="request-card">
+          <div class="rc-icon"><i class="ti ti-tools-kitchen-2" aria-hidden="true"></i></div>
+          <div class="rc-info"><div class="rc-title">Canteen meal</div><div class="rc-sub">Any viand + rice combo</div></div>
+          <div class="rc-price">+₱10</div>
+        </div>
+        <div class="request-card">
+          <div class="rc-icon"><i class="ti ti-coffee" aria-hidden="true"></i></div>
+          <div class="rc-info"><div class="rc-title">Milk tea / drinks</div><div class="rc-sub">From any stall on campus</div></div>
+          <div class="rc-price">+₱10</div>
+        </div>
+        <button class="submit-btn"><i class="ti ti-bolt" aria-hidden="true"></i> Send request to nearby runners</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-radar" class="tab-content">
+    <div class="radar-screen">
+      <div class="radar-header">
+        <i class="ti ti-radar" aria-hidden="true"></i>
+        <div>
+          <div class="sh-title">Campus radar</div>
+          <div class="sh-sub">Broadcast urgent item needs</div>
+        </div>
+      </div>
+      <div class="radar-body">
+        <div class="radar-visual">
+          <div class="radar-ring" style="width:60px;height:60px;"></div>
+          <div class="radar-ring" style="width:110px;height:110px;"></div>
+          <div class="radar-ring" style="width:160px;height:160px;"></div>
+          <div class="radar-center"></div>
+          <div class="radar-ping" style="top:50px;left:120px;" title="Student A"></div>
+          <div class="radar-ping" style="bottom:40px;left:80px;" title="Student B"></div>
+          <div class="radar-ping" style="top:60px;right:70px;" title="Student C"></div>
+        </div>
+        <div class="section-label">Active SOS broadcasts</div>
+        <div class="alert-card urgent">
+          <div class="ac-badge red"><i class="ti ti-calculator" aria-hidden="true"></i></div>
+          <div class="ac-info">
+            <div class="ac-title">Needs a scientific calculator</div>
+            <div class="ac-sub">Chem 1 lab — 5 mins ago · 2nd floor</div>
+          </div>
+          <button class="ac-action teal">I have one</button>
+        </div>
+        <div class="alert-card active-sos">
+          <div class="ac-badge purple"><i class="ti ti-flask" aria-hidden="true"></i></div>
+          <div class="ac-info">
+            <div class="ac-title">Needs a lab coat (size S)</div>
+            <div class="ac-sub">Nursing lab — 3 mins ago · 3rd floor</div>
+          </div>
+          <button class="ac-action purple">Lend mine</button>
+        </div>
+        <button class="broadcast-btn"><i class="ti ti-broadcast" aria-hidden="true"></i> Broadcast what I'm missing</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-runner" class="tab-content">
+    <div class="runner-screen">
+      <div class="runner-header">
+        <div>
+          <div class="sh-title" style="font-size:14px;font-weight:500;">Runner dashboard</div>
+          <div class="sh-sub" style="font-size:11px;opacity:0.75;">You're online · 3 requests nearby</div>
+        </div>
+        <div style="background:#B5D4F4;color:#042C53;font-size:11px;padding:4px 10px;border-radius:6px;font-weight:500;">Online</div>
+      </div>
+      <div class="runner-body">
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-num" style="color:#185FA5;">₱85</div><div class="stat-lbl">Earned today</div></div>
+          <div class="stat-card"><div class="stat-num">7</div><div class="stat-lbl">Deliveries</div></div>
+          <div class="stat-card"><div class="stat-num" style="color:#1D9E75;">4.9</div><div class="stat-lbl">Rating</div></div>
+        </div>
+        <div class="section-label">New requests nearby</div>
+        <div class="job-card">
+          <div class="job-header">
+            <span style="font-size:13px;font-weight:500;color:var(--color-text-primary);">Canteen → 5th floor ENG</span>
+            <span class="job-badge new">New</span>
+          </div>
+          <div class="job-meta">
+            <span><i class="ti ti-clock" aria-hidden="true"></i> Posted 1 min ago</span>
+            <span><i class="ti ti-coin" aria-hidden="true"></i> ₱10 runner fee · Est. ₱80 food</span>
+            <span><i class="ti ti-map-pin" aria-hidden="true"></i> ~120m from you</span>
+          </div>
+          <button class="accept-btn"><i class="ti ti-check" aria-hidden="true"></i> Accept this job</button>
+        </div>
+        <div class="job-card">
+          <div class="job-header">
+            <span style="font-size:13px;font-weight:500;color:var(--color-text-primary);">Milk tea stall → Room 204</span>
+            <span class="job-badge inprog">In progress</span>
+          </div>
+          <div class="job-meta">
+            <span><i class="ti ti-clock" aria-hidden="true"></i> Accepted 8 mins ago</span>
+            <span><i class="ti ti-coin" aria-hidden="true"></i> ₱10 runner fee · Est. ₱50 drink</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="how-section">
+  <div class="section-title">How Re:Quest works</div>
+  <div class="section-sub">Simple, fast, built for ADZU students.</div>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <i class="ti ti-edit step-icon" aria-hidden="true"></i>
+      <div class="step-title">Post a request</div>
+      <div class="step-desc">Describe what you need and where you are on campus.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <i class="ti ti-bell-ringing step-icon" aria-hidden="true"></i>
+      <div class="step-title">Runners get notified</div>
+      <div class="step-desc">Nearby student runners see your request and can accept it.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <i class="ti ti-run step-icon" aria-hidden="true"></i>
+      <div class="step-title">Runner fetches it</div>
+      <div class="step-desc">Your runner grabs the item and heads your way.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">4</div>
+      <i class="ti ti-package step-icon" aria-hidden="true"></i>
+      <div class="step-title">Delivered to you</div>
+      <div class="step-desc">Get your item without leaving your floor. Rate your runner!</div>
+    </div>
+  </div>
+</section>
+
+<section class="features-section">
+  <div class="section-title">Everything you need on campus</div>
+  <div class="section-sub">Beyond food delivery.</div>
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon-wrap" style="background:#EEEDFE;"><i class="ti ti-radar" style="font-size:18px;color:#534AB7;" aria-hidden="true"></i></div>
+      <div class="feat-title">SOS Radar</div>
+      <div class="feat-desc">Broadcast that you're missing a calculator or lab coat. Nearby classmates can lend theirs.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon-wrap" style="background:#E1F5EE;"><i class="ti ti-bolt" style="font-size:18px;color:#0F6E56;" aria-hidden="true"></i></div>
+      <div class="feat-title">Fast matching</div>
+      <div class="feat-desc">Requests go to runners already on campus, so wait times are kept short.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon-wrap" style="background:#E6F1FB;"><i class="ti ti-coin" style="font-size:18px;color:#185FA5;" aria-hidden="true"></i></div>
+      <div class="feat-title">Earn as a runner</div>
+      <div class="feat-desc">Pick up jobs between classes and earn a small fee for each delivery.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon-wrap" style="background:#FAECE7;"><i class="ti ti-shield-check" style="font-size:18px;color:#993C1D;" aria-hidden="true"></i></div>
+      <div class="feat-title">ADZU verified only</div>
+      <div class="feat-desc">Login with your school ID. Only verified ADZU students can use Re:Quest.</div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-logo">Re:Quest</div>
+  <div class="footer-sub">A student-built app for students, by students.</div>
+  <div class="adzu-tag"><i class="ti ti-school" aria-hidden="true"></i> Ateneo de Zamboanga University</div>
+</footer>
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected','true');
+}
+</script>
