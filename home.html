@@ -86,6 +86,7 @@
     }
     .btn-primary:hover { background: var(--orange-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(252,76,2,.45); }
     .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
     .btn-secondary {
       background: var(--surface); color: var(--text);
       border: 1.5px solid var(--border); box-shadow: var(--shadow-sm);
@@ -93,6 +94,11 @@
     .btn-secondary:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
     .btn-ghost { color: var(--muted); padding: 10px 16px; border-radius: var(--radius-sm); }
     .btn-ghost:hover { background: var(--bg); color: var(--text); }
+    .btn-danger {
+      background: #fee2e2; color: #991b1b; border: 1.5px solid #fecaca;
+      font-weight: 600; font-size: 0.9rem;
+    }
+    .btn-danger:hover { background: #991b1b; color: #fff; }
     .btn-icon {
       width: 42px; height: 42px; padding: 0; border-radius: 50%;
       background: var(--surface); border: 1.5px solid var(--border);
@@ -153,6 +159,7 @@
     .badge-gray   { background: var(--bg); color: var(--muted); }
     .badge-yellow { background: #fef3c7; color: #92400e; }
     .badge-red    { background: #fee2e2; color: #991b1b; }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
 
     /* ─── DIVIDER ─────────────────────────────────────────── */
     .divider {
@@ -185,7 +192,9 @@
       display: flex; align-items: center; justify-content: center;
       color: #fff; font-weight: 700; font-size: 0.85rem;
       cursor: pointer; flex-shrink: 0;
+      transition: box-shadow .18s;
     }
+    .avatar:hover { box-shadow: 0 0 0 3px rgba(252,76,2,.25); }
     .cart-btn {
       position: relative; padding: 8px 14px; border-radius: var(--radius-sm);
       background: var(--orange-light); color: var(--orange);
@@ -278,16 +287,6 @@
     .home-action-btn.food .text { flex: 1; }
     .home-action-btn.food .text strong { display: block; font-size: 1.05rem; }
     .home-action-btn.food .text span { font-weight: 400; font-size: 0.82rem; opacity: .85; }
-    .home-action-btn.emergency {
-      background: rgba(255,255,255,.1); color: #fff;
-      border: 1px solid rgba(255,255,255,.2); backdrop-filter: blur(8px);
-    }
-    .home-action-btn.emergency:hover { background: rgba(255,255,255,.18); }
-    .home-action-btn.runner {
-      background: rgba(255,255,255,.1); color: #fff;
-      border: 1px solid rgba(255,255,255,.2); backdrop-filter: blur(8px);
-    }
-    .home-action-btn.runner:hover { background: rgba(255,255,255,.18); }
     .home-action-btn.food:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(252,76,2,.5); }
 
     /* Quick Status Bar */
@@ -314,7 +313,7 @@
     .section-title {
       font-size: 1rem; font-weight: 700; color: var(--text);
     }
-    .section-link { font-size: 0.82rem; color: var(--orange); font-weight: 600; }
+    .section-link { font-size: 0.82rem; color: var(--orange); font-weight: 600; cursor: pointer; }
 
     /* Order Card */
     .order-card {
@@ -458,52 +457,7 @@
     .qty-btn:hover { border-color: var(--orange); color: var(--orange); }
     .qty-num { font-weight: 700; font-size: 0.9rem; min-width: 20px; text-align: center; }
 
-    /* ══════════════════════════════════════════════════════════
-       PAGE 4 — RUNNER APPLICATION
-    ══════════════════════════════════════════════════════════ */
-    .runner-hero {
-      background: linear-gradient(135deg, #0f3460, #1a1a2e);
-      padding: 32px 20px; text-align: center; position: relative; overflow: hidden;
-    }
-    .runner-hero::before {
-      content: ''; position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
-      width: 200px; height: 200px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(252,76,2,.35) 0%, transparent 70%);
-    }
-    .runner-emoji { font-size: 3.5rem; margin-bottom: 10px; position: relative; z-index: 1; }
-    .runner-title {
-      font-family: 'Syne', sans-serif; font-weight: 800;
-      font-size: 1.8rem; color: #fff; margin-bottom: 6px;
-      position: relative; z-index: 1;
-    }
-    .runner-title span { color: var(--orange); }
-    .runner-subtitle { color: rgba(255,255,255,.6); font-size: 0.87rem; position: relative; z-index: 1; }
-    .runner-perks {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-      padding: 16px 20px;
-    }
-    .perk-card {
-      background: var(--surface); border-radius: var(--radius);
-      padding: 14px; text-align: center; border: 1px solid var(--border);
-      box-shadow: var(--shadow-sm);
-    }
-    .perk-icon { font-size: 1.6rem; margin-bottom: 4px; }
-    .perk-label { font-size: 0.7rem; font-weight: 600; color: var(--muted); line-height: 1.3; }
-    .runner-form { padding: 0 20px 20px; }
-    .file-upload {
-      border: 2px dashed var(--border); border-radius: var(--radius);
-      padding: 28px 20px; text-align: center; cursor: pointer; transition: all .2s;
-      background: var(--bg);
-    }
-    .file-upload:hover { border-color: var(--orange); background: var(--orange-light); }
-    .file-upload input { display: none; }
-    .file-upload .upload-icon { font-size: 2rem; margin-bottom: 8px; }
-    .file-upload .upload-text { font-size: 0.85rem; font-weight: 600; color: var(--text); }
-    .file-upload .upload-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
-
-    /* ══════════════════════════════════════════════════════════
-       PAGE 5 — ORDER CONFIRMATION
-    ══════════════════════════════════════════════════════════ */
+    /* Confirm Page */
     .confirm-header {
       background: var(--surface); border-bottom: 1px solid var(--border);
       padding: 16px 20px;
@@ -549,18 +503,16 @@
     .price-val { font-size: 0.88rem; font-weight: 600; }
     .price-row.total .price-label { font-weight: 700; color: var(--text); font-size: 1rem; }
     .price-row.total .price-val { font-weight: 800; color: var(--orange); font-size: 1.1rem; }
-    .eta-box {
-      background: linear-gradient(135deg, var(--orange-light), #fff);
-      border: 1.5px solid rgba(252,76,2,.2); border-radius: var(--radius);
-      padding: 16px; display: flex; align-items: center; gap: 14px;
-      margin: 0 20px 12px;
-    }
-    .eta-icon { font-size: 2rem; }
-    .eta-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
-    .eta-time { font-size: 1.2rem; font-weight: 800; color: var(--orange); }
     .confirm-footer {
       padding: 16px 20px; background: var(--surface);
       border-top: 1px solid var(--border); position: sticky; bottom: 0;
+    }
+    /* Pre-fill notice */
+    .prefill-note {
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: var(--radius-sm); padding: 10px 14px;
+      font-size: 0.78rem; color: #1d4ed8; font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -583,7 +535,7 @@
       font-family: 'Syne', sans-serif; font-weight: 800;
       font-size: 1.6rem; margin-bottom: 6px;
     }
-    .receipt-sub { font-size: 0.85rem; color: var(--muted); }
+    .receipt-sub { font-size: 0.88rem; color: var(--muted); line-height: 1.55; max-width: 360px; margin: 0 auto; }
     .receipt-card {
       background: var(--surface); border-radius: var(--radius-lg);
       margin: 0 20px 12px; border: 1px solid var(--border);
@@ -616,47 +568,12 @@
     }
     .receipt-total-label { font-weight: 700; font-size: 0.95rem; }
     .receipt-total-val { font-weight: 800; font-size: 1.2rem; color: var(--orange); }
-    .receipt-runner {
-      display: flex; align-items: center; gap: 12px;
-      background: var(--orange-light); border-radius: var(--radius);
-      padding: 14px 16px; margin: 0 20px 12px;
-    }
-    .receipt-runner-avatar {
-      width: 44px; height: 44px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--orange), #ff8c42);
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 700; font-size: 1rem; flex-shrink: 0;
-    }
-    .receipt-runner-info { flex: 1; }
-    .receipt-runner-name { font-weight: 700; font-size: 0.9rem; }
-    .receipt-runner-label { font-size: 0.75rem; color: var(--muted); }
-    .status-tracker {
-      display: flex; align-items: center; padding: 16px 20px;
-      gap: 0;
-    }
-    .tracker-step {
-      display: flex; flex-direction: column; align-items: center;
-      flex: 1; position: relative;
-    }
-    .tracker-step::after {
-      content: ''; position: absolute; top: 14px; left: 50%;
-      width: 100%; height: 2px; background: var(--border); z-index: 0;
-    }
-    .tracker-step:last-child::after { display: none; }
-    .tracker-dot {
-      width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid var(--border);
-      background: var(--surface); display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; z-index: 1; position: relative; margin-bottom: 6px;
-    }
-    .tracker-dot.done { background: var(--success); border-color: var(--success); color: #fff; }
-    .tracker-dot.active { background: var(--orange); border-color: var(--orange); color: #fff; animation: pulse 1.5s infinite; }
-    .tracker-label { font-size: 0.65rem; color: var(--muted); text-align: center; font-weight: 600; }
-    .tracker-step.done .tracker-label, .tracker-step.active .tracker-label { color: var(--text); }
-    @keyframes pulse { 0%,100%{ box-shadow: 0 0 0 0 rgba(252,76,2,.4); } 50%{ box-shadow: 0 0 0 8px rgba(252,76,2,0); } }
-
     .receipt-actions {
       display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
       padding: 0 20px 20px;
+    }
+    .receipt-divider {
+      border: none; border-top: 1px dashed var(--border); margin: 4px 0;
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -674,7 +591,7 @@
     .toast.error { background: #7f1d1d; }
 
     /* ══════════════════════════════════════════════════════════
-       MODAL
+       MODAL (Menu item + Profile)
     ══════════════════════════════════════════════════════════ */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,.6);
@@ -693,6 +610,32 @@
       width: 40px; height: 4px; border-radius: 2px;
       background: var(--border); margin: 0 auto 20px;
     }
+
+    /* ── Profile Modal ──────────────────────────────────── */
+    .profile-header {
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 20px;
+    }
+    .profile-avatar-lg {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), #ff8c42);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 800; font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .profile-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 2px; }
+    .profile-sub { font-size: 0.78rem; color: var(--muted); }
+    .profile-info-list {
+      display: flex; flex-direction: column; gap: 10px;
+      background: var(--bg); border-radius: var(--radius-sm);
+      padding: 14px 16px; margin-bottom: 20px;
+    }
+    .profile-info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85rem;
+    }
+    .profile-info-label { color: var(--muted); font-weight: 500; }
+    .profile-info-val { font-weight: 600; }
 
     /* ══════════════════════════════════════════════════════════
        LOADING SCREEN
@@ -740,7 +683,7 @@
       .cart-drawer.open { transform: translateX(-50%) translateY(0); }
     }
 
-    /* ──── Extra polish ──── */
+    /* Extra polish */
     .section-emoji { font-size: 1.1rem; }
     .pill-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
     .pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 0.76rem; font-weight: 600; color: var(--muted); }
@@ -754,12 +697,10 @@
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-logo">Re<span>:</span>Quest</div>
   <div class="loading-bar"><div class="loading-fill"></div></div>
-  <div class="loading-sub">ADZU Campus Delivery</div>
+  <div class="loading-sub">Signing you in…</div>
 </div>
 
-<!-- ──────────────────────────────────────────────
-     TOAST
-────────────────────────────────────────────── -->
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <!-- ──────────────────────────────────────────────
@@ -780,9 +721,22 @@
   </div>
   <div id="cartSummary" class="hidden">
     <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:6px">
-      <div class="price-row"><span class="price-label">Subtotal</span><span class="price-val" id="cartSubtotal">₱0</span></div>
-      <div class="price-row"><span class="price-label">Delivery Fee</span><span class="price-val">₱15.00</span></div>
-      <div class="price-row total"><span class="price-label">Total</span><span class="price-val" id="cartTotal">₱0</span></div>
+      <div class="price-row">
+        <span class="price-label">Subtotal</span>
+        <span class="price-val" id="cartSubtotal">₱0</span>
+      </div>
+      <div class="price-row">
+        <span class="price-label">🚗 Service & Delivery Fee</span>
+        <span class="price-val" id="cartDeliveryFee">₱15</span>
+      </div>
+      <div class="price-row hidden" id="cartExtraFeeRow">
+        <span class="price-label">📦 Multi-item Fee <span style="font-size:0.72em;color:var(--muted)">(3+ items)</span></span>
+        <span class="price-val" id="cartExtraFee">+₱5</span>
+      </div>
+      <div class="price-row total">
+        <span class="price-label">Total</span>
+        <span class="price-val" id="cartTotal">₱0</span>
+      </div>
     </div>
     <button class="btn btn-primary w-full btn-lg" style="margin-top:16px" onclick="goToConfirm()">
       Confirm Order →
@@ -800,11 +754,20 @@
   </div>
 </div>
 
+<!-- ──────────────────────────────────────────────
+     PROFILE MODAL
+────────────────────────────────────────────── -->
+<div class="modal-overlay" id="profileModal" onclick="closeProfileModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div id="profileModalContent"></div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════
-     PAGE 2: HOME
+     PAGE: HOME
 ═══════════════════════════════════════════ -->
 <div class="page active" id="pageHome">
-  <!-- Top Nav -->
   <nav class="topnav">
     <div class="topnav-logo">
       <span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span>
@@ -814,7 +777,7 @@
         🛒 Cart
         <div class="cart-count" id="cartCount">0</div>
       </button>
-      <div class="avatar" id="homeAvatar" onclick="toggleProfile()">J</div>
+      <div class="avatar" id="homeAvatar" onclick="toggleProfile()" title="My Account">?</div>
     </div>
   </nav>
 
@@ -823,7 +786,7 @@
     <div class="home-hero">
       <div class="home-greeting" id="homeGreeting">Good morning 👋</div>
       <div class="home-headline">Need something<br>on <span class="hl">campus?</span></div>
-      <div class="home-subline">Order from the caf, request supplies, or find a runner — delivered right to your room.</div>
+      <div class="home-subline">Order from the cafeteria — delivered right to your room.</div>
       <div class="home-actions">
         <button class="home-action-btn food" onclick="goToPage('pageMenu')">
           <div class="icon">🍱</div>
@@ -833,55 +796,14 @@
           </div>
           <span style="font-size:1.2rem;opacity:.7">→</span>
         </button>
-        <button class="home-action-btn emergency" onclick="showToast('⚡ Emergency request opened!','success')">
-          <div class="icon">⚡</div>
-          <span>Emergency<br>Request</span>
-        </button>
-        <button class="home-action-btn runner" onclick="goToPage('pageRunner')">
-          <div class="icon">🏃</div>
-          <span>Become a<br>Runner</span>
-        </button>
       </div>
     </div>
 
     <!-- Status Bar -->
     <div class="status-bar">
       <div class="status-pill"><div class="status-dot green"></div>Cafeteria Open</div>
-      <div class="status-pill"><div class="status-dot orange"></div>8 Runners Active</div>
-      <div class="status-pill">⏱ 15–25 min avg delivery</div>
+      <div class="status-pill">⏱ ~10–15 min prep & delivery</div>
       <div class="status-pill">📍 ADZU Main Campus</div>
-    </div>
-
-    <!-- Recent Orders -->
-    <div class="home-section">
-      <div class="section-header">
-        <div class="section-title">📋 Recent Orders</div>
-        <a class="section-link" href="#">View all</a>
-      </div>
-      <div class="order-card">
-        <div class="order-icon">🍱</div>
-        <div class="order-info">
-          <div class="order-name">Chicken Adobo + Rice</div>
-          <div class="order-meta">Today, 10:42 AM · Rm 201 SHS Bldg</div>
-        </div>
-        <span class="badge badge-green">Delivered</span>
-      </div>
-      <div class="order-card">
-        <div class="order-icon">🥤</div>
-        <div class="order-info">
-          <div class="order-name">Buko Juice × 2</div>
-          <div class="order-meta">Yesterday · Rm 304 Main Bldg</div>
-        </div>
-        <span class="badge badge-gray">Done</span>
-      </div>
-      <div class="order-card">
-        <div class="order-icon">📚</div>
-        <div class="order-info">
-          <div class="order-name">Pad paper, Ballpen</div>
-          <div class="order-meta">June 17 · Rm 105 Lib Bldg</div>
-        </div>
-        <span class="badge badge-gray">Done</span>
-      </div>
     </div>
 
     <!-- Quick Order -->
@@ -933,19 +855,11 @@
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
       Menu
     </button>
-    <button class="bottomnav-item" onclick="goToPage('pageRunner')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
-      Runner
-    </button>
-    <button class="bottomnav-item" onclick="goToPage('pageReceipt')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      Orders
-    </button>
   </nav>
 </div>
 
 <!-- ══════════════════════════════════════════
-     PAGE 3: CAFETERIA MENU
+     PAGE: CAFETERIA MENU
 ═══════════════════════════════════════════ -->
 <div class="page" id="pageMenu">
   <nav class="topnav">
@@ -987,214 +901,75 @@
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
       Menu
     </button>
-    <button class="bottomnav-item" onclick="goToPage('pageRunner')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
-      Runner
-    </button>
-    <button class="bottomnav-item" onclick="goToPage('pageReceipt')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      Orders
-    </button>
   </nav>
 </div>
 
 <!-- ══════════════════════════════════════════
-     PAGE 4: RUNNER APPLICATION
-═══════════════════════════════════════════ -->
-<div class="page" id="pageRunner">
-  <nav class="topnav">
-    <button class="btn btn-ghost btn-sm" onclick="goToPage('pageHome')" style="padding:8px">
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-    </button>
-    <div class="topnav-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
-    <div style="width:42px"></div>
-  </nav>
-
-  <div class="page-body">
-    <div class="runner-hero">
-      <div class="runner-emoji">🏃‍♂️</div>
-      <div class="runner-title">Become a <span>Runner</span></div>
-      <div class="runner-subtitle">Earn extra income delivering orders around campus</div>
-    </div>
-
-    <div class="runner-perks">
-      <div class="perk-card">
-        <div class="perk-icon">💰</div>
-        <div class="perk-label">Earn per<br>delivery</div>
-      </div>
-      <div class="perk-card">
-        <div class="perk-icon">⏰</div>
-        <div class="perk-label">Flexible<br>schedule</div>
-      </div>
-      <div class="perk-card">
-        <div class="perk-icon">📍</div>
-        <div class="perk-label">Campus<br>only</div>
-      </div>
-    </div>
-
-    <div class="runner-form">
-      <div class="card" style="margin-bottom:16px">
-        <div class="confirm-section-title" style="padding:14px 16px;font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border);">Personal Information</div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
-          <div class="form-group">
-            <label class="form-label">Full Name</label>
-            <input type="text" class="form-input" placeholder="As shown on student ID" id="rName" />
-          </div>
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label">Student Number</label>
-              <input type="text" class="form-input" placeholder="2024-XXXXX" id="rStudNum" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Course</label>
-              <select class="form-select" id="rCourse">
-                <option>BSIT</option><option>BSCS</option><option>BSN</option>
-                <option>BSED</option><option>BSBA</option><option>BSCE</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label">Section</label>
-              <input type="text" class="form-input" placeholder="e.g. IT-2A" id="rSection" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Room Number</label>
-              <input type="text" class="form-input" placeholder="e.g. 201" id="rRoom" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Contact Number</label>
-            <input type="tel" class="form-input" placeholder="09XXXXXXXXX" id="rContact" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Emergency Contact</label>
-            <input type="text" class="form-input" placeholder="Name – Number" id="rEmergency" />
-          </div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:20px">
-        <div class="confirm-section-title" style="padding:14px 16px;font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border);">Student ID Verification</div>
-        <div class="card-body">
-          <label class="file-upload" for="idUpload">
-            <input type="file" id="idUpload" accept="image/*" onchange="previewID(this)" />
-            <div class="upload-icon">📷</div>
-            <div class="upload-text">Upload Student ID Photo</div>
-            <div class="upload-sub">JPG, PNG — max 5MB</div>
-          </label>
-          <div id="idPreview" class="hidden" style="margin-top:12px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)">
-            <img id="idPreviewImg" style="width:100%;display:block" />
-          </div>
-        </div>
-      </div>
-
-      <button class="btn btn-primary w-full btn-lg" onclick="submitRunnerApp()">
-        Submit Application →
-      </button>
-      <p class="text-center text-sm text-muted mt-3">Applications are reviewed within 24–48 hours</p>
-    </div>
-  </div>
-
-  <nav class="bottomnav">
-    <button class="bottomnav-item" onclick="goToPage('pageHome')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-      Home
-    </button>
-    <button class="bottomnav-item" onclick="goToPage('pageMenu')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
-      Menu
-    </button>
-    <button class="bottomnav-item active" onclick="goToPage('pageRunner')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
-      Runner
-    </button>
-    <button class="bottomnav-item" onclick="goToPage('pageReceipt')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      Orders
-    </button>
-  </nav>
-</div>
-
-<!-- ══════════════════════════════════════════
-     PAGE 5: ORDER CONFIRMATION
+     PAGE: CHECKOUT
 ═══════════════════════════════════════════ -->
 <div class="page" id="pageConfirm">
   <nav class="topnav">
     <button class="btn btn-ghost btn-sm" onclick="goToPage('pageMenu')" style="padding:8px">
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
-    <div class="confirm-title" style="font-size:1rem;font-weight:700">Confirm Order</div>
+    <div class="confirm-title" style="font-size:1rem;font-weight:700">Checkout</div>
     <div style="width:42px"></div>
   </nav>
 
   <div class="page-body">
-    <!-- ETA -->
-    <div class="eta-box" style="margin-top:12px">
-      <div class="eta-icon">⏱️</div>
-      <div>
-        <div class="eta-label">Estimated delivery time</div>
-        <div class="eta-time">15–25 minutes</div>
-      </div>
-    </div>
-
-    <!-- Items -->
-    <div class="confirm-section">
+    <!-- Items Summary -->
+    <div class="confirm-section" style="margin-top:12px">
       <div class="confirm-section-title">Order Summary</div>
       <div class="confirm-section-body" id="confirmItems"></div>
     </div>
 
-    <!-- Pricing -->
+    <!-- Pricing Breakdown -->
     <div class="confirm-section">
       <div class="confirm-section-title">Price Breakdown</div>
       <div class="confirm-section-body">
-        <div class="price-row"><span class="price-label">Subtotal</span><span class="price-val" id="confirmSubtotal">₱0</span></div>
-        <div class="price-row"><span class="price-label">Delivery Fee</span><span class="price-val">₱15.00</span></div>
-        <div class="price-row total"><span class="price-label">Total</span><span class="price-val" id="confirmTotal">₱0</span></div>
+        <div class="price-row">
+          <span class="price-label">Subtotal</span>
+          <span class="price-val" id="confirmSubtotal">₱0</span>
+        </div>
+        <div class="price-row">
+          <span class="price-label">🚗 Service & Delivery Fee</span>
+          <span class="price-val" id="confirmDeliveryFee">₱15</span>
+        </div>
+        <div class="price-row hidden" id="confirmExtraFeeRow">
+          <span class="price-label">📦 Multi-item Fee <span style="font-size:0.75em;color:var(--muted)">(3+ items)</span></span>
+          <span class="price-val" id="confirmExtraFee">+₱5</span>
+        </div>
+        <div class="price-row total">
+          <span class="price-label">Total</span>
+          <span class="price-val" id="confirmTotal">₱0</span>
+        </div>
       </div>
     </div>
 
-    <!-- Delivery Info -->
+    <!-- Customer Details (pre-filled from account) -->
     <div class="confirm-section">
-      <div class="confirm-section-title">Delivery Location</div>
+      <div class="confirm-section-title">Your Details</div>
       <div class="confirm-section-body" style="display:flex;flex-direction:column;gap:14px">
-        <div class="form-group">
-          <label class="form-label">Building</label>
-          <select class="form-select" id="confirmBuilding">
-            <option>Main Building</option>
-            <option>SHS Building</option>
-            <option>Library Building</option>
-            <option>Science Building</option>
-            <option>Engineering Building</option>
-            <option>College of Nursing</option>
-            <option>College of Education</option>
-            <option>Gymnasium</option>
-          </select>
-        </div>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label class="form-label">Floor</label>
-            <select class="form-select" id="confirmFloor">
-              <option>Ground Floor</option>
-              <option>2nd Floor</option>
-              <option>3rd Floor</option>
-              <option>4th Floor</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Room Number</label>
-            <input type="text" class="form-input" placeholder="e.g. 201" id="confirmRoom" />
-          </div>
+        <div class="prefill-note">
+          ✏️ Pre-filled from your account. Edit if needed.
         </div>
         <div class="form-group">
-          <label class="form-label">Special Instructions <span style="color:var(--muted);font-weight:400">(optional)</span></label>
-          <textarea class="form-textarea" placeholder="Any notes for the runner…" id="confirmNotes"></textarea>
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" placeholder="Juan Dela Cruz" id="confirmName" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Number</label>
+          <input type="tel" class="form-input" placeholder="09XXXXXXXXX" id="confirmPhone" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Delivery Location / Room</label>
+          <input type="text" class="form-input" placeholder="e.g. Rm 201, SHS Building" id="confirmLocation" />
         </div>
       </div>
     </div>
 
     <div style="padding: 0 20px 20px">
-      <button class="btn btn-primary w-full btn-lg" onclick="placeOrder()">
+      <button class="btn btn-primary w-full btn-lg" id="placeOrderBtn" onclick="placeOrder()">
         🛒 Place Order · <span id="confirmTotalBtn">₱0</span>
       </button>
     </div>
@@ -1202,7 +977,7 @@
 </div>
 
 <!-- ══════════════════════════════════════════
-     PAGE 6: RECEIPT
+     PAGE: RECEIPT / SUCCESS
 ═══════════════════════════════════════════ -->
 <div class="page" id="pageReceipt">
   <nav class="topnav">
@@ -1214,55 +989,29 @@
     <!-- Success Header -->
     <div class="receipt-success">
       <div class="receipt-checkmark">✓</div>
-      <div class="receipt-order-id" id="receiptOrderId">Order #RQ-20240619-0042</div>
-      <div class="receipt-heading">Order Placed! 🎉</div>
-      <div class="receipt-sub">Your runner is on the way.</div>
-    </div>
-
-    <!-- Tracker -->
-    <div class="status-tracker">
-      <div class="tracker-step done">
-        <div class="tracker-dot done">✓</div>
-        <div class="tracker-label">Order<br>Placed</div>
-      </div>
-      <div class="tracker-step active">
-        <div class="tracker-dot active">⏳</div>
-        <div class="tracker-label">Runner<br>Assigned</div>
-      </div>
-      <div class="tracker-step">
-        <div class="tracker-dot">🍱</div>
-        <div class="tracker-label">Preparing<br>Order</div>
-      </div>
-      <div class="tracker-step">
-        <div class="tracker-dot">🚀</div>
-        <div class="tracker-label">On the<br>Way</div>
-      </div>
-      <div class="tracker-step">
-        <div class="tracker-dot">✅</div>
-        <div class="tracker-label">Delivered</div>
-      </div>
-    </div>
-
-    <!-- Runner Info -->
-    <div class="receipt-runner">
-      <div class="receipt-runner-avatar">MR</div>
-      <div class="receipt-runner-info">
-        <div class="receipt-runner-name">Miguel Reyes</div>
-        <div class="receipt-runner-label">Your Runner · BSIT-3B · 0912-345-6789</div>
-      </div>
-      <span style="font-size:1.4rem">⭐ 4.9</span>
+      <div class="receipt-order-id" id="receiptOrderId">Order #—</div>
+      <div class="receipt-heading">Order Received!</div>
+      <div class="receipt-sub">Your order is confirmed. Please wait approximately 10–15 minutes for preparation and delivery.</div>
     </div>
 
     <!-- Receipt Card -->
     <div class="receipt-card">
       <div class="receipt-card-header">
         <div class="receipt-brand">Re<span>:</span>Quest</div>
-        <div class="receipt-num" id="receiptNum">RQ-20240619-0042</div>
+        <div class="receipt-num" id="receiptNum">—</div>
       </div>
       <div class="receipt-body">
         <div class="receipt-row">
-          <span class="label">Date & Time</span>
+          <span class="label">Date &amp; Time</span>
           <span class="val" id="receiptDate">—</span>
+        </div>
+        <div class="receipt-row">
+          <span class="label">Name</span>
+          <span class="val" id="receiptName">—</span>
+        </div>
+        <div class="receipt-row">
+          <span class="label">Contact Number</span>
+          <span class="val" id="receiptPhone">—</span>
         </div>
         <div class="receipt-row">
           <span class="label">Delivery Location</span>
@@ -1272,180 +1021,286 @@
           <div style="font-size:0.78rem;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Items Ordered</div>
           <div id="receiptItemsList"></div>
         </div>
-        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
-          <div class="receipt-row">
-            <span class="label">Subtotal</span>
-            <span class="val" id="receiptSubtotal">—</span>
-          </div>
-          <div class="receipt-row">
-            <span class="label">Delivery Fee</span>
-            <span class="val">₱15.00</span>
-          </div>
+        <!-- Fee breakdown in receipt -->
+        <hr class="receipt-divider">
+        <div class="receipt-row">
+          <span class="label">Subtotal</span>
+          <span class="val" id="receiptSubtotal">—</span>
+        </div>
+        <div class="receipt-row">
+          <span class="label">Service &amp; Delivery</span>
+          <span class="val" id="receiptDeliveryFee">₱15</span>
+        </div>
+        <div class="receipt-row hidden" id="receiptExtraFeeRow">
+          <span class="label">Multi-item Fee</span>
+          <span class="val" id="receiptExtraFee">+₱5</span>
         </div>
         <div class="receipt-total-box">
-          <span class="receipt-total-label">Total Paid</span>
+          <span class="receipt-total-label">Total</span>
           <span class="receipt-total-val" id="receiptTotal">—</span>
         </div>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="receipt-actions">
-      <button class="btn btn-secondary w-full" onclick="downloadReceipt()">
-        📄 Download PDF
-      </button>
-      <button class="btn btn-secondary w-full" onclick="printReceipt()">
-        🖨️ Print Receipt
-      </button>
-    </div>
     <div style="padding:0 20px 24px">
       <button class="btn btn-primary w-full btn-lg" onclick="goToPage('pageMenu')">
-        Order Again 🍱
+        Place Another Order 🍱
       </button>
     </div>
   </div>
-
-  <nav class="bottomnav">
-    <button class="bottomnav-item" onclick="goToPage('pageHome')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-      Home
-    </button>
-    <button class="bottomnav-item" onclick="goToPage('pageMenu')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
-      Menu
-    </button>
-    <button class="bottomnav-item" onclick="goToPage('pageRunner')">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
-      Runner
-    </button>
-    <button class="bottomnav-item active">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      Orders
-    </button>
-  </nav>
 </div>
 
-<!-- ──────────────────────────────────────────────
-     JAVASCRIPT
-────────────────────────────────────────────── -->
-<script>
-/* ─── DATA: 50 Menu Items ──────────────────── */
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT — Firebase v9 Modular SDK
+══════════════════════════════════════════════════════════ -->
+<script type="module">
+
+/* ── Firebase Imports ──────────────────────────────────── */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ── Firebase Config ───────────────────────────────────── */
+// Same project used in index.html (request-f183d).
+// NOTE: Replace appId with the real one from Firebase Console →
+// Project Settings → Your Apps → Web App → appId
+// (it looks like "1:189332484631:web:xxxxxxxxxxxx", not a GA Measurement ID)
+const firebaseConfig = {
+  apiKey:            "AIzaSyB3ZfZNm8D2qUcbWFvv86ipCR23X5KkOsg",
+  authDomain:        "request-f183d.firebaseapp.com",
+  projectId:         "request-f183d",
+  storageBucket:     "request-f183d.firebasestorage.app",
+  messagingSenderId: "189332484631",
+  appId:             "G-J1K0VM2XGF"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ── State ─────────────────────────────────────────────── */
+let currentUser  = null;
+let userProfile  = null;
+let cart         = [];
+let activeCategory = 'All';
+let searchQuery    = '';
+
+/* ── Menu Data (50 items) ──────────────────────────────── */
 const MENU = [
   // MEALS (18)
-  {id:1,name:"Chicken Adobo + Rice",cat:"Meals",price:65,desc:"Classic Filipino adobo with steamed white rice",emoji:"🍖"},
-  {id:2,name:"Pork Sinigang",cat:"Meals",price:75,desc:"Sour tamarind soup with pork ribs and veggies",emoji:"🥣"},
-  {id:3,name:"Beef Caldereta",cat:"Meals",price:80,desc:"Rich tomato-based beef stew with potatoes",emoji:"🥩"},
-  {id:4,name:"Chicken Tinola",cat:"Meals",price:70,desc:"Ginger broth with chicken and green papaya",emoji:"🍲"},
-  {id:5,name:"Fried Chicken + Rice",cat:"Meals",price:70,desc:"Crispy golden fried chicken with steamed rice",emoji:"🍗"},
-  {id:6,name:"Pork Menudo",cat:"Meals",price:65,desc:"Pork and liver in tomato sauce with carrots",emoji:"🍛"},
-  {id:7,name:"Chopsuey",cat:"Meals",price:55,desc:"Stir-fried mixed vegetables in oyster sauce",emoji:"🥦"},
-  {id:8,name:"Pancit Canton",cat:"Meals",price:50,desc:"Stir-fried egg noodles with meat and veggies",emoji:"🍝"},
-  {id:9,name:"Paksiw na Isda",cat:"Meals",price:60,desc:"Fish simmered in vinegar and spices",emoji:"🐟"},
-  {id:10,name:"Pinakbet",cat:"Meals",price:55,desc:"Mixed vegetables with bagoong alamang",emoji:"🫑"},
-  {id:11,name:"Bistek Tagalog",cat:"Meals",price:75,desc:"Beef sirloin in soy sauce and calamano",emoji:"🥩"},
-  {id:12,name:"Lumpiang Prito × 3",cat:"Meals",price:40,desc:"Crispy spring rolls with sweet chili dipping sauce",emoji:"🌮"},
-  {id:13,name:"Kare-Kare",cat:"Meals",price:85,desc:"Oxtail peanut stew with vegetables and bagoong",emoji:"🥜"},
-  {id:14,name:"Laing",cat:"Meals",price:55,desc:"Dried taro leaves cooked in coconut milk",emoji:"🌿"},
-  {id:15,name:"Fried Rice Combo",cat:"Meals",price:60,desc:"Garlic fried rice with egg and tocino",emoji:"🍳"},
-  {id:16,name:"Arroz Caldo",cat:"Meals",price:45,desc:"Chicken congee with ginger and green onion",emoji:"🍚"},
-  {id:17,name:"Nilaga Baka",cat:"Meals",price:75,desc:"Boiled beef with corn and potatoes",emoji:"🌽"},
-  {id:18,name:"Mongo Guisado",cat:"Meals",price:45,desc:"Mung bean stew with malunggay and pork",emoji:"🫘"},
-
+  {id:1,  name:"Chicken Adobo + Rice",  cat:"Meals",    price:65,  desc:"Classic Filipino adobo with steamed white rice",                      emoji:"🍖"},
+  {id:2,  name:"Pork Sinigang",         cat:"Meals",    price:75,  desc:"Sour tamarind soup with pork ribs and veggies",                       emoji:"🥣"},
+  {id:3,  name:"Beef Caldereta",        cat:"Meals",    price:80,  desc:"Rich tomato-based beef stew with potatoes",                           emoji:"🥩"},
+  {id:4,  name:"Chicken Tinola",        cat:"Meals",    price:70,  desc:"Ginger broth with chicken and green papaya",                          emoji:"🍲"},
+  {id:5,  name:"Fried Chicken + Rice",  cat:"Meals",    price:70,  desc:"Crispy golden fried chicken with steamed rice",                       emoji:"🍗"},
+  {id:6,  name:"Pork Menudo",           cat:"Meals",    price:65,  desc:"Pork and liver in tomato sauce with carrots",                         emoji:"🍛"},
+  {id:7,  name:"Chopsuey",              cat:"Meals",    price:55,  desc:"Stir-fried mixed vegetables in oyster sauce",                         emoji:"🥦"},
+  {id:8,  name:"Pancit Canton",         cat:"Meals",    price:50,  desc:"Stir-fried egg noodles with meat and veggies",                        emoji:"🍝"},
+  {id:9,  name:"Paksiw na Isda",        cat:"Meals",    price:60,  desc:"Fish simmered in vinegar and spices",                                 emoji:"🐟"},
+  {id:10, name:"Pinakbet",              cat:"Meals",    price:55,  desc:"Mixed vegetables with bagoong alamang",                               emoji:"🫑"},
+  {id:11, name:"Bistek Tagalog",        cat:"Meals",    price:75,  desc:"Beef sirloin in soy sauce and calamano",                              emoji:"🥩"},
+  {id:12, name:"Lumpiang Prito × 3",   cat:"Meals",    price:40,  desc:"Crispy spring rolls with sweet chili dipping sauce",                  emoji:"🌮"},
+  {id:13, name:"Kare-Kare",            cat:"Meals",    price:85,  desc:"Oxtail peanut stew with vegetables and bagoong",                      emoji:"🥜"},
+  {id:14, name:"Laing",                 cat:"Meals",    price:55,  desc:"Dried taro leaves cooked in coconut milk",                            emoji:"🌿"},
+  {id:15, name:"Fried Rice Combo",      cat:"Meals",    price:60,  desc:"Garlic fried rice with egg and tocino",                               emoji:"🍳"},
+  {id:16, name:"Arroz Caldo",           cat:"Meals",    price:45,  desc:"Chicken congee with ginger and green onion",                          emoji:"🍚"},
+  {id:17, name:"Nilaga Baka",           cat:"Meals",    price:75,  desc:"Boiled beef with corn and potatoes",                                  emoji:"🌽"},
+  {id:18, name:"Mongo Guisado",         cat:"Meals",    price:45,  desc:"Mung bean stew with malunggay and pork",                              emoji:"🫘"},
   // SNACKS (14)
-  {id:19,name:"Siopao (Asado)",cat:"Snacks",price:20,desc:"Fluffy steamed bun filled with pork asado",emoji:"🥙"},
-  {id:20,name:"Instant Noodles",cat:"Snacks",price:18,desc:"Your choice of cup noodles, prepared hot",emoji:"🍜"},
-  {id:21,name:"Hotdog on Stick × 2",cat:"Snacks",price:25,desc:"Grilled hotdog on bamboo skewer",emoji:"🌭"},
-  {id:22,name:"Kikiam × 3",cat:"Snacks",price:20,desc:"Fish cake rolls with sweet sauce",emoji:"🍡"},
-  {id:23,name:"Fishball × 10",cat:"Snacks",price:15,desc:"Golden fishballs with sweet-sour sauce",emoji:"⚫"},
-  {id:24,name:"Camote Cue × 2",cat:"Snacks",price:20,desc:"Caramelized sweet potato on a stick",emoji:"🍠"},
-  {id:25,name:"Banana Cue × 2",cat:"Snacks",price:18,desc:"Caramelized saba banana skewer",emoji:"🍌"},
-  {id:26,name:"Cheese Bread",cat:"Snacks",price:25,desc:"Soft roll topped with sugar and grated cheese",emoji:"🧀"},
-  {id:27,name:"Pandesal × 3",cat:"Snacks",price:15,desc:"Classic Filipino bread rolls, warm from oven",emoji:"🥖"},
-  {id:28,name:"Hard-Boiled Egg",cat:"Snacks",price:12,desc:"Plain hard-boiled chicken egg",emoji:"🥚"},
-  {id:29,name:"Grilled Corn",cat:"Snacks",price:30,desc:"Charcoal-grilled corn with butter or cheese",emoji:"🌽"},
-  {id:30,name:"Kwek-Kwek × 3",cat:"Snacks",price:20,desc:"Orange battered quail eggs, deep fried",emoji:"🟠"},
-  {id:31,name:"Turon × 2",cat:"Snacks",price:20,desc:"Crispy banana spring roll with jackfruit",emoji:"🫓"},
-  {id:32,name:"Peanut Butter Toast",cat:"Snacks",price:22,desc:"Toasted bread with creamy peanut butter",emoji:"🥜"},
-
+  {id:19, name:"Siopao (Asado)",        cat:"Snacks",   price:20,  desc:"Fluffy steamed bun filled with pork asado",                           emoji:"🥙"},
+  {id:20, name:"Instant Noodles",       cat:"Snacks",   price:18,  desc:"Your choice of cup noodles, prepared hot",                            emoji:"🍜"},
+  {id:21, name:"Hotdog on Stick × 2",  cat:"Snacks",   price:25,  desc:"Grilled hotdog on bamboo skewer",                                     emoji:"🌭"},
+  {id:22, name:"Kikiam × 3",           cat:"Snacks",   price:20,  desc:"Fish cake rolls with sweet sauce",                                    emoji:"🍡"},
+  {id:23, name:"Fishball × 10",        cat:"Snacks",   price:15,  desc:"Golden fishballs with sweet-sour sauce",                              emoji:"⚫"},
+  {id:24, name:"Camote Cue × 2",       cat:"Snacks",   price:20,  desc:"Caramelized sweet potato on a stick",                                 emoji:"🍠"},
+  {id:25, name:"Banana Cue × 2",       cat:"Snacks",   price:18,  desc:"Caramelized saba banana skewer",                                      emoji:"🍌"},
+  {id:26, name:"Cheese Bread",          cat:"Snacks",   price:25,  desc:"Soft roll topped with sugar and grated cheese",                       emoji:"🧀"},
+  {id:27, name:"Pandesal × 3",         cat:"Snacks",   price:15,  desc:"Classic Filipino bread rolls, warm from oven",                        emoji:"🥖"},
+  {id:28, name:"Hard-Boiled Egg",       cat:"Snacks",   price:12,  desc:"Plain hard-boiled chicken egg",                                       emoji:"🥚"},
+  {id:29, name:"Grilled Corn",          cat:"Snacks",   price:30,  desc:"Charcoal-grilled corn with butter or cheese",                         emoji:"🌽"},
+  {id:30, name:"Kwek-Kwek × 3",        cat:"Snacks",   price:20,  desc:"Orange battered quail eggs, deep fried",                              emoji:"🟠"},
+  {id:31, name:"Turon × 2",            cat:"Snacks",   price:20,  desc:"Crispy banana spring roll with jackfruit",                            emoji:"🫓"},
+  {id:32, name:"Peanut Butter Toast",   cat:"Snacks",   price:22,  desc:"Toasted bread with creamy peanut butter",                             emoji:"🥜"},
   // DRINKS (10)
-  {id:33,name:"Buko Juice",cat:"Drinks",price:25,desc:"Fresh young coconut juice with coconut meat",emoji:"🥤"},
-  {id:34,name:"Bottled Water",cat:"Drinks",price:15,desc:"500ml purified drinking water",emoji:"💧"},
-  {id:35,name:"Iced Coffee",cat:"Drinks",price:35,desc:"Brewed coffee over ice with creamer",emoji:"☕"},
-  {id:36,name:"Softdrink (Regular)",cat:"Drinks",price:25,desc:"Your choice of cola, sprite, or orange",emoji:"🧃"},
-  {id:37,name:"Mango Shake",cat:"Drinks",price:45,desc:"Fresh mango blended with milk and ice",emoji:"🥭"},
-  {id:38,name:"Banana Shake",cat:"Drinks",price:40,desc:"Creamy banana smoothie with milk",emoji:"🍌"},
-  {id:39,name:"Hot Choco",cat:"Drinks",price:30,desc:"Tsokolate barako with evaporated milk",emoji:"🍫"},
-  {id:40,name:"Energy Drink",cat:"Drinks",price:35,desc:"250ml energy drink of your choice",emoji:"⚡"},
-  {id:41,name:"Iced Milo",cat:"Drinks",price:30,desc:"Milo powder mixed cold over ice",emoji:"🟫"},
-  {id:42,name:"Pineapple Juice",cat:"Drinks",price:28,desc:"Fresh chilled pineapple juice",emoji:"🍍"},
-
+  {id:33, name:"Buko Juice",            cat:"Drinks",   price:25,  desc:"Fresh young coconut juice with coconut meat",                         emoji:"🥤"},
+  {id:34, name:"Bottled Water",         cat:"Drinks",   price:15,  desc:"500ml purified drinking water",                                       emoji:"💧"},
+  {id:35, name:"Iced Coffee",           cat:"Drinks",   price:35,  desc:"Brewed coffee over ice with creamer",                                 emoji:"☕"},
+  {id:36, name:"Softdrink (Regular)",   cat:"Drinks",   price:25,  desc:"Your choice of cola, sprite, or orange",                              emoji:"🧃"},
+  {id:37, name:"Mango Shake",           cat:"Drinks",   price:45,  desc:"Fresh mango blended with milk and ice",                               emoji:"🥭"},
+  {id:38, name:"Banana Shake",          cat:"Drinks",   price:40,  desc:"Creamy banana smoothie with milk",                                    emoji:"🍌"},
+  {id:39, name:"Hot Choco",             cat:"Drinks",   price:30,  desc:"Tsokolate barako with evaporated milk",                               emoji:"🍫"},
+  {id:40, name:"Energy Drink",          cat:"Drinks",   price:35,  desc:"250ml energy drink of your choice",                                   emoji:"⚡"},
+  {id:41, name:"Iced Milo",             cat:"Drinks",   price:30,  desc:"Milo powder mixed cold over ice",                                     emoji:"🟫"},
+  {id:42, name:"Pineapple Juice",       cat:"Drinks",   price:28,  desc:"Fresh chilled pineapple juice",                                       emoji:"🍍"},
   // DESSERTS (8)
-  {id:43,name:"Buko Pandan",cat:"Desserts",price:35,desc:"Chilled young coconut with pandan gelatin",emoji:"🟢"},
-  {id:44,name:"Halo-Halo",cat:"Desserts",price:50,desc:"Mixed Filipino shaved ice dessert",emoji:"🍧"},
-  {id:45,name:"Leche Flan",cat:"Desserts",price:40,desc:"Classic caramel custard pudding",emoji:"🍮"},
-  {id:46,name:"Maja Blanca",cat:"Desserts",price:30,desc:"Coconut pudding with corn kernels",emoji:"🟡"},
-  {id:47,name:"Ice Cream (Dirty Kitchen)",cat:"Desserts",price:20,desc:"Dirty Kitchen-style dirty ice cream scoop",emoji:"🍦"},
-  {id:48,name:"Puto",cat:"Desserts",price:25,desc:"Steamed rice cake with cheese or plain",emoji:"🍥"},
-  {id:49,name:"Kutsinta × 3",cat:"Desserts",price:20,desc:"Brown sticky rice cake with grated coconut",emoji:"🟤"},
-  {id:50,name:"Fruit Salad",cat:"Desserts",price:45,desc:"Mixed fruit in cream with nata de coco",emoji:"🍓"},
+  {id:43, name:"Buko Pandan",           cat:"Desserts", price:35,  desc:"Chilled young coconut with pandan gelatin",                           emoji:"🟢"},
+  {id:44, name:"Halo-Halo",            cat:"Desserts", price:50,  desc:"Mixed Filipino shaved ice dessert",                                   emoji:"🍧"},
+  {id:45, name:"Leche Flan",            cat:"Desserts", price:40,  desc:"Classic caramel custard pudding",                                     emoji:"🍮"},
+  {id:46, name:"Maja Blanca",           cat:"Desserts", price:30,  desc:"Coconut pudding with corn kernels",                                   emoji:"🟡"},
+  {id:47, name:"Ice Cream",             cat:"Desserts", price:20,  desc:"Dirty Kitchen-style dirty ice cream scoop",                           emoji:"🍦"},
+  {id:48, name:"Puto",                  cat:"Desserts", price:25,  desc:"Steamed rice cake with cheese or plain",                              emoji:"🍥"},
+  {id:49, name:"Kutsinta × 3",         cat:"Desserts", price:20,  desc:"Brown sticky rice cake with grated coconut",                          emoji:"🟤"},
+  {id:50, name:"Fruit Salad",           cat:"Desserts", price:45,  desc:"Mixed fruit in cream with nata de coco",                              emoji:"🍓"},
 ];
 
-/* ─── BG Colors for menu imgs ─ */
 const catColors = {
-  Meals: "linear-gradient(135deg,#ffecd2,#fcb69f)",
-  Snacks: "linear-gradient(135deg,#fef3c7,#fde68a)",
-  Drinks: "linear-gradient(135deg,#d1fae5,#a7f3d0)",
+  Meals:    "linear-gradient(135deg,#ffecd2,#fcb69f)",
+  Snacks:   "linear-gradient(135deg,#fef3c7,#fde68a)",
+  Drinks:   "linear-gradient(135deg,#d1fae5,#a7f3d0)",
   Desserts: "linear-gradient(135deg,#ede9fe,#c4b5fd)",
 };
 
-/* ─── STATE ─────────────────────────────── */
-let cart = [];
-let currentUser = null;
-let currentOrderId = null;
-let activeCategory = "All";
-let searchQuery = "";
-let orderCounter = 42;
+/* ═══════════════════════════════════════════════════════════
+   AUTH GUARD — redirect to login if not signed in
+══════════════════════════════════════════════════════════ */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    // Not logged in → back to login page
+    window.location.replace('index.html');
+    return;
+  }
 
-/* ─── LOADING ───────────────────────────── */
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    document.getElementById('loadingScreen').style.opacity = '0';
-    document.getElementById('loadingScreen').style.transition = 'opacity .4s';
-    setTimeout(() => document.getElementById('loadingScreen').style.display = 'none', 400);
-  }, 1400);
+  currentUser = user;
+
+  // Load the student profile stored in Firestore by index.html signup
+  try {
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (snap.exists()) {
+      userProfile = snap.data();
+    }
+  } catch (err) {
+    console.warn('Could not load user profile:', err);
+  }
+
+  // Populate UI with user info
+  populateUserUI();
+
+  // Render menu
   renderMenu();
   updateGreeting();
+
+  // Hide loading screen
+  setTimeout(() => {
+    const ls = document.getElementById('loadingScreen');
+    ls.style.opacity = '0';
+    ls.style.transition = 'opacity .4s';
+    setTimeout(() => ls.style.display = 'none', 400);
+  }, 900);
 });
 
-/* ─── PAGE NAVIGATION ───────────────────── */
-function goToPage(id) {
+/* ── Populate UI from user profile ────────────────────── */
+function populateUserUI() {
+  const name     = userProfile?.fullName || currentUser.displayName || 'Student';
+  const initials = name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
+
+  // Avatar initials
+  document.getElementById('homeAvatar').textContent = initials;
+
+  // Pre-fill checkout form with account info
+  document.getElementById('confirmName').value     = name;
+  // Pre-fill delivery location with student's section as a helpful hint
+  if (userProfile?.section) {
+    document.getElementById('confirmLocation').placeholder = `e.g. ${userProfile.section} Room or Building`;
+  }
+}
+
+/* ── Greeting ──────────────────────────────────────────── */
+function updateGreeting() {
+  const h       = new Date().getHours();
+  const tod     = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const first   = (userProfile?.fullName || currentUser?.displayName || '').split(' ')[0];
+  const display = first ? `${tod}, ${first}! 👋` : `${tod} 👋`;
+  const el      = document.getElementById('homeGreeting');
+  if (el) el.textContent = display;
+}
+setInterval(updateGreeting, 60000);
+
+/* ═══════════════════════════════════════════════════════════
+   PROFILE MODAL — show account info + logout
+══════════════════════════════════════════════════════════ */
+window.toggleProfile = function () {
+  const name    = userProfile?.fullName || currentUser?.displayName || 'Student';
+  const initials = name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
+
+  document.getElementById('profileModalContent').innerHTML = `
+    <div class="profile-header">
+      <div class="profile-avatar-lg">${initials}</div>
+      <div>
+        <div class="profile-name">${name}</div>
+        <div class="profile-sub">${userProfile?.email || currentUser?.email || ''}</div>
+      </div>
+    </div>
+    <div class="profile-info-list">
+      ${userProfile?.studentId ? `<div class="profile-info-row"><span class="profile-info-label">Student ID</span><span class="profile-info-val">${userProfile.studentId}</span></div>` : ''}
+      ${userProfile?.course    ? `<div class="profile-info-row"><span class="profile-info-label">Course / Strand</span><span class="profile-info-val">${userProfile.course}</span></div>` : ''}
+      ${userProfile?.yearLevel ? `<div class="profile-info-row"><span class="profile-info-label">Year Level</span><span class="profile-info-val">${userProfile.yearLevel}</span></div>` : ''}
+      ${userProfile?.section   ? `<div class="profile-info-row"><span class="profile-info-label">Section</span><span class="profile-info-val">${userProfile.section}</span></div>` : ''}
+    </div>
+    <button class="btn btn-danger w-full" onclick="handleLogout()" style="border-radius:var(--radius-sm);padding:14px">
+      🚪 Sign Out
+    </button>
+  `;
+  document.getElementById('profileModal').classList.add('open');
+};
+
+window.closeProfileModal = function (e) {
+  if (!e || e.target === document.getElementById('profileModal')) {
+    document.getElementById('profileModal').classList.remove('open');
+  }
+};
+
+window.handleLogout = async function () {
+  try {
+    await signOut(auth);
+    window.location.replace('index.html');
+  } catch (err) {
+    showToast('Error signing out. Try again.', 'error');
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE NAVIGATION
+══════════════════════════════════════════════════════════ */
+window.goToPage = function (id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.getElementById(id).querySelector('.page-body')?.scrollTo(0, 0);
   updateAllCartCounts();
-}
 
-function toggleProfile() {
-  showToast('Profile menu coming soon!');
-}
+  // Re-fill confirm form every time user lands on checkout
+  if (id === 'pageConfirm') {
+    const currentName = document.getElementById('confirmName').value;
+    if (!currentName) {
+      const name = userProfile?.fullName || currentUser?.displayName || '';
+      document.getElementById('confirmName').value = name;
+    }
+  }
+};
 
-/* ─── GREETING ──────────────────────────── */
-function updateGreeting() {
-  const h = new Date().getHours();
-  const greet = h < 12 ? 'Good morning 👋' : h < 17 ? 'Good afternoon 👋' : 'Good evening 👋';
-  document.getElementById('homeGreeting').textContent = greet;
-}
-
-/* ─── MENU RENDERING ─────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   MENU RENDERING
+══════════════════════════════════════════════════════════ */
 function renderMenu() {
-  const grid = document.getElementById('menuGrid');
+  const grid  = document.getElementById('menuGrid');
   const items = MENU.filter(m => {
-    const matchCat = activeCategory === 'All' || m.cat === activeCategory;
+    const matchCat    = activeCategory === 'All' || m.cat === activeCategory;
     const matchSearch = searchQuery === '' ||
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.desc.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCat && matchSearch;
   });
+
   if (items.length === 0) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--muted)">
       <div style="font-size:2.5rem;margin-bottom:8px">🔍</div>
@@ -1454,6 +1309,7 @@ function renderMenu() {
     </div>`;
     return;
   }
+
   grid.innerHTML = items.map(item => `
     <div class="menu-card" onclick="openMenuModal(${item.id})">
       <div class="menu-img" style="background:${catColors[item.cat]}">
@@ -1472,23 +1328,24 @@ function renderMenu() {
   `).join('');
 }
 
-function filterCategory(cat, el) {
+window.filterCategory = function (cat, el) {
   activeCategory = cat;
   document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   renderMenu();
-}
+};
 
-function filterMenu(q) {
+window.filterMenu = function (q) {
   searchQuery = q;
   renderMenu();
-}
+};
 
-/* ─── MENU MODAL ────────────────────────── */
-function openMenuModal(id) {
-  const item = MENU.find(m => m.id === id);
+/* ── Menu Modal ────────────────────────────────────────── */
+window.openMenuModal = function (id) {
+  const item   = MENU.find(m => m.id === id);
   if (!item) return;
   const inCart = cart.find(c => c.id === id);
+
   document.getElementById('menuModalContent').innerHTML = `
     <div style="text-align:center;margin-bottom:16px">
       <div style="font-size:4rem;margin-bottom:8px">${item.emoji}</div>
@@ -1509,71 +1366,82 @@ function openMenuModal(id) {
     </button>
   `;
   document.getElementById('menuModal').classList.add('open');
-}
+};
 
-function closeMenuModal(e) {
+window.closeMenuModal = function (e) {
   document.getElementById('menuModal').classList.remove('open');
-}
+};
 
-let modalQty = 1;
-function modalQtyChange(id, delta) {
+window.modalQtyChange = function (id, delta) {
   const el = document.getElementById('modalQty');
   let v = parseInt(el.textContent) + delta;
   if (v < 1) v = 1;
   if (v > 20) v = 20;
   el.textContent = v;
-}
+};
 
-function addToCartFromModal(id) {
-  const qty = parseInt(document.getElementById('modalQty').textContent);
-  const item = MENU.find(m => m.id === id);
+window.addToCartFromModal = function (id) {
+  const qty      = parseInt(document.getElementById('modalQty').textContent);
+  const item     = MENU.find(m => m.id === id);
   const existing = cart.find(c => c.id === id);
   if (existing) existing.qty = qty;
   else cart.push({ ...item, qty });
   updateAllCartCounts();
-  closeMenuModal();
+  document.getElementById('menuModal').classList.remove('open');
   showToast(`✓ ${item.name} added to cart`, 'success');
-}
+};
 
-/* ─── CART ──────────────────────────────── */
-function addToCart(id) {
-  const item = MENU.find(m => m.id === id);
+/* ═══════════════════════════════════════════════════════════
+   CART
+══════════════════════════════════════════════════════════ */
+window.addToCart = function (id) {
+  const item     = MENU.find(m => m.id === id);
   const existing = cart.find(c => c.id === id);
   if (existing) existing.qty++;
   else cart.push({ ...item, qty: 1 });
   updateAllCartCounts();
   showToast(`✓ ${item.name} added`, 'success');
-}
+};
 
-function quickAdd(name, emoji, price) {
+window.quickAdd = function (name, emoji, price) {
   const existing = cart.find(c => c.name === name);
   if (existing) existing.qty++;
   else cart.push({ id: Date.now(), name, emoji, price, qty: 1 });
   updateAllCartCounts();
   showToast(`✓ ${name} added to cart`, 'success');
-}
+};
 
 function updateAllCartCounts() {
-  const total = cart.reduce((a,b) => a + b.qty, 0);
+  const total = cart.reduce((a, b) => a + b.qty, 0);
   document.querySelectorAll('#cartCount, #menuCartCount, #menuCartCountBadge').forEach(el => {
     el.textContent = total;
   });
 }
 
-function openCart() {
+window.openCart = function () {
   renderCartDrawer();
   document.getElementById('cartOverlay').classList.add('open');
   document.getElementById('cartDrawer').classList.add('open');
-}
+};
 
-function closeCart() {
+window.closeCart = function () {
   document.getElementById('cartOverlay').classList.remove('open');
   document.getElementById('cartDrawer').classList.remove('open');
+};
+
+/* ── Fee calculation helper ────────────────────────────── */
+function computeFees() {
+  const subtotal    = cart.reduce((a, b) => a + b.price * b.qty, 0);
+  const deliveryFee = 15;
+  // +₱5 if cart has more than 2 distinct item types
+  const extraFee    = cart.length > 2 ? 5 : 0;
+  const total       = subtotal + deliveryFee + extraFee;
+  return { subtotal, deliveryFee, extraFee, total };
 }
 
 function renderCartDrawer() {
-  const itemsEl = document.getElementById('cartItems');
-  const emptyEl = document.getElementById('cartEmpty');
+  const itemsEl   = document.getElementById('cartItems');
+  const emptyEl   = document.getElementById('cartEmpty');
   const summaryEl = document.getElementById('cartSummary');
 
   if (cart.length === 0) {
@@ -1585,8 +1453,7 @@ function renderCartDrawer() {
   emptyEl.classList.add('hidden');
   summaryEl.classList.remove('hidden');
 
-  const subtotal = cart.reduce((a, b) => a + b.price * b.qty, 0);
-  const total = subtotal + 15;
+  const { subtotal, deliveryFee, extraFee, total } = computeFees();
 
   itemsEl.innerHTML = cart.map((item, i) => `
     <div class="cart-item">
@@ -1603,28 +1470,39 @@ function renderCartDrawer() {
     </div>
   `).join('');
 
-  document.getElementById('cartSubtotal').textContent = `₱${subtotal.toFixed(2)}`;
-  document.getElementById('cartTotal').textContent = `₱${total.toFixed(2)}`;
+  document.getElementById('cartSubtotal').textContent   = `₱${subtotal.toFixed(2)}`;
+  document.getElementById('cartDeliveryFee').textContent = `₱${deliveryFee.toFixed(2)}`;
+  document.getElementById('cartTotal').textContent       = `₱${total.toFixed(2)}`;
+
+  // Show extra fee row only when applicable
+  const extraRow = document.getElementById('cartExtraFeeRow');
+  if (extraFee > 0) {
+    extraRow.classList.remove('hidden');
+    document.getElementById('cartExtraFee').textContent = `+₱${extraFee.toFixed(2)}`;
+  } else {
+    extraRow.classList.add('hidden');
+  }
 }
 
-function changeCartQty(index, delta) {
+window.changeCartQty = function (index, delta) {
   cart[index].qty += delta;
   if (cart[index].qty <= 0) cart.splice(index, 1);
   updateAllCartCounts();
   renderCartDrawer();
-}
+};
 
-function goToConfirm() {
+window.goToConfirm = function () {
   if (cart.length === 0) { showToast('Add items to your order first', 'error'); return; }
   closeCart();
   renderConfirmPage();
   goToPage('pageConfirm');
-}
+};
 
-/* ─── CONFIRM PAGE ──────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   CONFIRM PAGE
+══════════════════════════════════════════════════════════ */
 function renderConfirmPage() {
-  const subtotal = cart.reduce((a, b) => a + b.price * b.qty, 0);
-  const total = subtotal + 15;
+  const { subtotal, deliveryFee, extraFee, total } = computeFees();
 
   document.getElementById('confirmItems').innerHTML = cart.map(item => `
     <div class="confirm-item">
@@ -1637,104 +1515,140 @@ function renderConfirmPage() {
     </div>
   `).join('');
 
-  document.getElementById('confirmSubtotal').textContent = `₱${subtotal.toFixed(2)}`;
-  document.getElementById('confirmTotal').textContent = `₱${total.toFixed(2)}`;
-  document.getElementById('confirmTotalBtn').textContent = `₱${total.toFixed(2)}`;
+  document.getElementById('confirmSubtotal').textContent    = `₱${subtotal.toFixed(2)}`;
+  document.getElementById('confirmDeliveryFee').textContent = `₱${deliveryFee.toFixed(2)}`;
+  document.getElementById('confirmTotal').textContent       = `₱${total.toFixed(2)}`;
+  document.getElementById('confirmTotalBtn').textContent    = `₱${total.toFixed(2)}`;
+
+  const extraRow = document.getElementById('confirmExtraFeeRow');
+  if (extraFee > 0) {
+    extraRow.classList.remove('hidden');
+    document.getElementById('confirmExtraFee').textContent = `+₱${extraFee.toFixed(2)}`;
+  } else {
+    extraRow.classList.add('hidden');
+  }
 }
 
-/* ─── PLACE ORDER ───────────────────────── */
-function placeOrder() {
-  const building = document.getElementById('confirmBuilding').value;
-  const floor = document.getElementById('confirmFloor').value;
-  const room = document.getElementById('confirmRoom').value || '—';
+/* ═══════════════════════════════════════════════════════════
+   PLACE ORDER — saves to Firestore orders collection
+══════════════════════════════════════════════════════════ */
+window.placeOrder = async function () {
+  if (cart.length === 0) { showToast('Your cart is empty', 'error'); return; }
 
-  orderCounter++;
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
-  const timeStr = now.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit' });
-  const orderId = `RQ-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(orderCounter).padStart(4,'0')}`;
-  currentOrderId = orderId;
+  const customerName = document.getElementById('confirmName').value.trim();
+  const phoneNumber  = document.getElementById('confirmPhone').value.trim();
+  const location     = document.getElementById('confirmLocation').value.trim();
 
-  const subtotal = cart.reduce((a, b) => a + b.price * b.qty, 0);
-  const total = subtotal + 15;
+  if (!customerName || !phoneNumber || !location) {
+    showToast('Please fill in your name, contact number, and location', 'error');
+    return;
+  }
 
-  // Render receipt
-  document.getElementById('receiptOrderId').textContent = `Order ${orderId}`;
-  document.getElementById('receiptNum').textContent = orderId;
-  document.getElementById('receiptDate').textContent = `${dateStr}, ${timeStr}`;
-  document.getElementById('receiptLocation').textContent = `${building}, ${floor}, Rm ${room}`;
-  document.getElementById('receiptSubtotal').textContent = `₱${subtotal.toFixed(2)}`;
-  document.getElementById('receiptTotal').textContent = `₱${total.toFixed(2)}`;
-  document.getElementById('receiptItemsList').innerHTML = cart.map(item => `
+  const { subtotal, deliveryFee, extraFee, total } = computeFees();
+
+  const items = cart.map(item => ({
+    name:      item.name,
+    emoji:     item.emoji,
+    price:     item.price,
+    qty:       item.qty,
+    lineTotal: item.price * item.qty
+  }));
+
+  const orderBtn = document.getElementById('placeOrderBtn');
+  orderBtn.disabled = true;
+  const originalHTML = orderBtn.innerHTML;
+  orderBtn.innerHTML = '⏳ Placing order…';
+
+  try {
+    const docRef = await addDoc(collection(db, 'orders'), {
+      // ── Customer details (from form) ──────────────────────
+      customerName,
+      phoneNumber,
+      location,
+      // ── Account details (pulled from Firebase profile) ────
+      userId:    currentUser.uid,
+      userEmail: currentUser.email,
+      fullName:  userProfile?.fullName   || customerName,
+      studentId: userProfile?.studentId  || '',
+      course:    userProfile?.course     || '',
+      yearLevel: userProfile?.yearLevel  || '',
+      section:   userProfile?.section    || '',
+      // ── Order data ────────────────────────────────────────
+      items,
+      subtotal,
+      deliveryFee,
+      extraFee,
+      total,
+      status:    'pending',
+      createdAt: serverTimestamp()
+    });
+
+    renderReceipt(docRef.id, { customerName, phoneNumber, location, items, subtotal, deliveryFee, extraFee, total });
+
+    // Clear cart and form
+    cart = [];
+    updateAllCartCounts();
+    document.getElementById('confirmPhone').value    = '';
+    document.getElementById('confirmLocation').value = '';
+    // Keep name (from account) – user doesn't need to re-enter it
+
+    showToast('✓ Order placed successfully!', 'success');
+    goToPage('pageReceipt');
+
+  } catch (err) {
+    console.error('Error saving order to Firestore:', err);
+    showToast('Something went wrong. Please try again.', 'error');
+  } finally {
+    orderBtn.disabled = false;
+    orderBtn.innerHTML = originalHTML;
+  }
+};
+
+/* ── Render Receipt ──────────────────────────────────── */
+function renderReceipt(orderId, order) {
+  const now      = new Date();
+  const dateStr  = now.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+  const timeStr  = now.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit' });
+  const shortId  = orderId.slice(-6).toUpperCase();
+
+  document.getElementById('receiptOrderId').textContent   = `Order #${shortId}`;
+  document.getElementById('receiptNum').textContent        = shortId;
+  document.getElementById('receiptDate').textContent       = `${dateStr}, ${timeStr}`;
+  document.getElementById('receiptName').textContent       = order.customerName;
+  document.getElementById('receiptPhone').textContent      = order.phoneNumber;
+  document.getElementById('receiptLocation').textContent   = order.location;
+  document.getElementById('receiptSubtotal').textContent   = `₱${order.subtotal.toFixed(2)}`;
+  document.getElementById('receiptDeliveryFee').textContent = `₱${order.deliveryFee.toFixed(2)}`;
+  document.getElementById('receiptTotal').textContent      = `₱${order.total.toFixed(2)}`;
+
+  const receiptExtraRow = document.getElementById('receiptExtraFeeRow');
+  if (order.extraFee > 0) {
+    receiptExtraRow.classList.remove('hidden');
+    document.getElementById('receiptExtraFee').textContent = `+₱${order.extraFee.toFixed(2)}`;
+  } else {
+    receiptExtraRow.classList.add('hidden');
+  }
+
+  document.getElementById('receiptItemsList').innerHTML = order.items.map(item => `
     <div class="receipt-row">
       <span class="label">${item.emoji} ${item.name} ×${item.qty}</span>
-      <span class="val">₱${(item.price * item.qty).toFixed(2)}</span>
+      <span class="val">₱${item.lineTotal.toFixed(2)}</span>
     </div>
   `).join('');
-
-  showToast('✓ Order placed successfully!', 'success');
-  cart = [];
-  updateAllCartCounts();
-  setTimeout(() => goToPage('pageReceipt'), 600);
 }
 
-/* ─── RUNNER APPLICATION ─────────────────── */
-function previewID(input) {
-  if (input.files && input.files[0]) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      document.getElementById('idPreviewImg').src = e.target.result;
-      document.getElementById('idPreview').classList.remove('hidden');
-    };
-    reader.readAsDataURL(input.files[0]);
-  }
-}
-
-function submitRunnerApp() {
-  const name = document.getElementById('rName').value.trim();
-  const num = document.getElementById('rStudNum').value.trim();
-  const contact = document.getElementById('rContact').value.trim();
-  if (!name || !num || !contact) {
-    showToast('Please complete all required fields', 'error'); return;
-  }
-  showToast('🏃 Application submitted! Check back in 24–48 hrs', 'success');
-  setTimeout(() => goToPage('pageHome'), 1200);
-}
-
-/* ─── RECEIPT ACTIONS ────────────────────── */
-function downloadReceipt() {
-  const text = buildReceiptText();
-  const blob = new Blob([text], {type:'text/plain'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `Receipt-${currentOrderId || 'RQ'}.txt`;
-  a.click();
-  showToast('📄 Receipt downloaded', 'success');
-}
-
-function printReceipt() {
-  showToast('🖨️ Sending to printer…');
-  setTimeout(() => window.print(), 400);
-}
-
-function buildReceiptText() {
-  const orderId = currentOrderId || 'RQ-N/A';
-  const now = new Date().toLocaleString('en-PH');
-  return `RE:QUEST CAMPUS DELIVERY\nAteneo de Zamboanga University\n${'─'.repeat(36)}\nOrder ID: ${orderId}\nDate: ${now}\n${'─'.repeat(36)}\n[See app for full item details]\n${'─'.repeat(36)}\nThank you for ordering with Re:Quest!\n`;
-}
-
-/* ─── TOAST ─────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════ */
 let toastTimer;
-function showToast(msg, type='') {
+function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = `toast show ${type}`;
+  t.className   = `toast show ${type}`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-/* ─── GREETING CYCLE ─────────────────────── */
-setInterval(updateGreeting, 60000);
 </script>
 </body>
 </html>
