@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Re:Quest — Runner Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── TOKENS (matches the customer app) ─────────────────── */
+    :root {
+      --orange:      #FC4C02;
+      --orange-dark: #d93e00;
+      --orange-light:#fff2ed;
+      --bg:          #F3F4F6;
+      --surface:     #FFFFFF;
+      --text:        #111827;
+      --muted:       #6B7280;
+      --border:      #E5E7EB;
+      --success:     #10B981;
+      --danger:      #EF4444;
+      --radius-sm:   8px;
+      --radius:      14px;
+      --radius-lg:   20px;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow:      0 4px 16px rgba(0,0,0,.10);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
+    }
+
+    /* ─── RESET ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+    input { font-family: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── UTILITIES ───────────────────────────────────────── */
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .w-full { width: 100%; }
+    .text-sm { font-size: 0.875rem; }
+    .text-muted { color: var(--muted); }
+    .mt-1 { margin-top: 4px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-3 { margin-top: 12px; }
+    .mt-4 { margin-top: 16px; }
+
+    /* ─── PAGE SYSTEM ─────────────────────────────────────── */
+    .page { display: none; min-height: 100vh; flex-direction: column; }
+    .page.active { display: flex; }
+    .page-body { flex: 1; overflow-y: auto; }
+
+    /* ─── BUTTONS ─────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 14px 24px; border-radius: var(--radius);
+      font-size: 0.95rem; font-weight: 600; transition: all .18s ease;
+      line-height: 1; white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--orange); color: #fff;
+      box-shadow: 0 4px 14px rgba(252,76,2,.35);
+    }
+    .btn-primary:hover { background: var(--orange-dark); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: var(--surface); color: var(--text);
+      border: 1.5px solid var(--border); box-shadow: var(--shadow-sm);
+    }
+    .btn-secondary:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
+    .btn-ghost { color: var(--muted); padding: 10px 16px; border-radius: var(--radius-sm); }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+    .btn-lg { padding: 18px 32px; font-size: 1.05rem; border-radius: var(--radius-lg); }
+    .btn-sm { padding: 9px 16px; font-size: 0.82rem; border-radius: var(--radius-sm); }
+
+    /* ─── FORM ELEMENTS ───────────────────────────────────── */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 0.82rem; font-weight: 600; color: var(--text); letter-spacing: .3px; }
+    .form-input {
+      padding: 13px 16px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 0.95rem;
+      background: var(--surface); color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
+      width: 100%;
+    }
+    .form-input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(252,76,2,.12); }
+    .form-input::placeholder { color: #9CA3AF; }
+
+    /* ─── BADGE ───────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; padding: 4px 10px;
+      border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: .3px; text-transform: uppercase;
+    }
+    .badge-green  { background: #d1fae5; color: #065f46; }
+    .badge-gray   { background: var(--bg); color: var(--muted); }
+    .badge-yellow { background: #fef3c7; color: #92400e; }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
+
+    /* ─── LOADING SCREEN ──────────────────────────────────── */
+    .loading-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #1a1a2e; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+    }
+    .loading-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.4rem; color: #fff; letter-spacing: -1px; }
+    .loading-logo span { color: var(--orange); }
+    .loading-tag { color: rgba(255,255,255,.55); font-size: 0.85rem; letter-spacing: .5px; text-transform: uppercase; }
+    .loading-bar { width: 120px; height: 3px; background: rgba(255,255,255,.15); border-radius: 999px; overflow: hidden; }
+    .loading-fill { height: 100%; width: 0%; background: var(--orange); border-radius: 999px; animation: load 1.2s ease forwards; }
+    @keyframes load { to { width: 100%; } }
+
+    /* ─── TOAST ───────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--text); color: #fff; padding: 12px 20px;
+      border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
+      z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap;
+      box-shadow: var(--shadow-lg);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #064e3b; }
+    .toast.error { background: #7f1d1d; }
+
+    /* ══════════════════════════════════════════════════════════
+       AUTH PAGE — runner register / login
+    ══════════════════════════════════════════════════════════ */
+    .auth-shell {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 24px 20px; background: linear-gradient(135deg, #1a1a2e 0%, #1f2d45 100%);
+    }
+    .auth-card {
+      width: 100%; max-width: 400px; background: var(--surface);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+      padding: 28px 24px; overflow: hidden;
+    }
+    .auth-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; text-align: center; margin-bottom: 4px; }
+    .auth-logo span.re { color: var(--orange); }
+    .auth-logo span.colon { color: var(--muted); }
+    .auth-tagline { text-align: center; font-size: 0.8rem; color: var(--muted); margin-bottom: 20px; }
+    .auth-tabs { display: flex; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 22px; }
+    .auth-tab { flex: 1; text-align: center; padding: 9px 0; border-radius: 7px; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+    .auth-tab.active { background: var(--surface); color: var(--orange); box-shadow: var(--shadow-sm); }
+    .auth-form { display: flex; flex-direction: column; gap: 14px; }
+
+    /* ══════════════════════════════════════════════════════════
+       DASHBOARD — topbar, filters, order feed
+    ══════════════════════════════════════════════════════════ */
+    .runner-topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--text); color: #fff;
+      padding: 0 20px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .runner-topbar .auth-logo { margin: 0; text-align: left; font-size: 1.3rem; }
+    .runner-topbar .auth-logo span.quest { color: #fff; }
+    .runner-id { display: flex; align-items: center; gap: 10px; }
+    .runner-badge {
+      font-size: 0.62rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase;
+      background: var(--orange); color: #fff; padding: 3px 8px; border-radius: 999px;
+    }
+    .runner-name { font-size: 0.8rem; color: rgba(255,255,255,.75); }
+
+    .filter-row {
+      padding: 12px 20px; background: var(--surface);
+      border-bottom: 1px solid var(--border); overflow-x: auto;
+      display: flex; gap: 8px;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      flex-shrink: 0; padding: 7px 16px; border-radius: 999px;
+      border: 1.5px solid var(--border); font-size: 0.8rem; font-weight: 600;
+      background: var(--surface); color: var(--muted); transition: all .15s;
+    }
+    .filter-chip.active, .filter-chip:hover {
+      background: var(--orange); color: #fff; border-color: var(--orange);
+    }
+
+    .order-feed { padding: 16px 20px 90px; display: flex; flex-direction: column; gap: 12px; max-width: 720px; margin: 0 auto; width: 100%; }
+    .order-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); padding: 14px 16px; cursor: pointer; transition: all .15s;
+    }
+    .order-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+    .order-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .order-card-id { font-weight: 700; font-size: 0.85rem; }
+    .order-card-customer { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
+    .order-card-loc { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
+    .order-card-bottom { display: flex; justify-content: space-between; align-items: center; }
+    .order-card-total { font-weight: 800; color: var(--orange); font-size: 0.95rem; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+
+    /* ══════════════════════════════════════════════════════════
+       ORDER DETAIL DRAWER (details + accept/deliver + chat)
+    ══════════════════════════════════════════════════════════ */
+    .order-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5);
+      z-index: 200; opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .order-overlay.open { opacity: 1; pointer-events: all; }
+    .order-drawer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      z-index: 201; padding: 20px; max-height: 86vh; overflow-y: auto;
+      transform: translateY(100%); transition: transform .3s cubic-bezier(.16,1,.3,1);
+      box-shadow: 0 -8px 40px rgba(0,0,0,.18);
+    }
+    .order-drawer.open { transform: translateY(0); }
+    .drawer-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 10px; }
+    .drawer-header-id { font-weight: 700; font-size: 1.05rem; }
+
+    .confirm-section { background: var(--surface); margin: 0 0 12px; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+    .confirm-section-title { padding: 12px 16px; font-size: 0.75rem; font-weight: 700; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--bg); }
+    .confirm-section-body { padding: 14px 16px; }
+    .receipt-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; }
+    .receipt-row .label { color: var(--muted); }
+    .receipt-row .val { font-weight: 600; }
+    .receipt-divider { border: none; border-top: 1px dashed var(--border); margin: 6px 0; }
+    .receipt-total-box { background: var(--bg); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+    .receipt-total-label { font-weight: 700; font-size: 0.9rem; }
+    .receipt-total-val { font-weight: 800; font-size: 1.1rem; color: var(--orange); }
+    .note-box { border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+
+    /* ── Chat (shared visual language with the customer app) ── */
+    .chat-thread { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 0 10px; }
+    .chat-bubble { max-width: 78%; padding: 9px 13px; border-radius: 14px; font-size: 0.85rem; line-height: 1.4; }
+    .chat-bubble.me   { align-self: flex-end;   background: var(--orange); color: #fff; border-bottom-right-radius: 4px; }
+    .chat-bubble.them { align-self: flex-start; background: var(--bg);     color: var(--text); border-bottom-left-radius: 4px; }
+    .chat-meta { font-size: 0.65rem; color: var(--muted); margin-top: 3px; }
+    .chat-bubble.me .chat-meta { color: rgba(255,255,255,.7); text-align: right; }
+    .chat-empty { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 18px 0; }
+    .chat-input-row { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .chat-input-row .form-input { flex: 1; }
+
+    /* ══════════════════════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════════════════════ */
+    @media (min-width: 900px) {
+      .order-drawer { max-width: 480px; left: 50%; transform: translateX(-50%) translateY(100%); }
+      .order-drawer.open { transform: translateX(-50%) translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">Re<span>:</span>Quest</div>
+  <div class="loading-tag">Runner Portal</div>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ──────────────────────────────────────────────
+     ORDER DETAIL DRAWER (global, used from dashboard)
+────────────────────────────────────────────── -->
+<div class="order-overlay" id="orderOverlay" onclick="closeOrderDetail()"></div>
+<div class="order-drawer" id="orderDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <div class="drawer-header-id" id="orderDetailId">Order #—</div>
+    <div class="flex items-center gap-2">
+      <span id="orderDetailBadge"></span>
+      <button class="btn btn-ghost btn-sm" onclick="closeOrderDetail()">✕</button>
+    </div>
+  </div>
+  <div id="orderDetailBody"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: RUNNER AUTH (login / register)
+═══════════════════════════════════════════ -->
+<div class="page" id="pageAuth">
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
+      <div class="auth-tagline">Runner Portal — campus delivery, on demand</div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="authTab_login" onclick="showAuthMode('login')">Log In</button>
+        <button class="auth-tab" id="authTab_register" onclick="showAuthMode('register')">Register</button>
+      </div>
+
+      <!-- Login form -->
+      <div class="auth-form" id="authLogin">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" placeholder="you@example.com" id="loginEmail" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" placeholder="••••••••" id="loginPassword" onkeydown="if(event.key==='Enter')handleLogin()" />
+        </div>
+        <button class="btn btn-primary w-full btn-lg mt-2" id="loginBtn" onclick="handleLogin()">Log In</button>
+      </div>
+
+      <!-- Register form -->
+      <div class="auth-form hidden" id="authRegister">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" placeholder="Juan Dela Cruz" id="regName" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Number</label>
+          <input type="tel" class="form-input" placeholder="09XXXXXXXXX" id="regPhone" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" placeholder="you@example.com" id="regEmail" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" placeholder="At least 6 characters" id="regPassword" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" class="form-input" placeholder="Re-enter password" id="regPassword2" onkeydown="if(event.key==='Enter')handleRegister()" />
+        </div>
+        <button class="btn btn-primary w-full btn-lg mt-2" id="registerBtn" onclick="handleRegister()">Create Runner Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: RUNNER DASHBOARD
+═══════════════════════════════════════════ -->
+<div class="page" id="pageDashboard">
+  <nav class="runner-topbar">
+    <div class="auth-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
+    <div class="runner-id">
+      <span class="runner-badge">Runner</span>
+      <span class="runner-name" id="runnerNameLabel">—</span>
+      <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="handleLogout()">Log Out</button>
+    </div>
+  </nav>
+
+  <div class="filter-row" id="filterRow">
+    <button class="filter-chip active" onclick="setFilter('pending', this)">🟡 Available</button>
+    <button class="filter-chip" onclick="setFilter('mine', this)">🚴 My Orders</button>
+    <button class="filter-chip" onclick="setFilter('delivered', this)">✅ Delivered</button>
+    <button class="filter-chip" onclick="setFilter('all', this)">📋 All Orders</button>
+  </div>
+
+  <div class="page-body">
+    <div class="order-feed" id="orderFeed"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT — Firebase v9 Modular SDK
+══════════════════════════════════════════════════════════ -->
+<script type="module">
+
+/* ── Firebase Imports ──────────────────────────────────── */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  runTransaction,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ── Firebase Config ───────────────────────────────────────
+   Same project as home.html / index.html (request-f183d), so
+   runners and customers read/write the same `orders` data.
+─────────────────────────────────────────────────────────── */
+const firebaseConfig = {
+  apiKey:            "AIzaSyB3ZfZNm8D2qUcbWFvv86ipCR23X5KkOsg",
+  authDomain:        "request-f183d.firebaseapp.com",
+  projectId:         "request-f183d",
+  storageBucket:     "request-f183d.firebasestorage.app",
+  messagingSenderId: "189332484631",
+  appId:             "G-J1K0VM2XGF"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ── State ─────────────────────────────────────────────── */
+let currentRunner   = null;   // Firebase Auth user
+let runnerProfile   = null;   // { name, phone, email }
+let orders          = [];     // live cache of every order, from onSnapshot
+let ordersUnsub     = null;
+let activeFilter    = 'pending';
+let selectedOrderId = null;
+let chatUnsub       = null;
+
+/* ── Page navigation ───────────────────────────────────── */
+function goToPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ══════════════════════════════════════════════════════════
+   AUTH — runner registration & login
+══════════════════════════════════════════════════════════ */
+window.showAuthMode = function (mode) {
+  document.getElementById('authLogin').classList.toggle('hidden', mode !== 'login');
+  document.getElementById('authRegister').classList.toggle('hidden', mode !== 'register');
+  document.getElementById('authTab_login').classList.toggle('active', mode === 'login');
+  document.getElementById('authTab_register').classList.toggle('active', mode === 'register');
+};
+
+function friendlyAuthError(err) {
+  const code = err?.code || '';
+  if (code.includes('email-already-in-use')) return 'An account with this email already exists';
+  if (code.includes('invalid-email'))         return 'Please enter a valid email address';
+  if (code.includes('weak-password'))         return 'Password is too weak';
+  if (code.includes('user-not-found') || code.includes('wrong-password') || code.includes('invalid-credential'))
+    return 'Incorrect email or password';
+  return 'Something went wrong. Please try again.';
+}
+
+window.handleRegister = async function () {
+  const name  = document.getElementById('regName').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPassword').value;
+  const pass2 = document.getElementById('regPassword2').value;
+
+  if (!name || !phone || !email || !pass) { showToast('Please fill in all fields', 'error'); return; }
+  if (pass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+  if (pass !== pass2) { showToast('Passwords do not match', 'error'); return; }
+
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '⏳ Creating account…';
+
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await setDoc(doc(db, 'runners', cred.user.uid), {
+      name, phone, email, createdAt: serverTimestamp()
+    });
+    showToast('✓ Runner account created!', 'success');
+    // onAuthStateChanged below picks up the new session automatically
+  } catch (err) {
+    console.error(err);
+    showToast(friendlyAuthError(err), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+};
+
+window.handleLogin = async function () {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+  if (!email || !pass) { showToast('Please enter your email and password', 'error'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '⏳ Signing in…';
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch (err) {
+    console.error(err);
+    showToast(friendlyAuthError(err), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+};
+
+window.handleLogout = async function () {
+  try {
+    if (ordersUnsub) { ordersUnsub(); ordersUnsub = null; }
+    if (chatUnsub)   { chatUnsub();   chatUnsub   = null; }
+    await signOut(auth);
+  } catch (err) {
+    showToast('Error signing out', 'error');
+  }
+};
+
+/* ── Auth guard: route to dashboard or login ───────────── */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    currentRunner = null;
+    runnerProfile = null;
+    goToPage('pageAuth');
+    hideLoading();
+    return;
+  }
+
+  try {
+    const snap = await getDoc(doc(db, 'runners', user.uid));
+    if (!snap.exists()) {
+      // This Firebase account exists but isn't registered as a runner
+      // (e.g. it's a customer account) — keep them out of this portal.
+      await signOut(auth);
+      showToast("This account isn't registered as a runner", 'error');
+      hideLoading();
+      return;
+    }
+    currentRunner = user;
+    runnerProfile = snap.data();
+    document.getElementById('runnerNameLabel').textContent = runnerProfile.name || user.email;
+    goToPage('pageDashboard');
+    subscribeOrders();
+  } catch (err) {
+    console.error(err);
+    showToast('Could not load your runner profile', 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+function hideLoading() {
+  const ls = document.getElementById('loadingScreen');
+  ls.style.opacity = '0';
+  ls.style.transition = 'opacity .4s';
+  setTimeout(() => ls.style.display = 'none', 400);
+}
+
+/* ══════════════════════════════════════════════════════════
+   LIVE ORDER FEED — every order, updating in real time
+══════════════════════════════════════════════════════════ */
+function subscribeOrders() {
+  if (ordersUnsub) ordersUnsub();
+  const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(200));
+  ordersUnsub = onSnapshot(q, (snap) => {
+    orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderOrderFeed();
+    if (selectedOrderId) renderOrderDetailDrawer();   // keep an open drawer in sync
+  }, (err) => {
+    console.error('Orders listener error:', err);
+    showToast('Could not load live orders', 'error');
+  });
+}
+
+window.setFilter = function (filter, el) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderOrderFeed();
+};
+
+function statusBadge(o, myUid) {
+  const status = o.status || 'pending';
+  if (status === 'delivered') return `<span class="badge badge-green">Delivered</span>`;
+  if (status === 'accepted' && o.riderId === myUid) return `<span class="badge badge-blue">You're delivering</span>`;
+  if (status === 'accepted') return `<span class="badge badge-gray">Taken</span>`;
+  return `<span class="badge badge-yellow">Pending</span>`;
+}
+
+function renderOrderFeed() {
+  const feed = document.getElementById('orderFeed');
+  const myUid = currentRunner?.uid;
+
+  let list = orders;
+  if (activeFilter === 'pending')   list = orders.filter(o => (o.status || 'pending') === 'pending' && !o.riderId);
+  if (activeFilter === 'mine')      list = orders.filter(o => o.riderId === myUid);
+  if (activeFilter === 'delivered') list = orders.filter(o => o.status === 'delivered');
+
+  if (list.length === 0) {
+    feed.innerHTML = `
+      <div class="empty-state">
+        <div style="font-size:2.4rem;margin-bottom:8px">📭</div>
+        <div style="font-weight:600">No orders here right now</div>
+        <div style="font-size:.8rem;margin-top:4px">Try another filter, or check back soon</div>
+      </div>`;
+    return;
+  }
+
+  feed.innerHTML = list.map(o => {
+    const shortId   = o.id.slice(-6).toUpperCase();
+    const time      = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) : '';
+    const itemCount = (o.items || []).reduce((a, b) => a + b.qty, 0);
+    const canAccept = (o.status || 'pending') === 'pending' && !o.riderId;
+
+    return `
+      <div class="order-card" onclick="openOrderDetail('${o.id}')">
+        <div class="order-card-top">
+          <span class="order-card-id">#${shortId} · ${time}</span>
+          ${statusBadge(o, myUid)}
+        </div>
+        <div class="order-card-customer">${o.customerName || 'Customer'}</div>
+        <div class="order-card-loc">📍 ${o.location || '—'}</div>
+        <div class="order-card-bottom">
+          <span class="text-muted text-sm">${itemCount} item${itemCount === 1 ? '' : 's'}</span>
+          <span class="order-card-total">₱${(o.total || 0).toFixed(2)}</span>
+        </div>
+        ${canAccept ? `<button class="btn btn-primary btn-sm w-full mt-3" onclick="event.stopPropagation();acceptOrder('${o.id}')">Accept Order</button>` : ''}
+      </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   ORDER DETAIL DRAWER — full info + accept/deliver + chat
+══════════════════════════════════════════════════════════ */
+window.openOrderDetail = function (orderId) {
+  selectedOrderId = orderId;
+  renderOrderDetailDrawer();
+  document.getElementById('orderOverlay').classList.add('open');
+  document.getElementById('orderDrawer').classList.add('open');
+};
+
+window.closeOrderDetail = function () {
+  document.getElementById('orderOverlay').classList.remove('open');
+  document.getElementById('orderDrawer').classList.remove('open');
+  if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+  selectedOrderId = null;
+};
+
+function renderOrderDetailDrawer() {
+  const o = orders.find(x => x.id === selectedOrderId);
+  const body = document.getElementById('orderDetailBody');
+  if (!o) { body.innerHTML = `<div class="empty-state">Order not found</div>`; return; }
+
+  const myUid     = currentRunner?.uid;
+  const shortId   = o.id.slice(-6).toUpperCase();
+  const isMine    = o.riderId === myUid;
+  const isPending = (o.status || 'pending') === 'pending' && !o.riderId;
+  const isTaken   = o.status === 'accepted' && !isMine;
+
+  document.getElementById('orderDetailId').textContent  = `Order #${shortId}`;
+  document.getElementById('orderDetailBadge').innerHTML = statusBadge(o, myUid);
+
+  const itemsHTML = (o.items || []).map(item => `
+    <div class="receipt-row">
+      <span class="label">${item.emoji || '🍽️'} ${item.name} ×${item.qty}</span>
+      <span class="val">₱${(item.lineTotal ?? (item.price * item.qty)).toFixed(2)}</span>
+    </div>`).join('');
+
+  let actionHTML = '';
+  if (isPending) {
+    actionHTML = `<button class="btn btn-primary w-full btn-lg mt-2" onclick="acceptOrder('${o.id}')">Accept This Order</button>`;
+  } else if (isTaken) {
+    actionHTML = `<div class="note-box mt-2" style="background:var(--bg);color:var(--muted)">🚫 Already accepted by ${o.riderName || 'another runner'}.</div>`;
+  } else if (isMine && o.status === 'accepted') {
+    actionHTML = `<button class="btn btn-secondary w-full btn-lg mt-2" onclick="markDelivered('${o.id}')">Mark as Delivered</button>`;
+  } else if (isMine && o.status === 'delivered') {
+    actionHTML = `<div class="note-box mt-2" style="background:#d1fae5;color:#065f46">✓ You delivered this order.</div>`;
+  }
+
+  body.innerHTML = `
+    <div class="confirm-section">
+      <div class="confirm-section-title">Customer</div>
+      <div class="confirm-section-body">
+        <div class="receipt-row"><span class="label">Name</span><span class="val">${o.customerName || '—'}</span></div>
+        <div class="receipt-row"><span class="label">Contact</span><span class="val">${o.phoneNumber || '—'}</span></div>
+        <div class="receipt-row"><span class="label">Location</span><span class="val">${o.location || '—'}</span></div>
+      </div>
+    </div>
+    <div class="confirm-section">
+      <div class="confirm-section-title">Items</div>
+      <div class="confirm-section-body">
+        ${itemsHTML}
+        <hr class="receipt-divider">
+        <div class="receipt-row"><span class="label">Subtotal</span><span class="val">₱${(o.subtotal || 0).toFixed(2)}</span></div>
+        <div class="receipt-row"><span class="label">Delivery Fee</span><span class="val">₱${(o.deliveryFee || 0).toFixed(2)}</span></div>
+        ${o.extraFee > 0 ? `<div class="receipt-row"><span class="label">Multi-item Fee</span><span class="val">+₱${o.extraFee.toFixed(2)}</span></div>` : ''}
+        <div class="receipt-total-box mt-2"><span class="receipt-total-label">Total</span><span class="receipt-total-val">₱${(o.total || 0).toFixed(2)}</span></div>
+      </div>
+    </div>
+    ${actionHTML}
+    ${isMine ? `
+      <div class="confirm-section mt-3">
+        <div class="confirm-section-title">💬 Chat with ${o.customerName || 'customer'}</div>
+        <div class="confirm-section-body">
+          <div class="chat-thread" id="runnerChatThread" style="max-height:220px"></div>
+          <div class="chat-input-row">
+            <input type="text" class="form-input" placeholder="Type a message…" id="runnerChatInput" onkeydown="if(event.key==='Enter')sendRunnerMessage()" />
+            <button class="btn btn-primary" onclick="sendRunnerMessage()">Send</button>
+          </div>
+        </div>
+      </div>` : ''}
+  `;
+
+  if (isMine) subscribeRunnerChat(o.id);
+  else if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ACCEPT / DELIVER
+   Accept uses a transaction so two runners can't claim the
+   same order if they tap Accept at the same moment.
+══════════════════════════════════════════════════════════ */
+window.acceptOrder = async function (orderId) {
+  try {
+    await runTransaction(db, async (tx) => {
+      const ref  = doc(db, 'orders', orderId);
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error('MISSING');
+      if (snap.data().riderId) throw new Error('TAKEN');
+      tx.update(ref, {
+        riderId:    currentRunner.uid,
+        riderName:  runnerProfile.name,
+        riderPhone: runnerProfile.phone,
+        status:     'accepted',
+        acceptedAt: serverTimestamp()
+      });
+    });
+    showToast('✓ Order accepted — check My Orders', 'success');
+  } catch (err) {
+    if (err.message === 'TAKEN') showToast('Too late — another runner already took this order', 'error');
+    else { console.error(err); showToast('Could not accept order. Try again.', 'error'); }
+  }
+};
+
+window.markDelivered = async function (orderId) {
+  try {
+    await updateDoc(doc(db, 'orders', orderId), {
+      status: 'delivered',
+      deliveredAt: serverTimestamp()
+    });
+    showToast('✓ Marked as delivered', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Could not update order. Try again.', 'error');
+  }
+};
+
+/* ══════════════════════════════════════════════════════════
+   CHAT — runner ↔ customer, scoped to the selected order
+══════════════════════════════════════════════════════════ */
+function subscribeRunnerChat(orderId) {
+  if (chatUnsub) chatUnsub();
+  const q = query(collection(db, 'orders', orderId, 'messages'), orderBy('createdAt', 'asc'));
+  chatUnsub = onSnapshot(q, (snap) => {
+    const thread = document.getElementById('runnerChatThread');
+    if (!thread) return; // drawer was closed while this resolved
+    if (snap.empty) {
+      thread.innerHTML = `<div class="chat-empty">No messages yet. Say hi 👋</div>`;
+      return;
+    }
+    thread.innerHTML = snap.docs.map(d => {
+      const m    = d.data();
+      const mine = m.senderId === currentRunner?.uid;
+      const time = m.createdAt?.toDate
+        ? m.createdAt.toDate().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })
+        : 'sending…';
+      return `
+        <div class="chat-bubble ${mine ? 'me' : 'them'}">
+          ${m.text}
+          <div class="chat-meta">${mine ? 'You' : (m.senderName || 'Customer')} · ${time}</div>
+        </div>`;
+    }).join('');
+    thread.scrollTop = thread.scrollHeight;
+  });
+}
+
+window.sendRunnerMessage = async function () {
+  const input = document.getElementById('runnerChatInput');
+  const text  = input.value.trim();
+  if (!text || !selectedOrderId) return;
+  input.value = '';
+  try {
+    await addDoc(collection(db, 'orders', selectedOrderId, 'messages'), {
+      text,
+      senderId:   currentRunner.uid,
+      senderRole: 'rider',
+      senderName: runnerProfile.name,
+      createdAt:  serverTimestamp()
+    });
+  } catch (err) {
+    console.error(err);
+    showToast('Message failed to send', 'error');
+  }
+};
+
+/* ══════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+</script>
+</body>
+</html>

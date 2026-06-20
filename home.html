@@ -898,6 +898,41 @@
     .fulfill-row:last-child { border-bottom: none; }
     .fulfill-row .label { color: var(--muted); font-weight: 500; flex-shrink: 0; }
     .fulfill-row .val { font-weight: 600; text-align: right; }
+
+    /* ══════════════════════════════════════════════════════════
+       RUNNER SIGN-UP FAB — floating bubble, top-right of screen
+       Sits outside the .page system (a direct body child, like
+       the toast/modals) so it persists across every page.
+    ══════════════════════════════════════════════════════════ */
+    .runner-fab {
+      position: fixed; top: 72px; right: 16px; z-index: 150;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), #ff8c42);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.55rem; line-height: 1;
+      box-shadow: 0 6px 18px rgba(252,76,2,.45);
+      cursor: pointer;
+      animation: runnerEntrance .45s ease, runnerFloat 2.6s ease-in-out 0.45s infinite;
+    }
+    .runner-fab::before {
+      content: ''; position: absolute; inset: -6px; border-radius: 50%;
+      border: 2px solid rgba(252,76,2,.45);
+      animation: runnerPing 2.2s ease-out infinite;
+    }
+    .runner-fab:hover { box-shadow: 0 8px 22px rgba(252,76,2,.55); }
+    @keyframes runnerFloat {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+    @keyframes runnerPing {
+      0%   { transform: scale(1);   opacity: .65; }
+      100% { transform: scale(1.55); opacity: 0; }
+    }
+    @keyframes runnerEntrance {
+      from { opacity: 0; transform: scale(.3); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .runner-pill-wrap { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
   </style>
 </head>
 <body>
@@ -913,6 +948,35 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- ──────────────────────────────────────────────
+     RUNNER SIGN-UP FAB — floating bubble, top right
+────────────────────────────────────────────── -->
+<div class="runner-fab" id="runnerFab" onclick="openRunnerModal()" title="Become a Runner">
+  🏃
+</div>
+
+<div class="modal-overlay" id="runnerModal" onclick="closeRunnerModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div id="runnerModalContent">
+      <div style="font-size:2.6rem;margin-bottom:10px">🏃</div>
+      <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;margin-bottom:8px">Become a Re:Quest Runner</h3>
+      <p class="text-sm text-muted" style="margin-bottom:18px;line-height:1.6">
+        Earn extra allowance between classes by delivering orders to fellow students. Set your own pace — sign up and we'll reach out with next steps.
+      </p>
+      <div class="runner-pill-wrap" style="margin-bottom:22px">
+        <span class="pill">💸 Earn per delivery</span>
+        <span class="pill">🕐 Flexible hours</span>
+        <span class="pill">🎓 Student-friendly</span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary w-full" onclick="closeRunnerModal()">Maybe later</button>
+        <a href="runner.html" class="btn btn-primary w-full">Yes, sign me up!</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ──────────────────────────────────────────────
      CART OVERLAY + DRAWER
@@ -1501,6 +1565,7 @@ import {
 import {
   getFirestore,
   addDoc,
+  getDoc,
   collection,
   query,
   orderBy,
@@ -2413,9 +2478,16 @@ function renderReceipt(orderId, order) {
 ══════════════════════════════════════════════════════════ */
 
 /* Deterministic per-card rotation/color so cards don't jitter
-   or recolor every time the board re-renders. */
-function sosRotation(id) { return ((id % 7) - 3) * 1.1; }
-function sosColor(id)    { return SOS_STICKY_COLORS[id % SOS_STICKY_COLORS.length]; }
+   or recolor every time the board re-renders. Hashes the id
+   first since Firestore doc ids are strings, not numbers. */
+function hashSOSId(id) {
+  let h = 0;
+  const s = String(id);
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 9973;
+  return Math.abs(h);
+}
+function sosRotation(id) { return ((hashSOSId(id) % 7) - 3) * 1.1; }
+function sosColor(id)    { return SOS_STICKY_COLORS[hashSOSId(id) % SOS_STICKY_COLORS.length]; }
 
 function timeAgo(ts) {
   const sec = Math.floor((Date.now() - ts) / 1000);
@@ -2617,6 +2689,19 @@ function renderFulfillmentPage() {
 window.backToBoard = function () {
   currentFulfillment = null;
   goToPage('pageBorrow');
+};
+
+/* ══════════════════════════════════════════════════════════
+   RUNNER SIGN-UP — floating bubble + popup
+══════════════════════════════════════════════════════════ */
+window.openRunnerModal = function () {
+  document.getElementById('runnerModal').classList.add('open');
+};
+
+window.closeRunnerModal = function (e) {
+  if (!e || e.target === document.getElementById('runnerModal')) {
+    document.getElementById('runnerModal').classList.remove('open');
+  }
 };
 
 /* ══════════════════════════════════════════════════════════
