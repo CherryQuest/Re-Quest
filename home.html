@@ -416,6 +416,37 @@
     }
     .add-btn:hover { background: var(--orange-dark); transform: scale(1.1); }
 
+    /* ══════════════════════════════════════════════════════════
+       PAGE 3a — STORES / STALLS LIST
+    ══════════════════════════════════════════════════════════ */
+    .store-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 14px; padding: 16px 20px;
+    }
+    .store-card {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border); overflow: hidden;
+      box-shadow: var(--shadow-sm); cursor: pointer; transition: all .2s;
+    }
+    .store-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+    .store-img {
+      height: 90px; display: flex; align-items: center; justify-content: center;
+      font-size: 2.4rem; background: var(--bg);
+    }
+    .store-body { padding: 12px 14px; }
+    .store-name { font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; line-height: 1.3; }
+    .store-meta { font-size: 0.72rem; color: var(--muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* Store header bar shown on a store's menu page */
+    .store-menu-header {
+      padding: 12px 20px; background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .store-menu-emoji { font-size: 1.8rem; flex-shrink: 0; }
+    .store-menu-name { font-weight: 700; font-size: 0.95rem; }
+    .store-menu-desc { font-size: 0.76rem; color: var(--muted); margin-top: 1px; }
+
     /* Cart Drawer */
     .cart-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,.5);
@@ -669,6 +700,7 @@
       .home-actions { grid-template-columns: 1fr 1fr 1fr; }
       .home-action-btn.food { grid-column: span 3; }
       .menu-grid { grid-template-columns: repeat(3, 1fr); }
+      .store-grid { grid-template-columns: repeat(3, 1fr); }
       .quick-grid { grid-template-columns: repeat(3, 1fr); }
       .receipt-actions { grid-template-columns: 1fr 1fr; }
       .form-grid-2 { grid-template-columns: 1fr 1fr; }
@@ -678,6 +710,7 @@
       .page-body { max-width: 720px; margin: 0 auto; }
       .topnav { max-width: 720px; margin: 0 auto; left: 0; right: 0; }
       .menu-grid { grid-template-columns: repeat(4, 1fr); }
+      .store-grid { grid-template-columns: repeat(4, 1fr); }
       .bottomnav { max-width: 720px; left: 50%; transform: translateX(-50%); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
       .cart-drawer { max-width: 480px; left: 50%; transform: translateX(-50%) translateY(100%); }
       .cart-drawer.open { transform: translateX(-50%) translateY(0); }
@@ -687,6 +720,184 @@
     .section-emoji { font-size: 1.1rem; }
     .pill-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
     .pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 0.76rem; font-weight: 600; color: var(--muted); }
+
+    /* ══════════════════════════════════════════════════════════
+       PAGE: BORROW — "Campus SOS Board"
+       A deliberately different look from the food pages: a warm
+       orange backdrop (so it never gets mistaken for an order
+       screen) with a white, hard-bordered board that reads as a
+       physical object floating on top of it.
+    ══════════════════════════════════════════════════════════ */
+    .sos-page-body {
+      position: relative;
+      background:
+        radial-gradient(circle at 88% -6%, rgba(255,255,255,.16) 0%, transparent 38%),
+        linear-gradient(165deg, #ff8a3d 0%, var(--orange) 45%, var(--orange-dark) 100%);
+      padding: 24px 16px 110px;
+      overflow-x: hidden;
+    }
+
+    /* Wireframe globe — a thin line-art world, mostly cropped off
+       the top-right corner so it reads as backdrop, not content. */
+    .sos-globe {
+      position: absolute; top: -50px; right: -80px;
+      width: 300px; height: 300px;
+      opacity: .22; pointer-events: none; z-index: 0;
+    }
+    .sos-globe circle, .sos-globe ellipse, .sos-globe line {
+      fill: none; stroke: #fff; stroke-width: 1;
+    }
+
+    .sos-hero-top {
+      position: relative; z-index: 1;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 22px;
+    }
+    .sos-hero-text { max-width: 340px; }
+    .sos-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.4);
+      padding: 6px 12px; border-radius: 999px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+      color: #fff; margin-bottom: 12px;
+    }
+    .sos-eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #fff;
+      box-shadow: 0 0 0 0 rgba(255,255,255,.6);
+      animation: sosPulse 1.8s infinite;
+    }
+    @keyframes sosPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.55); }
+      70%  { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    }
+    .sos-title {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 1.9rem; line-height: 1.08; letter-spacing: -.5px;
+      color: #fff; margin-bottom: 8px;
+    }
+    .sos-subtitle {
+      color: rgba(255,255,255,.88); font-size: 0.88rem; line-height: 1.5;
+    }
+    .sos-post-btn {
+      flex-shrink: 0; background: #fff; color: var(--orange-dark);
+      font-weight: 800; font-size: 0.92rem; padding: 14px 20px;
+      border-radius: var(--radius); white-space: nowrap;
+      box-shadow: 0 10px 26px rgba(0,0,0,.2); transition: all .2s;
+    }
+    .sos-post-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,.26); }
+    .sos-post-btn:active { transform: translateY(0); }
+
+    /* The board itself: white, thick orange outline, strong shadow
+       so it visibly separates from the orange backdrop. */
+    .sos-board-frame { position: relative; z-index: 1; }
+    .sos-board {
+      position: relative;
+      background: #fff;
+      background-image: radial-gradient(circle, rgba(17,24,39,.06) 1px, transparent 1px);
+      background-size: 16px 16px;
+      border: 3px solid #fff;
+      outline: 3px solid var(--orange);
+      outline-offset: -3px;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 22px 48px rgba(0,0,0,.28), 0 4px 14px rgba(0,0,0,.14);
+      min-height: 320px;
+      padding: 30px 14px 26px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px 12px;
+    }
+
+    /* Sticky-note request cards */
+    .sos-card {
+      position: relative;
+      border-radius: 3px 3px 11px 11px;
+      padding: 22px 13px 14px;
+      box-shadow: 3px 7px 14px rgba(0,0,0,.2);
+      transform: rotate(var(--rot, 0deg));
+      transition: transform .2s ease, box-shadow .2s ease;
+      animation: sosPinDrop .45s cubic-bezier(.34,1.56,.64,1) both;
+      font-size: 0.8rem;
+    }
+    .sos-card::after {
+      content: ''; position: absolute; right: 0; bottom: 0; width: 0; height: 0;
+      border-style: solid; border-width: 0 0 13px 13px;
+      border-color: transparent transparent rgba(0,0,0,.09) transparent;
+    }
+    .sos-card:hover {
+      transform: rotate(0deg) translateY(-4px) scale(1.03);
+      box-shadow: 5px 12px 22px rgba(0,0,0,.26);
+      z-index: 2;
+    }
+    .sos-card.sos-leaving {
+      animation: sosPinPull .32s ease forwards;
+      pointer-events: none;
+    }
+    @keyframes sosPinDrop {
+      0%   { opacity: 0; transform: translateY(-26px) scale(.82) rotate(var(--rot,0deg)); }
+      60%  { opacity: 1; transform: translateY(3px) scale(1.04) rotate(var(--rot,0deg)); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(var(--rot,0deg)); }
+    }
+    @keyframes sosPinPull {
+      to { opacity: 0; transform: translateY(-18px) scale(.76) rotate(10deg); }
+    }
+    .sos-pin {
+      position: absolute; top: -15px; left: 50%; transform: translateX(-50%) rotate(-8deg);
+      font-size: 1.4rem;
+      filter: drop-shadow(1px 3px 2px rgba(0,0,0,.4));
+    }
+    .sos-card-head {
+      display: flex; align-items: center; gap: 7px; margin-bottom: 10px;
+    }
+    .sos-card-emoji { font-size: 1.5rem; line-height: 1; }
+    .sos-card-title {
+      font-weight: 800; font-size: 0.8rem; letter-spacing: .2px;
+      text-transform: uppercase; line-height: 1.25; color: var(--text);
+    }
+    .sos-card-body { margin-bottom: 12px; display: flex; flex-direction: column; gap: 3px; }
+    .sos-row { display: flex; gap: 5px; font-size: 0.73rem; line-height: 1.5; }
+    .sos-k { font-weight: 700; color: rgba(17,24,39,.5); flex-shrink: 0; }
+    .sos-v { font-weight: 600; color: var(--text); word-break: break-word; }
+    .sos-row.sos-reward .sos-v { color: var(--orange-dark); font-weight: 800; }
+    .sos-card-foot {
+      display: flex; flex-direction: column; gap: 9px;
+      border-top: 1.5px dashed rgba(17,24,39,.15); padding-top: 10px;
+    }
+    .sos-time { font-size: 0.67rem; color: rgba(17,24,39,.48); font-weight: 600; }
+    .sos-accept-btn {
+      width: 100%; background: var(--orange); color: #fff;
+      font-weight: 700; font-size: 0.78rem; padding: 10px 12px;
+      border-radius: 8px; box-shadow: 0 4px 10px rgba(252,76,2,.32);
+      transition: all .15s;
+    }
+    .sos-accept-btn:hover { background: var(--orange-dark); transform: translateY(-1px); }
+
+    /* Empty state */
+    .sos-empty { grid-column: 1 / -1; text-align: center; padding: 54px 18px; }
+    .sos-empty-icon { font-size: 2.8rem; margin-bottom: 12px; }
+    .sos-empty-title { font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: 5px; }
+    .sos-empty-sub { font-size: 0.82rem; color: var(--muted); max-width: 260px; margin: 0 auto 18px; line-height: 1.5; }
+
+    @media (min-width: 600px) { .sos-board { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 900px) { .sos-board { grid-template-columns: repeat(4, 1fr); } }
+
+    /* ── Fulfillment page ──────────────────────────────────── */
+    .fulfill-banner {
+      display: flex; gap: 14px; align-items: flex-start;
+      background: #ecfdf5; border: 1.5px solid #a7f3d0;
+      border-radius: var(--radius); padding: 16px;
+    }
+    .fulfill-banner-icon { font-size: 1.6rem; flex-shrink: 0; line-height: 1; }
+    .fulfill-banner-title { font-weight: 700; font-size: 0.92rem; color: #065f46; margin-bottom: 3px; }
+    .fulfill-banner-sub { font-size: 0.8rem; color: #047857; line-height: 1.5; }
+    .fulfill-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .fulfill-row:last-child { border-bottom: none; }
+    .fulfill-row .label { color: var(--muted); font-weight: 500; flex-shrink: 0; }
+    .fulfill-row .val { font-weight: 600; text-align: right; }
   </style>
 </head>
 <body>
@@ -788,7 +999,7 @@
       <div class="home-headline">Need something<br>on <span class="hl">campus?</span></div>
       <div class="home-subline">Order from the cafeteria — delivered right to your room.</div>
       <div class="home-actions">
-        <button class="home-action-btn food" onclick="goToPage('pageMenu')">
+        <button class="home-action-btn food" onclick="goToPage('pageStores')">
           <div class="icon">🍱</div>
           <div class="text">
             <strong>Order Food</strong>
@@ -810,7 +1021,7 @@
     <div class="home-section" style="padding-bottom:20px">
       <div class="section-header">
         <div class="section-title">⚡ Quick Order</div>
-        <a class="section-link" onclick="goToPage('pageMenu')">See menu</a>
+        <a class="section-link" onclick="goToPage('pageStores')">See menu</a>
       </div>
       <div class="quick-grid">
         <div class="quick-item" onclick="quickAdd('Chicken Adobo','🍖',65)">
@@ -851,9 +1062,60 @@
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
       Home
     </button>
-    <button class="bottomnav-item" onclick="goToPage('pageMenu')">
+    <button class="bottomnav-item" onclick="goToPage('pageStores')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
       Menu
+    </button>
+    <button class="bottomnav-item" onclick="goToPage('pageBorrow')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-7.58-7-12a7 7 0 1114 0c0 4.42-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      Borrow
+    </button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: STORES / STALLS LIST
+═══════════════════════════════════════════ -->
+<div class="page" id="pageStores">
+  <nav class="topnav">
+    <button class="btn btn-ghost btn-sm" onclick="goToPage('pageHome')" style="padding:8px">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="topnav-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
+    <button class="cart-btn" onclick="openCart()">
+      🛒 <span id="storesCartCount">0</span>
+      <div class="cart-count" id="storesCartCountBadge">0</div>
+    </button>
+  </nav>
+
+  <div class="menu-search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" placeholder="Search stores…" oninput="filterStores(this.value)" id="storeSearch" />
+    </div>
+  </div>
+
+  <div class="page-body" style="padding-bottom:90px">
+    <div class="home-section" style="padding-top:16px">
+      <div class="section-header">
+        <div class="section-title">🏬 Cafeteria Stalls</div>
+      </div>
+    </div>
+    <div class="store-grid" id="storeGrid"></div>
+  </div>
+
+  <nav class="bottomnav">
+    <button class="bottomnav-item" onclick="goToPage('pageHome')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Home
+    </button>
+    <button class="bottomnav-item active" onclick="goToPage('pageStores')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
+      Menu
+    </button>
+    <button class="bottomnav-item" onclick="goToPage('pageBorrow')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-7.58-7-12a7 7 0 1114 0c0 4.42-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      Borrow
     </button>
   </nav>
 </div>
@@ -863,7 +1125,7 @@
 ═══════════════════════════════════════════ -->
 <div class="page" id="pageMenu">
   <nav class="topnav">
-    <button class="btn btn-ghost btn-sm" onclick="goToPage('pageHome')" style="padding:8px">
+    <button class="btn btn-ghost btn-sm" onclick="goToPage('pageStores')" style="padding:8px">
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
     </button>
     <div class="topnav-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
@@ -873,19 +1135,19 @@
     </button>
   </nav>
 
-  <div class="menu-search-bar">
-    <div class="search-input-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="text" class="search-input" placeholder="Search food, drinks, snacks…" oninput="filterMenu(this.value)" id="menuSearch" />
+  <div class="store-menu-header">
+    <div class="store-menu-emoji" id="storeMenuEmoji">🍱</div>
+    <div>
+      <div class="store-menu-name" id="storeMenuName">Store</div>
+      <div class="store-menu-desc" id="storeMenuDesc">Store description</div>
     </div>
   </div>
 
-  <div class="cat-scroll" id="catScroll">
-    <button class="cat-chip active" onclick="filterCategory('All', this)">All</button>
-    <button class="cat-chip" onclick="filterCategory('Meals', this)">🍱 Meals</button>
-    <button class="cat-chip" onclick="filterCategory('Snacks', this)">🍢 Snacks</button>
-    <button class="cat-chip" onclick="filterCategory('Drinks', this)">🥤 Drinks</button>
-    <button class="cat-chip" onclick="filterCategory('Desserts', this)">🍮 Desserts</button>
+  <div class="menu-search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" placeholder="Search this store's menu…" oninput="filterMenu(this.value)" id="menuSearch" />
+    </div>
   </div>
 
   <div class="page-body" style="padding-bottom:90px">
@@ -897,11 +1159,185 @@
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
       Home
     </button>
-    <button class="bottomnav-item active" onclick="goToPage('pageMenu')">
+    <button class="bottomnav-item active" onclick="goToPage('pageStores')">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
       Menu
     </button>
+    <button class="bottomnav-item" onclick="goToPage('pageBorrow')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-7.58-7-12a7 7 0 1114 0c0 4.42-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      Borrow
+    </button>
   </nav>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: BORROW — CAMPUS SOS BOARD
+═══════════════════════════════════════════ -->
+<div class="page" id="pageBorrow">
+  <nav class="topnav">
+    <div class="topnav-logo">
+      <span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span>
+    </div>
+  </nav>
+
+  <div class="page-body sos-page-body">
+    <svg class="sos-globe" viewBox="0 0 300 300" aria-hidden="true">
+      <circle cx="150" cy="150" r="140"/>
+      <ellipse cx="150" cy="150" rx="60" ry="140"/>
+      <ellipse cx="150" cy="150" rx="110" ry="140"/>
+      <ellipse cx="150" cy="150" rx="140" ry="46"/>
+      <ellipse cx="150" cy="98"  rx="133" ry="30"/>
+      <ellipse cx="150" cy="202" rx="133" ry="30"/>
+      <line x1="10" y1="150" x2="290" y2="150"/>
+    </svg>
+
+    <div class="sos-hero-top">
+      <div class="sos-hero-text">
+        <div class="sos-eyebrow"><span class="dot"></span> Live campus board</div>
+        <h1 class="sos-title">Campus SOS Board</h1>
+        <p class="sos-subtitle">Need something urgently? Post a request and connect with students nearby.</p>
+      </div>
+      <button class="sos-post-btn" onclick="openPostSOSModal()">+ Post SOS</button>
+    </div>
+
+    <div class="sos-board-frame">
+      <div class="sos-board" id="sosBoard"></div>
+    </div>
+  </div>
+
+  <nav class="bottomnav">
+    <button class="bottomnav-item" onclick="goToPage('pageHome')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Home
+    </button>
+    <button class="bottomnav-item" onclick="goToPage('pageStores')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
+      Menu
+    </button>
+    <button class="bottomnav-item active" onclick="goToPage('pageBorrow')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-7.58-7-12a7 7 0 1114 0c0 4.42-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      Borrow
+    </button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: FULFILLMENT — accepted SOS request
+═══════════════════════════════════════════ -->
+<div class="page" id="pageFulfillment">
+  <nav class="topnav">
+    <button class="btn btn-ghost btn-sm" onclick="backToBoard()" style="padding:8px">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="confirm-title" style="font-size:1rem;font-weight:700">Request Accepted</div>
+    <div style="width:42px"></div>
+  </nav>
+
+  <div class="page-body" style="padding:20px 20px 40px">
+    <div class="fulfill-banner">
+      <div class="fulfill-banner-icon">✅</div>
+      <div>
+        <div class="fulfill-banner-title">You have accepted this SOS request.</div>
+        <div class="fulfill-banner-sub">Please contact the student directly using Facebook or their phone number. Re:Quest doesn't handle the handoff — that part's between the two of you.</div>
+      </div>
+    </div>
+
+    <div class="confirm-section" style="margin:18px 0 0">
+      <div class="confirm-section-title">Request Details</div>
+      <div class="confirm-section-body">
+        <div class="fulfill-row">
+          <span class="label">Item Needed</span>
+          <span class="val"><span id="fulfillEmoji"></span> <span id="fulfillItemName"></span></span>
+        </div>
+        <div class="fulfill-row">
+          <span class="label">Student Name</span>
+          <span class="val" id="fulfillName"></span>
+        </div>
+        <div class="fulfill-row">
+          <span class="label">Location</span>
+          <span class="val" id="fulfillLocation"></span>
+        </div>
+        <div class="fulfill-row">
+          <span class="label">Contact Number</span>
+          <span class="val" id="fulfillContact"></span>
+        </div>
+        <div class="fulfill-row hidden" id="fulfillFbRow">
+          <span class="label">Facebook Name</span>
+          <span class="val" id="fulfillFb"></span>
+        </div>
+        <div class="fulfill-row">
+          <span class="label">Duration Needed</span>
+          <span class="val" id="fulfillDuration"></span>
+        </div>
+        <div class="fulfill-row hidden" id="fulfillRewardRow">
+          <span class="label">Reward</span>
+          <span class="val" id="fulfillReward" style="color:var(--orange)"></span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary w-full btn-lg" style="margin-top:20px" onclick="backToBoard()">← Back to Board</button>
+  </div>
+</div>
+
+<!-- ──────────────────────────────────────────────
+     POST SOS MODAL
+────────────────────────────────────────────── -->
+<div class="modal-overlay" id="postSOSModal" onclick="closePostSOSModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-height:88vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:4px">📌 Post an SOS</h3>
+    <p class="text-sm text-muted" style="margin-bottom:18px">Let nearby students know what you need.</p>
+    <form id="sosForm" onsubmit="return submitSOS(event)" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label class="form-label">Item Needed</label>
+        <input type="text" class="form-input" id="sosItem" placeholder="e.g. Scientific Calculator" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Name</label>
+        <input type="text" class="form-input" id="sosName" placeholder="Juan Dela Cruz" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Room / Location</label>
+        <input type="text" class="form-input" id="sosLocation" placeholder="e.g. CTC Room 304" required />
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Contact Number</label>
+          <input type="tel" class="form-input" id="sosContact" placeholder="09XXXXXXXXX" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Facebook Name <span class="text-muted" style="font-weight:400">(optional)</span></label>
+          <input type="text" class="form-input" id="sosFb" placeholder="Juan Dela Cruz" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duration Needed</label>
+        <input type="text" class="form-input" id="sosDuration" placeholder="e.g. Until 4:00 PM, 2 hours" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reward / Rental Fee <span class="text-muted" style="font-weight:400">(optional)</span></label>
+        <input type="number" min="0" class="form-input" id="sosReward" placeholder="e.g. 50" />
+      </div>
+      <button type="submit" class="btn btn-primary w-full btn-lg" style="margin-top:6px">Post to Board →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ──────────────────────────────────────────────
+     ACCEPT CONFIRMATION MODAL
+────────────────────────────────────────────── -->
+<div class="modal-overlay" id="acceptConfirmModal" onclick="closeAcceptConfirm(event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="text-align:center;padding-bottom:28px">
+    <div class="modal-handle"></div>
+    <div style="font-size:2.2rem;margin-bottom:10px">🤝</div>
+    <h3 style="font-size:1.05rem;font-weight:800;margin-bottom:6px">Are you willing to provide this item?</h3>
+    <p class="text-sm text-muted" style="margin-bottom:22px">Once confirmed, this request is marked fulfilled and removed from the board for everyone else.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary w-full" onclick="closeAcceptConfirm()">Cancel</button>
+      <button class="btn btn-primary w-full" onclick="confirmAcceptSOS()">Yes, I'll help</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -1064,10 +1500,11 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
-  doc,
-  getDoc,
-  collection,
   addDoc,
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -1090,76 +1527,354 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 /* ── State ─────────────────────────────────────────────── */
-let currentUser  = null;
-let userProfile  = null;
-let cart         = [];
-let activeCategory = 'All';
-let searchQuery    = '';
+let currentUser   = null;
+let userProfile   = null;
+let cart          = [];
+let selectedStore = null;   // the store currently being viewed on pageMenu
+let searchQuery   = '';
+let storeSearchQuery = '';  // search text on the pageStores stall list
 
-/* ── Menu Data (50 items) ──────────────────────────────── */
-const MENU = [
-  // MEALS (18)
-  {id:1,  name:"Chicken Adobo + Rice",  cat:"Meals",    price:65,  desc:"Classic Filipino adobo with steamed white rice",                      emoji:"🍖"},
-  {id:2,  name:"Pork Sinigang",         cat:"Meals",    price:75,  desc:"Sour tamarind soup with pork ribs and veggies",                       emoji:"🥣"},
-  {id:3,  name:"Beef Caldereta",        cat:"Meals",    price:80,  desc:"Rich tomato-based beef stew with potatoes",                           emoji:"🥩"},
-  {id:4,  name:"Chicken Tinola",        cat:"Meals",    price:70,  desc:"Ginger broth with chicken and green papaya",                          emoji:"🍲"},
-  {id:5,  name:"Fried Chicken + Rice",  cat:"Meals",    price:70,  desc:"Crispy golden fried chicken with steamed rice",                       emoji:"🍗"},
-  {id:6,  name:"Pork Menudo",           cat:"Meals",    price:65,  desc:"Pork and liver in tomato sauce with carrots",                         emoji:"🍛"},
-  {id:7,  name:"Chopsuey",              cat:"Meals",    price:55,  desc:"Stir-fried mixed vegetables in oyster sauce",                         emoji:"🥦"},
-  {id:8,  name:"Pancit Canton",         cat:"Meals",    price:50,  desc:"Stir-fried egg noodles with meat and veggies",                        emoji:"🍝"},
-  {id:9,  name:"Paksiw na Isda",        cat:"Meals",    price:60,  desc:"Fish simmered in vinegar and spices",                                 emoji:"🐟"},
-  {id:10, name:"Pinakbet",              cat:"Meals",    price:55,  desc:"Mixed vegetables with bagoong alamang",                               emoji:"🫑"},
-  {id:11, name:"Bistek Tagalog",        cat:"Meals",    price:75,  desc:"Beef sirloin in soy sauce and calamano",                              emoji:"🥩"},
-  {id:12, name:"Lumpiang Prito × 3",   cat:"Meals",    price:40,  desc:"Crispy spring rolls with sweet chili dipping sauce",                  emoji:"🌮"},
-  {id:13, name:"Kare-Kare",            cat:"Meals",    price:85,  desc:"Oxtail peanut stew with vegetables and bagoong",                      emoji:"🥜"},
-  {id:14, name:"Laing",                 cat:"Meals",    price:55,  desc:"Dried taro leaves cooked in coconut milk",                            emoji:"🌿"},
-  {id:15, name:"Fried Rice Combo",      cat:"Meals",    price:60,  desc:"Garlic fried rice with egg and tocino",                               emoji:"🍳"},
-  {id:16, name:"Arroz Caldo",           cat:"Meals",    price:45,  desc:"Chicken congee with ginger and green onion",                          emoji:"🍚"},
-  {id:17, name:"Nilaga Baka",           cat:"Meals",    price:75,  desc:"Boiled beef with corn and potatoes",                                  emoji:"🌽"},
-  {id:18, name:"Mongo Guisado",         cat:"Meals",    price:45,  desc:"Mung bean stew with malunggay and pork",                              emoji:"🫘"},
-  // SNACKS (14)
-  {id:19, name:"Siopao (Asado)",        cat:"Snacks",   price:20,  desc:"Fluffy steamed bun filled with pork asado",                           emoji:"🥙"},
-  {id:20, name:"Instant Noodles",       cat:"Snacks",   price:18,  desc:"Your choice of cup noodles, prepared hot",                            emoji:"🍜"},
-  {id:21, name:"Hotdog on Stick × 2",  cat:"Snacks",   price:25,  desc:"Grilled hotdog on bamboo skewer",                                     emoji:"🌭"},
-  {id:22, name:"Kikiam × 3",           cat:"Snacks",   price:20,  desc:"Fish cake rolls with sweet sauce",                                    emoji:"🍡"},
-  {id:23, name:"Fishball × 10",        cat:"Snacks",   price:15,  desc:"Golden fishballs with sweet-sour sauce",                              emoji:"⚫"},
-  {id:24, name:"Camote Cue × 2",       cat:"Snacks",   price:20,  desc:"Caramelized sweet potato on a stick",                                 emoji:"🍠"},
-  {id:25, name:"Banana Cue × 2",       cat:"Snacks",   price:18,  desc:"Caramelized saba banana skewer",                                      emoji:"🍌"},
-  {id:26, name:"Cheese Bread",          cat:"Snacks",   price:25,  desc:"Soft roll topped with sugar and grated cheese",                       emoji:"🧀"},
-  {id:27, name:"Pandesal × 3",         cat:"Snacks",   price:15,  desc:"Classic Filipino bread rolls, warm from oven",                        emoji:"🥖"},
-  {id:28, name:"Hard-Boiled Egg",       cat:"Snacks",   price:12,  desc:"Plain hard-boiled chicken egg",                                       emoji:"🥚"},
-  {id:29, name:"Grilled Corn",          cat:"Snacks",   price:30,  desc:"Charcoal-grilled corn with butter or cheese",                         emoji:"🌽"},
-  {id:30, name:"Kwek-Kwek × 3",        cat:"Snacks",   price:20,  desc:"Orange battered quail eggs, deep fried",                              emoji:"🟠"},
-  {id:31, name:"Turon × 2",            cat:"Snacks",   price:20,  desc:"Crispy banana spring roll with jackfruit",                            emoji:"🫓"},
-  {id:32, name:"Peanut Butter Toast",   cat:"Snacks",   price:22,  desc:"Toasted bread with creamy peanut butter",                             emoji:"🥜"},
-  // DRINKS (10)
-  {id:33, name:"Buko Juice",            cat:"Drinks",   price:25,  desc:"Fresh young coconut juice with coconut meat",                         emoji:"🥤"},
-  {id:34, name:"Bottled Water",         cat:"Drinks",   price:15,  desc:"500ml purified drinking water",                                       emoji:"💧"},
-  {id:35, name:"Iced Coffee",           cat:"Drinks",   price:35,  desc:"Brewed coffee over ice with creamer",                                 emoji:"☕"},
-  {id:36, name:"Softdrink (Regular)",   cat:"Drinks",   price:25,  desc:"Your choice of cola, sprite, or orange",                              emoji:"🧃"},
-  {id:37, name:"Mango Shake",           cat:"Drinks",   price:45,  desc:"Fresh mango blended with milk and ice",                               emoji:"🥭"},
-  {id:38, name:"Banana Shake",          cat:"Drinks",   price:40,  desc:"Creamy banana smoothie with milk",                                    emoji:"🍌"},
-  {id:39, name:"Hot Choco",             cat:"Drinks",   price:30,  desc:"Tsokolate barako with evaporated milk",                               emoji:"🍫"},
-  {id:40, name:"Energy Drink",          cat:"Drinks",   price:35,  desc:"250ml energy drink of your choice",                                   emoji:"⚡"},
-  {id:41, name:"Iced Milo",             cat:"Drinks",   price:30,  desc:"Milo powder mixed cold over ice",                                     emoji:"🟫"},
-  {id:42, name:"Pineapple Juice",       cat:"Drinks",   price:28,  desc:"Fresh chilled pineapple juice",                                       emoji:"🍍"},
-  // DESSERTS (8)
-  {id:43, name:"Buko Pandan",           cat:"Desserts", price:35,  desc:"Chilled young coconut with pandan gelatin",                           emoji:"🟢"},
-  {id:44, name:"Halo-Halo",            cat:"Desserts", price:50,  desc:"Mixed Filipino shaved ice dessert",                                   emoji:"🍧"},
-  {id:45, name:"Leche Flan",            cat:"Desserts", price:40,  desc:"Classic caramel custard pudding",                                     emoji:"🍮"},
-  {id:46, name:"Maja Blanca",           cat:"Desserts", price:30,  desc:"Coconut pudding with corn kernels",                                   emoji:"🟡"},
-  {id:47, name:"Ice Cream",             cat:"Desserts", price:20,  desc:"Dirty Kitchen-style dirty ice cream scoop",                           emoji:"🍦"},
-  {id:48, name:"Puto",                  cat:"Desserts", price:25,  desc:"Steamed rice cake with cheese or plain",                              emoji:"🍥"},
-  {id:49, name:"Kutsinta × 3",         cat:"Desserts", price:20,  desc:"Brown sticky rice cake with grated coconut",                          emoji:"🟤"},
-  {id:50, name:"Fruit Salad",           cat:"Desserts", price:45,  desc:"Mixed fruit in cream with nata de coco",                              emoji:"🍓"},
+/* ── Borrow / SOS Board state ───────────────────────────── */
+let pendingAcceptId    = null; // id of the request waiting on the confirm dialog
+let currentFulfillment = null; // request shown on the fulfillment page
+
+/* ── Stores (24 stalls) ────────────────────────────────────
+   To add a new store: copy a block below, give it the next
+   storeId, a name/emoji/desc, then add its products in MENU.
+─────────────────────────────────────────────────────────── */
+const STORES = [
+  {id:1,  name:"Mama's Kusina",        emoji:"🍱", desc:"Filipino rice meals & viands",        color:"linear-gradient(135deg,#ffecd2,#fcb69f)"},
+  {id:2,  name:"Iya's Lutong Bahay",   emoji:"🍲", desc:"Home-style vegetable viands",         color:"linear-gradient(135deg,#fef3c7,#fde68a)"},
+  {id:3,  name:"Grilling Station",     emoji:"🍢", desc:"Grilled & charcoal-cooked favorites", color:"linear-gradient(135deg,#d1fae5,#a7f3d0)"},
+  {id:4,  name:"Noodle House",         emoji:"🍜", desc:"Pancit, lomi & noodle soups",         color:"linear-gradient(135deg,#ede9fe,#c4b5fd)"},
+  {id:5,  name:"Rice Bowl Express",    emoji:"🍳", desc:"Silog meals & rice bowls",            color:"linear-gradient(135deg,#dbeafe,#93c5fd)"},
+  {id:6,  name:"Burger Joint",         emoji:"🍔", desc:"Burgers, fries & sides",               color:"linear-gradient(135deg,#fee2e2,#fca5a5)"},
+  {id:7,  name:"Pizza Corner",         emoji:"🍕", desc:"Pizza, pasta & Italian bites",        color:"linear-gradient(135deg,#fce7f3,#f9a8d4)"},
+  {id:8,  name:"Fried Chicken Hub",    emoji:"🍗", desc:"Fried chicken meals & buckets",       color:"linear-gradient(135deg,#e0f2fe,#7dd3fc)"},
+  {id:9,  name:"Seafood Stall",        emoji:"🐟", desc:"Fish & seafood dishes",                color:"linear-gradient(135deg,#ffecd2,#fcb69f)"},
+  {id:10, name:"Vegetable Garden",     emoji:"🥦", desc:"Vegetable-forward dishes",             color:"linear-gradient(135deg,#fef3c7,#fde68a)"},
+  {id:11, name:"Breakfast Nook",       emoji:"🥞", desc:"All-day breakfast meals",              color:"linear-gradient(135deg,#d1fae5,#a7f3d0)"},
+  {id:12, name:"Street Food Stop",     emoji:"🍡", desc:"Filipino street food favorites",       color:"linear-gradient(135deg,#ede9fe,#c4b5fd)"},
+  {id:13, name:"Bakery & Bread",       emoji:"🥐", desc:"Fresh-baked bread & pastries",         color:"linear-gradient(135deg,#dbeafe,#93c5fd)"},
+  {id:14, name:"Milk Tea Bar",         emoji:"🧋", desc:"Milk tea & fruit tea drinks",          color:"linear-gradient(135deg,#fee2e2,#fca5a5)"},
+  {id:15, name:"Coffee Shop",          emoji:"☕", desc:"Coffee & espresso-based drinks",       color:"linear-gradient(135deg,#fce7f3,#f9a8d4)"},
+  {id:16, name:"Juice Bar",            emoji:"🥤", desc:"Fresh juices & fruit shakes",          color:"linear-gradient(135deg,#e0f2fe,#7dd3fc)"},
+  {id:17, name:"Soda & Snacks",        emoji:"🧃", desc:"Sodas, chips & packaged snacks",       color:"linear-gradient(135deg,#ffecd2,#fcb69f)"},
+  {id:18, name:"Dessert Corner",       emoji:"🍮", desc:"Cakes, custards & sweet treats",       color:"linear-gradient(135deg,#fef3c7,#fde68a)"},
+  {id:19, name:"Halo-Halo House",      emoji:"🍧", desc:"Halo-halo & icy Filipino desserts",    color:"linear-gradient(135deg,#d1fae5,#a7f3d0)"},
+  {id:20, name:"Siomai & Dimsum",      emoji:"🥟", desc:"Siomai, dumplings & dimsum",           color:"linear-gradient(135deg,#ede9fe,#c4b5fd)"},
+  {id:21, name:"Tapa King Stall",      emoji:"🥩", desc:"Tapa & beef rice meals",                color:"linear-gradient(135deg,#dbeafe,#93c5fd)"},
+  {id:22, name:"Sandwich Spot",        emoji:"🥪", desc:"Sandwiches & wraps",                   color:"linear-gradient(135deg,#fee2e2,#fca5a5)"},
+  {id:23, name:"Waffle & Pancake",     emoji:"🧇", desc:"Waffles, pancakes & crepes",           color:"linear-gradient(135deg,#fce7f3,#f9a8d4)"},
+  {id:24, name:"Healthy Eats",         emoji:"🥗", desc:"Salads, bowls & lighter options",      color:"linear-gradient(135deg,#e0f2fe,#7dd3fc)"},
 ];
 
-const catColors = {
-  Meals:    "linear-gradient(135deg,#ffecd2,#fcb69f)",
-  Snacks:   "linear-gradient(135deg,#fef3c7,#fde68a)",
-  Drinks:   "linear-gradient(135deg,#d1fae5,#a7f3d0)",
-  Desserts: "linear-gradient(135deg,#ede9fe,#c4b5fd)",
-};
+/* ── Menu Data — grouped by store, 10 products each ────────
+   ID convention: storeId * 100 + product number (1-10).
+   To add a product to a store, copy a line in its block and
+   bump the last digit (e.g. add id:111 as an 11th item for
+   store 1). IDs just need to stay unique across the file.
+─────────────────────────────────────────────────────────── */
+const MENU = [
+  // ── 1. Mama's Kusina ──────────────────────────────────
+  {id:101, storeId:1,  name:"Chicken Adobo + Rice",  price:65, desc:"Classic Filipino adobo with steamed rice",        emoji:"🍖"},
+  {id:102, storeId:1,  name:"Pork Sinigang",         price:75, desc:"Sour tamarind soup with pork ribs and veggies",   emoji:"🥣"},
+  {id:103, storeId:1,  name:"Beef Caldereta",        price:80, desc:"Tomato-based beef stew with potatoes",            emoji:"🥩"},
+  {id:104, storeId:1,  name:"Chicken Tinola",        price:70, desc:"Ginger broth with chicken and green papaya",      emoji:"🍲"},
+  {id:105, storeId:1,  name:"Pork Menudo",           price:65, desc:"Pork and liver in tomato sauce with carrots",     emoji:"🍛"},
+  {id:106, storeId:1,  name:"Bistek Tagalog",        price:75, desc:"Beef sirloin in soy sauce and calamansi",         emoji:"🥩"},
+  {id:107, storeId:1,  name:"Kare-Kare",             price:85, desc:"Oxtail peanut stew with vegetables and bagoong",  emoji:"🥜"},
+  {id:108, storeId:1,  name:"Nilaga Baka",           price:75, desc:"Boiled beef with corn and potatoes",              emoji:"🌽"},
+  {id:109, storeId:1,  name:"Mongo Guisado",         price:45, desc:"Mung bean stew with malunggay and pork",          emoji:"🫘"},
+  {id:110, storeId:1,  name:"Fried Rice Combo",      price:60, desc:"Garlic fried rice with egg and tocino",           emoji:"🍳"},
+
+  // ── 2. Iya's Lutong Bahay ─────────────────────────────
+  {id:201, storeId:2,  name:"Pinakbet",              price:50, desc:"Mixed vegetables with bagoong alamang",           emoji:"🫑"},
+  {id:202, storeId:2,  name:"Laing",                 price:55, desc:"Dried taro leaves cooked in coconut milk",        emoji:"🌿"},
+  {id:203, storeId:2,  name:"Chopsuey",               price:55, desc:"Stir-fried mixed vegetables in oyster sauce",     emoji:"🥦"},
+  {id:204, storeId:2,  name:"Paksiw na Isda",        price:60, desc:"Fish simmered in vinegar and spices",             emoji:"🐟"},
+  {id:205, storeId:2,  name:"Ginataang Kalabasa",    price:50, desc:"Squash and string beans in coconut milk",        emoji:"🎃"},
+  {id:206, storeId:2,  name:"Dinengdeng",            price:50, desc:"Vegetable stew with bagoong isda",                emoji:"🥬"},
+  {id:207, storeId:2,  name:"Bicol Express",         price:70, desc:"Spicy pork in coconut milk and chili",            emoji:"🌶️"},
+  {id:208, storeId:2,  name:"Sarciado",               price:60, desc:"Egg and fish in tomato-garlic sauce",             emoji:"🍅"},
+  {id:209, storeId:2,  name:"Ginisang Ampalaya",     price:45, desc:"Sautéed bitter gourd with egg and pork",          emoji:"🥒"},
+  {id:210, storeId:2,  name:"Lumpiang Gulay × 3",   price:35, desc:"Crispy vegetable spring rolls",                   emoji:"🥬"},
+
+  // ── 3. Grilling Station ───────────────────────────────
+  {id:301, storeId:3,  name:"Pork BBQ Skewer × 2",  price:35, desc:"Sweet-savory grilled pork skewers",               emoji:"🍢"},
+  {id:302, storeId:3,  name:"Chicken Inasal",        price:70, desc:"Grilled chicken marinated in calamansi",          emoji:"🍗"},
+  {id:303, storeId:3,  name:"Grilled Liempo",        price:85, desc:"Charcoal-grilled pork belly",                     emoji:"🥓"},
+  {id:304, storeId:3,  name:"Isaw × 5",              price:20, desc:"Grilled chicken intestine skewers",               emoji:"🍢"},
+  {id:305, storeId:3,  name:"Grilled Tuna Belly",    price:90, desc:"Charcoal-grilled tuna belly",                     emoji:"🐟"},
+  {id:306, storeId:3,  name:"Grilled Squid",         price:95, desc:"Whole squid grilled over charcoal",               emoji:"🦑"},
+  {id:307, storeId:3,  name:"Grilled Corn",           price:30, desc:"Charcoal-grilled corn with butter",               emoji:"🌽"},
+  {id:308, storeId:3,  name:"Hotdog on Stick × 2",  price:25, desc:"Grilled hotdog on bamboo skewer",                 emoji:"🌭"},
+  {id:309, storeId:3,  name:"Betamax × 5",          price:20, desc:"Grilled chicken blood cake skewers",              emoji:"🟥"},
+  {id:310, storeId:3,  name:"Chicken Skin × 5",     price:25, desc:"Grilled crispy chicken skin skewers",             emoji:"🍗"},
+
+  // ── 4. Noodle House ────────────────────────────────────
+  {id:401, storeId:4,  name:"Pancit Canton",         price:50, desc:"Stir-fried egg noodles with meat and veggies",    emoji:"🍝"},
+  {id:402, storeId:4,  name:"Pancit Bihon",           price:50, desc:"Stir-fried rice noodles with vegetables",         emoji:"🍜"},
+  {id:403, storeId:4,  name:"Sotanghon Guisado",     price:50, desc:"Glass noodles sautéed with chicken and veggies",  emoji:"🍜"},
+  {id:404, storeId:4,  name:"Lomi",                  price:55, desc:"Thick egg noodle soup with pork and veggies",     emoji:"🍲"},
+  {id:405, storeId:4,  name:"Beef Mami",             price:55, desc:"Beef noodle soup with spring onions",             emoji:"🍜"},
+  {id:406, storeId:4,  name:"Filipino Spaghetti",    price:50, desc:"Sweet-style spaghetti with hotdog slices",        emoji:"🍝"},
+  {id:407, storeId:4,  name:"Carbonara",              price:60, desc:"Creamy white sauce pasta with bacon",             emoji:"🍝"},
+  {id:408, storeId:4,  name:"Instant Noodles",       price:18, desc:"Your choice of cup noodles, prepared hot",        emoji:"🍜"},
+  {id:409, storeId:4,  name:"Misua Soup",             price:40, desc:"Light wheat noodle soup with pork meatballs",     emoji:"🍜"},
+  {id:410, storeId:4,  name:"Bam-I",                  price:55, desc:"Mixed canton and bihon noodles, Cebu-style",      emoji:"🍜"},
+
+  // ── 5. Rice Bowl Express ──────────────────────────────
+  {id:501, storeId:5,  name:"Tapsilog",              price:70, desc:"Beef tapa, fried egg, and garlic rice",           emoji:"🍳"},
+  {id:502, storeId:5,  name:"Tocilog",                price:65, desc:"Sweet pork tocino, fried egg, and rice",          emoji:"🍳"},
+  {id:503, storeId:5,  name:"Longsilog",              price:65, desc:"Filipino sausage, fried egg, and rice",           emoji:"🍳"},
+  {id:504, storeId:5,  name:"Hotsilog",                price:50, desc:"Hotdog, fried egg, and garlic rice",              emoji:"🍳"},
+  {id:505, storeId:5,  name:"Cornsilog",               price:50, desc:"Corned beef, fried egg, and garlic rice",         emoji:"🌽"},
+  {id:506, storeId:5,  name:"Bangsilog",               price:70, desc:"Fried bangus, fried egg, and garlic rice",        emoji:"🐟"},
+  {id:507, storeId:5,  name:"Spamsilog",               price:65, desc:"Fried Spam, fried egg, and garlic rice",          emoji:"🥓"},
+  {id:508, storeId:5,  name:"Chicksilog",              price:70, desc:"Fried chicken, fried egg, and garlic rice",       emoji:"🍗"},
+  {id:509, storeId:5,  name:"Porksilog",               price:70, desc:"Grilled pork chop, fried egg, and rice",          emoji:"🥩"},
+  {id:510, storeId:5,  name:"Garlic Rice Add-on",      price:15, desc:"Extra cup of garlic fried rice",                  emoji:"🍚"},
+
+  // ── 6. Burger Joint ────────────────────────────────────
+  {id:601, storeId:6,  name:"Classic Beef Burger",   price:60, desc:"Beef patty with lettuce, tomato, and mayo",       emoji:"🍔"},
+  {id:602, storeId:6,  name:"Cheeseburger",           price:65, desc:"Beef patty topped with melted cheese",            emoji:"🍔"},
+  {id:603, storeId:6,  name:"Double Patty Burger",    price:85, desc:"Two beef patties with cheese and special sauce",  emoji:"🍔"},
+  {id:604, storeId:6,  name:"Chicken Burger",         price:60, desc:"Crispy chicken fillet with mayo and lettuce",     emoji:"🍔"},
+  {id:605, storeId:6,  name:"Bacon Burger",           price:75, desc:"Beef patty topped with crispy bacon strips",      emoji:"🥓"},
+  {id:606, storeId:6,  name:"Fries (Regular)",       price:35, desc:"Crispy golden french fries",                       emoji:"🍟"},
+  {id:607, storeId:6,  name:"Fries (Cheese)",         price:45, desc:"French fries topped with melted cheese sauce",    emoji:"🍟"},
+  {id:608, storeId:6,  name:"Onion Rings",            price:40, desc:"Battered and deep-fried onion rings",              emoji:"🧅"},
+  {id:609, storeId:6,  name:"Burger Steak Meal",     price:75, desc:"Burger patty in mushroom gravy with rice",         emoji:"🍔"},
+  {id:610, storeId:6,  name:"Iced Tea",               price:20, desc:"House-blend iced tea, served cold",                emoji:"🥤"},
+
+  // ── 7. Pizza Corner ────────────────────────────────────
+  {id:701, storeId:7,  name:"Pizza Slice (Cheese)",  price:40, desc:"Classic cheese pizza slice",                       emoji:"🍕"},
+  {id:702, storeId:7,  name:"Pizza Slice (Pepperoni)", price:45, desc:"Pepperoni pizza slice with mozzarella",          emoji:"🍕"},
+  {id:703, storeId:7,  name:"Pizza Slice (Hawaiian)", price:45, desc:"Ham and pineapple pizza slice",                  emoji:"🍕"},
+  {id:704, storeId:7,  name:"Pasta (Red Sauce)",     price:55, desc:"Pasta tossed in tomato-basil sauce",               emoji:"🍝"},
+  {id:705, storeId:7,  name:"Pasta (White Sauce)",   price:60, desc:"Pasta in creamy garlic white sauce",               emoji:"🍝"},
+  {id:706, storeId:7,  name:"Garlic Bread × 3",     price:35, desc:"Toasted bread with garlic butter",                 emoji:"🥖"},
+  {id:707, storeId:7,  name:"Mini Pizza (Whole)",    price:120, desc:"Personal-size whole pizza, cheese & toppings",    emoji:"🍕"},
+  {id:708, storeId:7,  name:"Lasagna",                price:70, desc:"Layered pasta with meat sauce and cheese",        emoji:"🍝"},
+  {id:709, storeId:7,  name:"Baked Mac",              price:65, desc:"Macaroni baked in creamy cheese sauce",            emoji:"🧀"},
+  {id:710, storeId:7,  name:"Iced Tea (Pitcher)",    price:50, desc:"House-blend iced tea, shareable pitcher",          emoji:"🥤"},
+
+  // ── 8. Fried Chicken Hub ───────────────────────────────
+  {id:801, storeId:8,  name:"1pc Fried Chicken + Rice", price:70, desc:"Crispy fried chicken with steamed rice",        emoji:"🍗"},
+  {id:802, storeId:8,  name:"2pc Fried Chicken Bucket", price:130, desc:"Two pieces of crispy fried chicken",          emoji:"🍗"},
+  {id:803, storeId:8,  name:"Chicken Wings × 4",     price:60, desc:"Crispy fried chicken wings",                       emoji:"🍗"},
+  {id:804, storeId:8,  name:"Chicken Popcorn",        price:55, desc:"Bite-sized crispy chicken popcorn",                emoji:"🍗"},
+  {id:805, storeId:8,  name:"Spicy Fried Chicken",    price:75, desc:"Fried chicken with a spicy coating",               emoji:"🌶️"},
+  {id:806, storeId:8,  name:"Chicken Sandwich",       price:60, desc:"Crispy chicken fillet sandwich",                   emoji:"🥪"},
+  {id:807, storeId:8,  name:"Chicken & Rice Combo",  price:80, desc:"Fried chicken, rice, and gravy combo",             emoji:"🍗"},
+  {id:808, storeId:8,  name:"Gravy Add-on",           price:10, desc:"Extra cup of savory chicken gravy",                emoji:"🥣"},
+  {id:809, storeId:8,  name:"Coleslaw",                price:25, desc:"Crisp cabbage salad with creamy dressing",         emoji:"🥗"},
+  {id:810, storeId:8,  name:"Softdrink (Regular)",    price:25, desc:"Your choice of cola, sprite, or orange",           emoji:"🧃"},
+
+  // ── 9. Seafood Stall ───────────────────────────────────
+  {id:901, storeId:9,  name:"Grilled Bangus",         price:80, desc:"Whole grilled milkfish, stuffed with tomato",     emoji:"🐟"},
+  {id:902, storeId:9,  name:"Sweet & Sour Fish",      price:85, desc:"Fried fish in sweet and sour sauce",               emoji:"🐟"},
+  {id:903, storeId:9,  name:"Fish Fillet + Rice",     price:75, desc:"Breaded fish fillet with steamed rice",            emoji:"🐟"},
+  {id:904, storeId:9,  name:"Shrimp Sinigang",        price:95, desc:"Sour tamarind soup with shrimp and veggies",       emoji:"🦐"},
+  {id:905, storeId:9,  name:"Calamares",               price:80, desc:"Crispy battered squid rings",                      emoji:"🦑"},
+  {id:906, storeId:9,  name:"Crispy Tilapia",         price:70, desc:"Deep-fried whole tilapia",                         emoji:"🐟"},
+  {id:907, storeId:9,  name:"Garlic Butter Shrimp",   price:100, desc:"Shrimp sautéed in garlic butter sauce",           emoji:"🦐"},
+  {id:908, storeId:9,  name:"Seafood Pancit",         price:75, desc:"Stir-fried noodles with mixed seafood",            emoji:"🍜"},
+  {id:909, storeId:9,  name:"Tuna Sisig",              price:70, desc:"Sizzling chopped tuna in spicy sauce",             emoji:"🐟"},
+  {id:910, storeId:9,  name:"Fish Tofu Soup",         price:55, desc:"Light soup with fish, tofu, and greens",           emoji:"🥣"},
+
+  // ── 10. Vegetable Garden ──────────────────────────────
+  {id:1001, storeId:10, name:"Pinakbet (Veggie)",     price:50, desc:"Mixed vegetables sautéed in bagoong",              emoji:"🫑"},
+  {id:1002, storeId:10, name:"Ginataang Gulay",       price:50, desc:"Mixed vegetables in coconut milk",                 emoji:"🌿"},
+  {id:1003, storeId:10, name:"Veggie Spring Rolls × 3", price:35, desc:"Crispy rolls filled with vegetables",            emoji:"🥬"},
+  {id:1004, storeId:10, name:"Steamed Vegetables",    price:40, desc:"Assorted steamed vegetables",                      emoji:"🥦"},
+  {id:1005, storeId:10, name:"Veggie Salad Bowl",     price:45, desc:"Fresh mixed greens with house dressing",           emoji:"🥗"},
+  {id:1006, storeId:10, name:"Tofu Sisig",             price:50, desc:"Sizzling chopped tofu in spicy sauce",             emoji:"🍲"},
+  {id:1007, storeId:10, name:"Mushroom Adobo",        price:55, desc:"Mushrooms braised in soy and vinegar",             emoji:"🍄"},
+  {id:1008, storeId:10, name:"Veggie Lumpia Ubod",    price:40, desc:"Fresh spring rolls with heart of palm",            emoji:"🥬"},
+  {id:1009, storeId:10, name:"Buttered Vegetables",   price:45, desc:"Mixed vegetables tossed in butter",                emoji:"🧈"},
+  {id:1010, storeId:10, name:"Veggie Fried Rice",     price:45, desc:"Fried rice with mixed vegetables",                 emoji:"🍚"},
+
+  // ── 11. Breakfast Nook ────────────────────────────────
+  {id:1101, storeId:11, name:"Tapsilog",               price:70, desc:"Beef tapa, fried egg, and garlic rice",            emoji:"🍳"},
+  {id:1102, storeId:11, name:"Longganisa + Rice",     price:60, desc:"Sweet Filipino sausage with garlic rice",          emoji:"🌭"},
+  {id:1103, storeId:11, name:"Corned Beef + Rice",    price:60, desc:"Sautéed corned beef with garlic rice",             emoji:"🥫"},
+  {id:1104, storeId:11, name:"Pandesal × 3 + Coffee", price:30, desc:"Warm bread rolls with a cup of coffee",            emoji:"🥖"},
+  {id:1105, storeId:11, name:"Champorado",             price:35, desc:"Sweet chocolate rice porridge",                    emoji:"🍫"},
+  {id:1106, storeId:11, name:"Arroz Caldo",            price:45, desc:"Chicken congee with ginger and green onion",       emoji:"🍚"},
+  {id:1107, storeId:11, name:"Scrambled Egg + Rice",  price:40, desc:"Fluffy scrambled eggs with garlic rice",           emoji:"🍳"},
+  {id:1108, storeId:11, name:"Beef Tapa + Rice",      price:70, desc:"Marinated beef tapa with garlic rice",             emoji:"🥩"},
+  {id:1109, storeId:11, name:"Hot Coffee",             price:25, desc:"Freshly brewed hot coffee",                        emoji:"☕"},
+  {id:1110, storeId:11, name:"Hotcakes × 3",          price:35, desc:"Fluffy pancakes with syrup and butter",            emoji:"🥞"},
+
+  // ── 12. Street Food Stop ──────────────────────────────
+  {id:1201, storeId:12, name:"Fishball × 10",         price:15, desc:"Golden fishballs with sweet-sour sauce",           emoji:"⚫"},
+  {id:1202, storeId:12, name:"Kikiam × 3",            price:20, desc:"Fish cake rolls with sweet sauce",                 emoji:"🍡"},
+  {id:1203, storeId:12, name:"Kwek-Kwek × 3",         price:20, desc:"Orange battered quail eggs, deep fried",           emoji:"🟠"},
+  {id:1204, storeId:12, name:"Squidballs × 10",       price:18, desc:"Deep-fried squid balls with sauce",                emoji:"⚪"},
+  {id:1205, storeId:12, name:"Chicharon",              price:25, desc:"Crispy deep-fried pork rinds",                     emoji:"🟤"},
+  {id:1206, storeId:12, name:"Tokneneng × 2",         price:20, desc:"Orange battered duck eggs, deep fried",            emoji:"🥚"},
+  {id:1207, storeId:12, name:"Isaw Manok × 5",        price:20, desc:"Grilled chicken intestine skewers",                emoji:"🍢"},
+  {id:1208, storeId:12, name:"Tempura × 3",           price:18, desc:"Fried fish cake on a stick",                       emoji:"🍤"},
+  {id:1209, storeId:12, name:"Cheese Sticks × 3",     price:20, desc:"Crispy fried cheese-filled spring rolls",          emoji:"🧀"},
+  {id:1210, storeId:12, name:"Calamares Snack",       price:35, desc:"Crispy battered squid rings, snack size",          emoji:"🦑"},
+
+  // ── 13. Bakery & Bread ────────────────────────────────
+  {id:1301, storeId:13, name:"Pandesal × 5",          price:20, desc:"Classic Filipino bread rolls, warm from oven",     emoji:"🥖"},
+  {id:1302, storeId:13, name:"Ensaymada",              price:25, desc:"Soft buttery bun topped with sugar and cheese",   emoji:"🥐"},
+  {id:1303, storeId:13, name:"Spanish Bread × 2",     price:20, desc:"Rolled bread with sweet buttery filling",          emoji:"🥖"},
+  {id:1304, storeId:13, name:"Cheese Bread",           price:25, desc:"Soft roll topped with sugar and grated cheese",   emoji:"🧀"},
+  {id:1305, storeId:13, name:"Cinnamon Roll",          price:30, desc:"Soft roll swirled with cinnamon and icing",        emoji:"🍩"},
+  {id:1306, storeId:13, name:"Banana Bread Slice",    price:25, desc:"Moist bread slice made with ripe bananas",        emoji:"🍌"},
+  {id:1307, storeId:13, name:"Pan de Coco × 2",       price:20, desc:"Soft bread filled with sweetened coconut",         emoji:"🥥"},
+  {id:1308, storeId:13, name:"Mamon × 2",             price:20, desc:"Soft and fluffy Filipino sponge cake",             emoji:"🧁"},
+  {id:1309, storeId:13, name:"Choco Roll",             price:22, desc:"Soft bread roll filled with chocolate",           emoji:"🍫"},
+  {id:1310, storeId:13, name:"Ube Bread",              price:25, desc:"Soft bread swirled with ube filling",              emoji:"🟣"},
+
+  // ── 14. Milk Tea Bar ───────────────────────────────────
+  {id:1401, storeId:14, name:"Classic Milk Tea",      price:60, desc:"Black tea with milk and chewy pearls",             emoji:"🧋"},
+  {id:1402, storeId:14, name:"Wintermelon Milk Tea",  price:65, desc:"Wintermelon-flavored milk tea with pearls",        emoji:"🧋"},
+  {id:1403, storeId:14, name:"Taro Milk Tea",          price:65, desc:"Creamy taro-flavored milk tea",                    emoji:"🧋"},
+  {id:1404, storeId:14, name:"Okinawa Milk Tea",      price:70, desc:"Brown sugar Okinawa-style milk tea",               emoji:"🧋"},
+  {id:1405, storeId:14, name:"Matcha Milk Tea",       price:70, desc:"Japanese matcha green tea with milk",              emoji:"🍵"},
+  {id:1406, storeId:14, name:"Strawberry Milk Tea",   price:65, desc:"Fruity strawberry-flavored milk tea",              emoji:"🍓"},
+  {id:1407, storeId:14, name:"Brown Sugar Milk Tea",  price:75, desc:"Milk tea swirled with brown sugar syrup",          emoji:"🧋"},
+  {id:1408, storeId:14, name:"Chocolate Milk Tea",    price:65, desc:"Rich chocolate-flavored milk tea",                 emoji:"🍫"},
+  {id:1409, storeId:14, name:"Fruit Tea (Lychee)",    price:55, desc:"Refreshing lychee-flavored fruit tea",             emoji:"🍑"},
+  {id:1410, storeId:14, name:"Yakult Soda",            price:50, desc:"Yakult mixed with sparkling soda",                 emoji:"🥤"},
+
+  // ── 15. Coffee Shop ────────────────────────────────────
+  {id:1501, storeId:15, name:"Iced Coffee",            price:35, desc:"Brewed coffee over ice with creamer",              emoji:"☕"},
+  {id:1502, storeId:15, name:"Hot Coffee",             price:25, desc:"Freshly brewed hot coffee",                        emoji:"☕"},
+  {id:1503, storeId:15, name:"Caramel Macchiato",      price:65, desc:"Espresso with milk and caramel drizzle",           emoji:"☕"},
+  {id:1504, storeId:15, name:"Cafe Latte",             price:60, desc:"Espresso with steamed milk",                       emoji:"☕"},
+  {id:1505, storeId:15, name:"Spanish Latte",          price:65, desc:"Sweet condensed-milk espresso latte",              emoji:"☕"},
+  {id:1506, storeId:15, name:"Americano",              price:45, desc:"Espresso diluted with hot water",                  emoji:"☕"},
+  {id:1507, storeId:15, name:"Mocha Frappe",           price:70, desc:"Blended iced coffee with chocolate",               emoji:"☕"},
+  {id:1508, storeId:15, name:"Vanilla Frappe",         price:70, desc:"Blended iced coffee with vanilla",                 emoji:"🍦"},
+  {id:1509, storeId:15, name:"Hot Choco",              price:30, desc:"Tsokolate barako with evaporated milk",            emoji:"🍫"},
+  {id:1510, storeId:15, name:"Cold Brew",              price:50, desc:"Slow-steeped smooth cold brew coffee",            emoji:"☕"},
+
+  // ── 16. Juice Bar ──────────────────────────────────────
+  {id:1601, storeId:16, name:"Mango Shake",            price:45, desc:"Fresh mango blended with milk and ice",            emoji:"🥭"},
+  {id:1602, storeId:16, name:"Banana Shake",           price:40, desc:"Creamy banana smoothie with milk",                 emoji:"🍌"},
+  {id:1603, storeId:16, name:"Buko Juice",             price:25, desc:"Fresh young coconut juice with coconut meat",      emoji:"🥤"},
+  {id:1604, storeId:16, name:"Pineapple Juice",        price:28, desc:"Fresh chilled pineapple juice",                    emoji:"🍍"},
+  {id:1605, storeId:16, name:"Watermelon Juice",       price:30, desc:"Fresh chilled watermelon juice",                   emoji:"🍉"},
+  {id:1606, storeId:16, name:"Avocado Shake",          price:45, desc:"Creamy avocado blended with milk",                 emoji:"🥑"},
+  {id:1607, storeId:16, name:"Calamansi Juice",        price:25, desc:"Refreshing Filipino lime juice",                   emoji:"🍋"},
+  {id:1608, storeId:16, name:"Strawberry Shake",       price:50, desc:"Sweet strawberry blended with milk and ice",       emoji:"🍓"},
+  {id:1609, storeId:16, name:"Mixed Fruit Shake",      price:55, desc:"Blend of assorted fresh fruits",                   emoji:"🍓"},
+  {id:1610, storeId:16, name:"Iced Milo",              price:30, desc:"Milo powder mixed cold over ice",                  emoji:"🟫"},
+
+  // ── 17. Soda & Snacks ──────────────────────────────────
+  {id:1701, storeId:17, name:"Softdrink (Regular)",   price:25, desc:"Your choice of cola, sprite, or orange",           emoji:"🧃"},
+  {id:1702, storeId:17, name:"Bottled Water",         price:15, desc:"500ml purified drinking water",                    emoji:"💧"},
+  {id:1703, storeId:17, name:"Energy Drink",          price:35, desc:"250ml energy drink of your choice",                emoji:"⚡"},
+  {id:1704, storeId:17, name:"Potato Chips",           price:25, desc:"Crispy salted potato chips, single pack",          emoji:"🥔"},
+  {id:1705, storeId:17, name:"Nachos with Cheese",    price:40, desc:"Corn chips with melted cheese sauce",              emoji:"🧀"},
+  {id:1706, storeId:17, name:"Popcorn (Caramel)",     price:25, desc:"Sweet caramel-coated popcorn",                     emoji:"🍿"},
+  {id:1707, storeId:17, name:"Candy Bar",              price:15, desc:"Assorted chocolate candy bar",                     emoji:"🍬"},
+  {id:1708, storeId:17, name:"Crackers Pack",          price:12, desc:"Pack of crunchy savory crackers",                  emoji:"🍘"},
+  {id:1709, storeId:17, name:"Iced Tea (Bottled)",    price:25, desc:"Bottled iced tea, ready to drink",                 emoji:"🧃"},
+  {id:1710, storeId:17, name:"Gummy Candy Pack",      price:20, desc:"Assorted fruity gummy candies",                    emoji:"🍬"},
+
+  // ── 18. Dessert Corner ─────────────────────────────────
+  {id:1801, storeId:18, name:"Leche Flan",             price:40, desc:"Classic caramel custard pudding",                  emoji:"🍮"},
+  {id:1802, storeId:18, name:"Maja Blanca",            price:30, desc:"Coconut pudding with corn kernels",                emoji:"🟡"},
+  {id:1803, storeId:18, name:"Buko Pandan",            price:35, desc:"Chilled young coconut with pandan gelatin",        emoji:"🟢"},
+  {id:1804, storeId:18, name:"Cassava Cake",           price:30, desc:"Baked cassava cake with custard topping",          emoji:"🟫"},
+  {id:1805, storeId:18, name:"Sapin-Sapin",            price:30, desc:"Layered sticky rice cake, multicolored",           emoji:"🌈"},
+  {id:1806, storeId:18, name:"Ube Halaya",             price:35, desc:"Sweet purple yam jam dessert",                     emoji:"🟣"},
+  {id:1807, storeId:18, name:"Chocolate Cake Slice",  price:45, desc:"Rich chocolate cake, single slice",                emoji:"🍫"},
+  {id:1808, storeId:18, name:"Carrot Cake Slice",     price:45, desc:"Moist carrot cake with cream frosting",            emoji:"🥕"},
+  {id:1809, storeId:18, name:"Brownies × 2",          price:30, desc:"Fudgy chocolate brownie squares",                  emoji:"🍫"},
+  {id:1810, storeId:18, name:"Cheesecake Slice",      price:50, desc:"Creamy baked cheesecake, single slice",            emoji:"🍰"},
+
+  // ── 19. Halo-Halo House ────────────────────────────────
+  {id:1901, storeId:19, name:"Classic Halo-Halo",     price:50, desc:"Mixed Filipino shaved ice dessert",                emoji:"🍧"},
+  {id:1902, storeId:19, name:"Mango Halo-Halo",       price:55, desc:"Halo-halo topped with fresh mango",                emoji:"🍧"},
+  {id:1903, storeId:19, name:"Ube Halo-Halo",         price:55, desc:"Halo-halo topped with ube halaya",                 emoji:"🍧"},
+  {id:1904, storeId:19, name:"Saba con Yelo",         price:35, desc:"Sweet banana with shaved ice and milk",            emoji:"🍌"},
+  {id:1905, storeId:19, name:"Ice Cream Scoop",       price:20, desc:"Dirty Kitchen-style dirty ice cream scoop",        emoji:"🍦"},
+  {id:1906, storeId:19, name:"Sago Gulaman",          price:25, desc:"Sweet tapioca and gelatin drink",                  emoji:"🟤"},
+  {id:1907, storeId:19, name:"Taho",                   price:20, desc:"Warm silken tofu with syrup and sago",             emoji:"🥣"},
+  {id:1908, storeId:19, name:"Fruit Salad",            price:45, desc:"Mixed fruit in cream with nata de coco",           emoji:"🍓"},
+  {id:1909, storeId:19, name:"Mais con Yelo",          price:30, desc:"Sweet corn with shaved ice and milk",              emoji:"🌽"},
+  {id:1910, storeId:19, name:"Halo-Halo Supreme",     price:65, desc:"Loaded halo-halo with extra toppings",             emoji:"🍧"},
+
+  // ── 20. Siomai & Dimsum ────────────────────────────────
+  {id:2001, storeId:20, name:"Siomai × 4",            price:30, desc:"Steamed pork dumplings with soy-calamansi",        emoji:"🥟"},
+  {id:2002, storeId:20, name:"Beef Siomai × 4",       price:35, desc:"Steamed beef dumplings with soy-calamansi",        emoji:"🥟"},
+  {id:2003, storeId:20, name:"Shanghai Lumpia × 5",  price:30, desc:"Crispy fried pork spring rolls",                   emoji:"🌮"},
+  {id:2004, storeId:20, name:"Siopao Asado",          price:20, desc:"Fluffy steamed bun filled with pork asado",        emoji:"🥙"},
+  {id:2005, storeId:20, name:"Siopao Bola-Bola",      price:20, desc:"Steamed bun filled with seasoned meatball",        emoji:"🥙"},
+  {id:2006, storeId:20, name:"Hakaw × 3",             price:35, desc:"Steamed shrimp dumplings",                          emoji:"🥟"},
+  {id:2007, storeId:20, name:"Kikiam × 3",            price:20, desc:"Fish cake rolls with sweet sauce",                 emoji:"🍡"},
+  {id:2008, storeId:20, name:"Molo Soup",              price:35, desc:"Dumpling soup with pork and shrimp",               emoji:"🥣"},
+  {id:2009, storeId:20, name:"Beef Dumpling Soup",    price:45, desc:"Clear broth soup with beef dumplings",             emoji:"🥣"},
+  {id:2010, storeId:20, name:"Dimsum Combo Platter",  price:65, desc:"Assorted dimsum sampler platter",                  emoji:"🥟"},
+
+  // ── 21. Tapa King Stall ────────────────────────────────
+  {id:2101, storeId:21, name:"Beef Tapa + Rice",      price:70, desc:"Marinated beef tapa with garlic rice",             emoji:"🥩"},
+  {id:2102, storeId:21, name:"Tapa Flakes + Rice",    price:65, desc:"Crispy shredded beef tapa with rice",              emoji:"🥩"},
+  {id:2103, storeId:21, name:"Beef Tocino + Rice",    price:65, desc:"Sweet cured beef tocino with rice",                emoji:"🥓"},
+  {id:2104, storeId:21, name:"Pork Tapa + Rice",      price:65, desc:"Marinated pork tapa with garlic rice",             emoji:"🥩"},
+  {id:2105, storeId:21, name:"Garlic Rice Add-on",    price:15, desc:"Extra cup of garlic fried rice",                   emoji:"🍚"},
+  {id:2106, storeId:21, name:"Fried Egg Add-on",      price:12, desc:"Extra sunny-side-up fried egg",                    emoji:"🍳"},
+  {id:2107, storeId:21, name:"Atchara Side",           price:10, desc:"Pickled green papaya relish",                      emoji:"🥒"},
+  {id:2108, storeId:21, name:"Tapa Meal w/ Egg",      price:80, desc:"Beef tapa, fried egg, and garlic rice",            emoji:"🥩"},
+  {id:2109, storeId:21, name:"Beef Tapa Sandwich",    price:55, desc:"Beef tapa served in a soft bun",                   emoji:"🥪"},
+  {id:2110, storeId:21, name:"Iced Tea",               price:20, desc:"House-blend iced tea, served cold",                emoji:"🥤"},
+
+  // ── 22. Sandwich Spot ──────────────────────────────────
+  {id:2201, storeId:22, name:"Club Sandwich",          price:55, desc:"Triple-decker sandwich with ham and egg",          emoji:"🥪"},
+  {id:2202, storeId:22, name:"Egg Sandwich",           price:35, desc:"Egg salad sandwich on soft bread",                 emoji:"🥪"},
+  {id:2203, storeId:22, name:"Tuna Sandwich",          price:45, desc:"Tuna salad sandwich on soft bread",                emoji:"🥪"},
+  {id:2204, storeId:22, name:"Ham & Cheese Sandwich",  price:45, desc:"Classic ham and cheese sandwich",                  emoji:"🥪"},
+  {id:2205, storeId:22, name:"Chicken Sandwich",       price:55, desc:"Shredded chicken sandwich with mayo",              emoji:"🥪"},
+  {id:2206, storeId:22, name:"Grilled Cheese",         price:35, desc:"Toasted bread with melted cheese",                 emoji:"🧀"},
+  {id:2207, storeId:22, name:"BLT Sandwich",           price:50, desc:"Bacon, lettuce, and tomato sandwich",              emoji:"🥪"},
+  {id:2208, storeId:22, name:"Peanut Butter Toast",   price:22, desc:"Toasted bread with creamy peanut butter",          emoji:"🥜"},
+  {id:2209, storeId:22, name:"Veggie Wrap",            price:50, desc:"Fresh vegetables wrapped in a tortilla",           emoji:"🌯"},
+  {id:2210, storeId:22, name:"Chicken Wrap",           price:60, desc:"Grilled chicken wrapped in a tortilla",            emoji:"🌯"},
+
+  // ── 23. Waffle & Pancake ───────────────────────────────
+  {id:2301, storeId:23, name:"Plain Waffle",           price:35, desc:"Crispy golden waffle with syrup",                  emoji:"🧇"},
+  {id:2302, storeId:23, name:"Choco Waffle",           price:45, desc:"Waffle topped with chocolate syrup",               emoji:"🧇"},
+  {id:2303, storeId:23, name:"Cheese Waffle",          price:45, desc:"Waffle topped with grated cheese",                 emoji:"🧇"},
+  {id:2304, storeId:23, name:"Ube Waffle",             price:50, desc:"Waffle infused with ube flavor",                   emoji:"🧇"},
+  {id:2305, storeId:23, name:"Pancake Stack × 3",     price:40, desc:"Fluffy pancakes with syrup and butter",            emoji:"🥞"},
+  {id:2306, storeId:23, name:"Banana Pancake",         price:45, desc:"Pancakes topped with fresh banana slices",         emoji:"🥞"},
+  {id:2307, storeId:23, name:"Waffle + Ice Cream",    price:60, desc:"Warm waffle topped with ice cream",                emoji:"🧇"},
+  {id:2308, storeId:23, name:"Crepe (Nutella)",       price:55, desc:"Thin crepe filled with chocolate-hazelnut spread", emoji:"🥞"},
+  {id:2309, storeId:23, name:"Crepe (Fruit)",         price:55, desc:"Thin crepe filled with fresh mixed fruit",         emoji:"🥞"},
+  {id:2310, storeId:23, name:"Hot Choco (Pair)",      price:30, desc:"Two cups of rich hot chocolate",                   emoji:"🍫"},
+
+  // ── 24. Healthy Eats ───────────────────────────────────
+  {id:2401, storeId:24, name:"Garden Salad",           price:45, desc:"Fresh mixed greens with house dressing",           emoji:"🥗"},
+  {id:2402, storeId:24, name:"Chicken Caesar Salad",  price:65, desc:"Grilled chicken over crisp romaine and dressing",  emoji:"🥗"},
+  {id:2403, storeId:24, name:"Quinoa Bowl",            price:70, desc:"Quinoa with roasted vegetables and dressing",      emoji:"🥗"},
+  {id:2404, storeId:24, name:"Fruit Bowl",             price:40, desc:"Assorted fresh seasonal fruit cup",                emoji:"🍓"},
+  {id:2405, storeId:24, name:"Greek Yogurt Cup",      price:35, desc:"Creamy yogurt with honey and granola",             emoji:"🥣"},
+  {id:2406, storeId:24, name:"Avocado Toast",          price:50, desc:"Toasted bread topped with mashed avocado",         emoji:"🥑"},
+  {id:2407, storeId:24, name:"Grilled Chicken Bowl",  price:75, desc:"Grilled chicken with rice and veggies",            emoji:"🍗"},
+  {id:2408, storeId:24, name:"Veggie Wrap",            price:50, desc:"Fresh vegetables wrapped in a tortilla",           emoji:"🌯"},
+  {id:2409, storeId:24, name:"Smoothie Bowl",          price:60, desc:"Blended fruit topped with granola and seeds",      emoji:"🍓"},
+  {id:2410, storeId:24, name:"Overnight Oats",        price:40, desc:"Chilled oats soaked with milk and fruit",          emoji:"🥣"},
+];
+
+/* ── Borrow / SOS Board Data ────────────────────────────────
+   In-memory demo data for the Campus SOS Board (lives only in
+   this browser session — refreshing the page resets it, the
+   same way STORES/MENU above do). Each request needs a unique
+   numeric id; new posts use Date.now() so they always sort to
+   the top safely.
+─────────────────────────────────────────────────────────── */
+const SOS_STICKY_COLORS = ['#FFE898', '#FFC9D4', '#BFE3F5', '#C9F0D8', '#E3D6FB'];
+
+let SOS = [];
 
 /* ═══════════════════════════════════════════════════════════
    AUTH GUARD — redirect to login if not signed in
@@ -1186,8 +1901,8 @@ onAuthStateChanged(auth, async (user) => {
   // Populate UI with user info
   populateUserUI();
 
-  // Render menu
-  renderMenu();
+  // Render store list
+  renderStores();
   updateGreeting();
 
   // Hide loading screen
@@ -1278,6 +1993,11 @@ window.goToPage = function (id) {
   document.getElementById(id).querySelector('.page-body')?.scrollTo(0, 0);
   updateAllCartCounts();
 
+  // Refresh the SOS board (and its "posted X ago" labels) every time it's opened
+  if (id === 'pageBorrow') {
+    renderSOSBoard();
+  }
+
   // Re-fill confirm form every time user lands on checkout
   if (id === 'pageConfirm') {
     const currentName = document.getElementById('confirmName').value;
@@ -1292,29 +2012,30 @@ window.goToPage = function (id) {
    MENU RENDERING
 ══════════════════════════════════════════════════════════ */
 function renderMenu() {
-  const grid  = document.getElementById('menuGrid');
+  const grid = document.getElementById('menuGrid');
+  if (!selectedStore) { grid.innerHTML = ''; return; }
+
   const items = MENU.filter(m => {
-    const matchCat    = activeCategory === 'All' || m.cat === activeCategory;
+    const matchStore  = m.storeId === selectedStore.id;
     const matchSearch = searchQuery === '' ||
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.desc.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCat && matchSearch;
+    return matchStore && matchSearch;
   });
 
   if (items.length === 0) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--muted)">
       <div style="font-size:2.5rem;margin-bottom:8px">🔍</div>
       <div style="font-weight:600">No items found</div>
-      <div style="font-size:.8rem;margin-top:4px">Try a different search or category</div>
+      <div style="font-size:.8rem;margin-top:4px">Try a different search</div>
     </div>`;
     return;
   }
 
   grid.innerHTML = items.map(item => `
     <div class="menu-card" onclick="openMenuModal(${item.id})">
-      <div class="menu-img" style="background:${catColors[item.cat]}">
+      <div class="menu-img" style="background:${selectedStore.color}">
         <span style="font-size:2.8rem">${item.emoji}</span>
-        <div class="menu-img-badge"><span class="badge badge-orange">${item.cat}</span></div>
       </div>
       <div class="menu-body">
         <div class="menu-name">${item.name}</div>
@@ -1328,16 +2049,64 @@ function renderMenu() {
   `).join('');
 }
 
-window.filterCategory = function (cat, el) {
-  activeCategory = cat;
-  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderMenu();
-};
-
 window.filterMenu = function (q) {
   searchQuery = q;
   renderMenu();
+};
+
+/* ═══════════════════════════════════════════════════════════
+   STORE LIST RENDERING — the cafeteria stalls on pageStores
+══════════════════════════════════════════════════════════ */
+function renderStores() {
+  const grid   = document.getElementById('storeGrid');
+  const stores = STORES.filter(s =>
+    storeSearchQuery === '' || s.name.toLowerCase().includes(storeSearchQuery.toLowerCase())
+  );
+
+  if (stores.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--muted)">
+      <div style="font-size:2.5rem;margin-bottom:8px">🔍</div>
+      <div style="font-weight:600">No stalls found</div>
+      <div style="font-size:.8rem;margin-top:4px">Try a different search</div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = stores.map(store => `
+    <div class="store-card" onclick="openStore(${store.id})">
+      <div class="store-img" style="background:${store.color}">
+        <span>${store.emoji}</span>
+      </div>
+      <div class="store-body">
+        <div class="store-name">${store.name}</div>
+        <div class="store-meta">${store.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.filterStores = function (q) {
+  storeSearchQuery = q;
+  renderStores();
+};
+
+/* ── Open a store: switch pageMenu over to that store's items ── */
+window.openStore = function (id) {
+  const store = STORES.find(s => s.id === id);
+  if (!store) return;
+
+  selectedStore = store;
+  searchQuery = '';
+
+  document.getElementById('storeMenuEmoji').textContent = store.emoji;
+  document.getElementById('storeMenuName').textContent  = store.name;
+  document.getElementById('storeMenuDesc').textContent  = store.desc;
+
+  const searchBox = document.getElementById('menuSearch');
+  if (searchBox) searchBox.value = '';
+
+  renderMenu();
+  goToPage('pageMenu');
 };
 
 /* ── Menu Modal ────────────────────────────────────────── */
@@ -1636,6 +2405,212 @@ function renderReceipt(orderId, order) {
     </div>
   `).join('');
 }
+
+/* ══════════════════════════════════════════════════════════
+   BORROW — "Campus SOS Board"
+══════════════════════════════════════════════════════════ */
+
+/* Deterministic per-card rotation/color so cards don't jitter
+   or recolor every time the board re-renders. */
+function sosRotation(id) { return ((id % 7) - 3) * 1.1; }
+function sosColor(id)    { return SOS_STICKY_COLORS[id % SOS_STICKY_COLORS.length]; }
+
+function timeAgo(ts) {
+  const sec = Math.floor((Date.now() - ts) / 1000);
+  if (sec < 60)  return 'just now';
+  const min = Math.floor(sec / 60);
+  if (min < 60)  return `${min} minute${min !== 1 ? 's' : ''} ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24)   return `${hr} hour${hr !== 1 ? 's' : ''} ago`;
+  const day = Math.floor(hr / 24);
+  return `${day} day${day !== 1 ? 's' : ''} ago`;
+}
+
+// Picks a fitting emoji for whatever the student typed, so posts
+// made through the form get an icon too (not just the seed data).
+function guessSOSEmoji(itemName) {
+  const n = itemName.toLowerCase();
+  if (n.includes('calc'))                      return '🧮';
+  if (n.includes('lab coat'))                  return '🥼';
+  if (n.includes('charger') || n.includes('cable')) return '🔌';
+  if (n.includes('extension') || n.includes('cord')) return '⚡';
+  if (n.includes('tool') || n.includes('caliper'))   return '🛠️';
+  if (n.includes('ruler'))                     return '📏';
+  if (n.includes('umbrella'))                  return '☔';
+  if (n.includes('book'))                      return '📚';
+  if (n.includes('laptop'))                    return '💻';
+  if (n.includes('printer') || n.includes('print')) return '🖨️';
+  return '📦';
+}
+
+function renderSOSBoard() {
+  const board = document.getElementById('sosBoard');
+  if (!board) return;
+
+  const open = SOS.filter(s => s.status === 'open').sort((a, b) => b.postedAt - a.postedAt);
+
+  if (open.length === 0) {
+    board.innerHTML = `
+      <div class="sos-empty">
+        <div class="sos-empty-icon">📌</div>
+        <div class="sos-empty-title">The board's all clear</div>
+        <div class="sos-empty-sub">No urgent requests right now. Be the first to post one!</div>
+        <button class="btn btn-primary" onclick="openPostSOSModal()">+ Post SOS</button>
+      </div>`;
+    return;
+  }
+
+  board.innerHTML = open.map((req, i) => `
+    <div class="sos-card" data-sos-id="${req.id}" style="background:${sosColor(req.id)};--rot:${sosRotation(req.id)}deg;animation-delay:${Math.min(i * 60, 300)}ms">
+      <span class="sos-pin">📌</span>
+      <div class="sos-card-head">
+        <span class="sos-card-emoji">${req.itemEmoji}</span>
+        <span class="sos-card-title">Need ${req.item}</span>
+      </div>
+      <div class="sos-card-body">
+        <div class="sos-row"><span class="sos-k">Name:</span><span class="sos-v">${req.name}</span></div>
+        <div class="sos-row"><span class="sos-k">Location:</span><span class="sos-v">${req.location}</span></div>
+        ${req.contact ? `<div class="sos-row"><span class="sos-k">Contact:</span><span class="sos-v">${req.contact}</span></div>` : ''}
+        ${req.fb ? `<div class="sos-row"><span class="sos-k">FB:</span><span class="sos-v">${req.fb}</span></div>` : ''}
+        <div class="sos-row"><span class="sos-k">Duration:</span><span class="sos-v">${req.duration}</span></div>
+        ${req.reward ? `<div class="sos-row sos-reward"><span class="sos-k">Reward:</span><span class="sos-v">₱${req.reward}</span></div>` : ''}
+      </div>
+      <div class="sos-card-foot">
+        <span class="sos-time">Posted ${timeAgo(req.postedAt)}</span>
+        <button class="sos-accept-btn" onclick="acceptSOS('${req.id}')">Accept Request</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* FIRESTORE SOS LISTENER */
+const sosQuery = query(
+  collection(db, "sos_posts"),
+  orderBy("postedAt", "desc")
+);
+
+onSnapshot(sosQuery, (snapshot) => {
+  SOS = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+
+  renderSOSBoard();
+});
+
+/* ── Posting an SOS ──────────────────────────────────────── */
+window.openPostSOSModal = function () {
+  document.getElementById('sosForm').reset();
+  document.getElementById('postSOSModal').classList.add('open');
+};
+
+window.closePostSOSModal = function (e) {
+  if (!e || e.target === document.getElementById('postSOSModal')) {
+    document.getElementById('postSOSModal').classList.remove('open');
+  }
+};
+
+window.submitSOS = async function(event) { 
+  event.preventDefault();
+
+  const item     = document.getElementById('sosItem').value.trim();
+  const name     = document.getElementById('sosName').value.trim();
+  const location = document.getElementById('sosLocation').value.trim();
+  const contact  = document.getElementById('sosContact').value.trim();
+  const fb       = document.getElementById('sosFb').value.trim();
+  const duration = document.getElementById('sosDuration').value.trim();
+  const reward   = document.getElementById('sosReward').value.trim();
+
+  if (!item || !name || !location || !contact || !duration) {
+    showToast('Please fill in all required fields', 'error');
+    return false;
+  }
+
+  await addDoc(collection(db, 'sos_posts'), {
+  item,
+  name,
+  location,
+  contact,
+  fb,
+  duration,
+  reward,
+  itemEmoji: guessSOSEmoji(item),
+  status: 'open',
+  postedAt: Date.now()
+});
+
+  document.getElementById('postSOSModal').classList.remove('open');
+  renderSOSBoard();
+  showToast('✓ SOS posted to the board!', 'success');
+  return false;
+};
+
+/* ── Accepting a request ─────────────────────────────────── */
+window.acceptSOS = function (id) {
+  pendingAcceptId = id;
+  document.getElementById('acceptConfirmModal').classList.add('open');
+};
+
+window.closeAcceptConfirm = function (e) {
+  if (!e || e.target === document.getElementById('acceptConfirmModal')) {
+    document.getElementById('acceptConfirmModal').classList.remove('open');
+  }
+};
+
+window.confirmAcceptSOS = function () {
+  const id = pendingAcceptId;
+  document.getElementById('acceptConfirmModal').classList.remove('open');
+
+  const req = SOS.find(s => s.id === id);
+  if (!req) return;
+
+  // Play the "pulled off the board" animation on this exact card first…
+  const card = document.querySelector(`.sos-card[data-sos-id="${id}"]`);
+  if (card) card.classList.add('sos-leaving');
+
+  setTimeout(() => {
+    // …then mark it fulfilled so nobody else can accept it, and move on.
+    req.status = 'fulfilled';
+    currentFulfillment = req;
+    renderSOSBoard();
+    renderFulfillmentPage();
+    goToPage('pageFulfillment');
+  }, 320);
+};
+
+/* ── Fulfillment page ─────────────────────────────────────── */
+function renderFulfillmentPage() {
+  const f = currentFulfillment;
+  if (!f) return;
+
+  document.getElementById('fulfillEmoji').textContent    = f.itemEmoji;
+  document.getElementById('fulfillItemName').textContent = f.item;
+  document.getElementById('fulfillName').textContent     = f.name;
+  document.getElementById('fulfillLocation').textContent = f.location;
+  document.getElementById('fulfillContact').textContent  = f.contact || '—';
+  document.getElementById('fulfillDuration').textContent = f.duration;
+
+  const fbRow = document.getElementById('fulfillFbRow');
+  if (f.fb) {
+    fbRow.classList.remove('hidden');
+    document.getElementById('fulfillFb').textContent = f.fb;
+  } else {
+    fbRow.classList.add('hidden');
+  }
+
+  const rewardRow = document.getElementById('fulfillRewardRow');
+  if (f.reward) {
+    rewardRow.classList.remove('hidden');
+    document.getElementById('fulfillReward').textContent = `₱${f.reward}`;
+  } else {
+    rewardRow.classList.add('hidden');
+  }
+}
+
+window.backToBoard = function () {
+  currentFulfillment = null;
+  goToPage('pageBorrow');
+};
 
 /* ══════════════════════════════════════════════════════════
    TOAST
