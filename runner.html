@@ -78,6 +78,11 @@
       border: 1.5px solid var(--border); box-shadow: var(--shadow-sm);
     }
     .btn-secondary:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
+    .btn-danger {
+      background: #fee2e2; color: #991b1b; border: 1.5px solid #fecaca;
+      font-weight: 600; font-size: 0.9rem;
+    }
+    .btn-danger:hover { background: #991b1b; color: #fff; border-color: #991b1b; }
     .btn-ghost { color: var(--muted); padding: 10px 16px; border-radius: var(--radius-sm); }
     .btn-ghost:hover { background: var(--bg); color: var(--text); }
     .btn-lg { padding: 18px 32px; font-size: 1.05rem; border-radius: var(--radius-lg); }
@@ -662,7 +667,10 @@ function renderOrderDetailDrawer() {
   } else if (isTaken) {
     actionHTML = `<div class="note-box mt-2" style="background:var(--bg);color:var(--muted)">🚫 Already accepted by ${o.riderName || 'another runner'}.</div>`;
   } else if (isMine && o.status === 'accepted') {
-    actionHTML = `<button class="btn btn-secondary w-full btn-lg mt-2" onclick="markDelivered('${o.id}')">Mark as Delivered</button>`;
+    actionHTML = `
+      <button class="btn btn-secondary w-full btn-lg mt-2" onclick="markDelivered('${o.id}')">Mark as Delivered</button>
+      <button class="btn btn-danger w-full mt-2" onclick="cancelOrder('${o.id}')">Cancel Delivery</button>
+    `;
   } else if (isMine && o.status === 'delivered') {
     actionHTML = `<div class="note-box mt-2" style="background:#d1fae5;color:#065f46">✓ You delivered this order.</div>`;
   }
@@ -742,6 +750,39 @@ window.markDelivered = async function (orderId) {
   } catch (err) {
     console.error(err);
     showToast('Could not update order. Try again.', 'error');
+  }
+};
+
+/* Cancelling hands the order back to the pool — wrapped in a
+   transaction so we only touch it if it's still really yours
+   (e.g. it wasn't already marked delivered in the meantime). */
+window.cancelOrder = async function (orderId) {
+  if (!confirm("Cancel this delivery? It'll go back on the board for other runners to accept.")) return;
+
+  try {
+    await runTransaction(db, async (tx) => {
+      const ref  = doc(db, 'orders', orderId);
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error('MISSING');
+      const data = snap.data();
+      if (data.riderId !== currentRunner.uid) throw new Error('NOT_MINE');
+      if (data.status === 'delivered') throw new Error('ALREADY_DELIVERED');
+
+      tx.update(ref, {
+        status:      'pending',
+        riderId:     null,
+        riderName:   null,
+        riderPhone:  null,
+        acceptedAt:  null,
+        cancelledAt: serverTimestamp()
+      });
+    });
+    showToast("Order cancelled — it's available to other runners again", 'success');
+    closeOrderDetail();
+  } catch (err) {
+    if (err.message === 'NOT_MINE')           showToast('This order is no longer assigned to you', 'error');
+    else if (err.message === 'ALREADY_DELIVERED') showToast('This order has already been delivered', 'error');
+    else { console.error(err); showToast('Could not cancel order. Try again.', 'error'); }
   }
 };
 
