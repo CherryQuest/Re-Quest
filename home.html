@@ -1505,7 +1505,9 @@ import {
   query,
   orderBy,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  deleteDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ── Firebase Config ───────────────────────────────────── */
@@ -2557,22 +2559,27 @@ window.closeAcceptConfirm = function (e) {
   }
 };
 
-window.confirmAcceptSOS = function () {
+window.confirmAcceptSOS = async function () {
   const id = pendingAcceptId;
+
   document.getElementById('acceptConfirmModal').classList.remove('open');
 
+  // Grab the request before deleting it
   const req = SOS.find(s => s.id === id);
   if (!req) return;
 
-  // Play the "pulled off the board" animation on this exact card first…
+  // Keep it for the fulfillment page
+  currentFulfillment = req;
+
+  // Optional animation
   const card = document.querySelector(`.sos-card[data-sos-id="${id}"]`);
   if (card) card.classList.add('sos-leaving');
 
-  setTimeout(() => {
-    // …then mark it fulfilled so nobody else can accept it, and move on.
-    req.status = 'fulfilled';
-    currentFulfillment = req;
-    renderSOSBoard();
+  setTimeout(async () => {
+    // Delete from Firestore
+    await deleteDoc(doc(db, "sos_posts", id));
+
+    // Show fulfillment page
     renderFulfillmentPage();
     goToPage('pageFulfillment');
   }, 320);
