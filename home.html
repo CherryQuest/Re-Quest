@@ -1585,6 +1585,7 @@ import {
   getFirestore,
   addDoc,
   getDoc,
+  setDoc,
   updateDoc,
   collection,
   query,
@@ -2041,10 +2042,25 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// Computes whole-years age from the "YYYY-MM-DD" birthdate string
+// stored in Firestore, accounting for whether this year's birthday
+// has happened yet. Returns null if there's no birthdate on file.
+function calculateAge(birthdateStr) {
+  if (!birthdateStr) return null;
+  const birth = new Date(birthdateStr + 'T00:00:00');
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
 window.toggleProfile = function () {
   const name    = userProfile?.fullName || currentUser?.displayName || 'Student';
   const initials = name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
   const bio     = userProfile?.bio || '';
+  const age     = calculateAge(userProfile?.birthdate);
 
   document.getElementById('profileModalContent').innerHTML = `
     <div class="profile-header">
@@ -2056,10 +2072,10 @@ window.toggleProfile = function () {
     </div>
     <div class="profile-info-list">
       ${userProfile?.studentId   ? `<div class="profile-info-row"><span class="profile-info-label">Student ID</span><span class="profile-info-val">${userProfile.studentId}</span></div>` : ''}
+      ${age !== null             ? `<div class="profile-info-row"><span class="profile-info-label">Age</span><span class="profile-info-val">${age}</span></div>` : ''}
       ${userProfile?.course      ? `<div class="profile-info-row"><span class="profile-info-label">Course / Strand</span><span class="profile-info-val">${userProfile.course}</span></div>` : ''}
       ${userProfile?.yearLevel   ? `<div class="profile-info-row"><span class="profile-info-label">Year Level</span><span class="profile-info-val">${userProfile.yearLevel}</span></div>` : ''}
       ${userProfile?.section     ? `<div class="profile-info-row"><span class="profile-info-label">Section</span><span class="profile-info-val">${userProfile.section}</span></div>` : ''}
-      ${userProfile?.phoneNumber ? `<div class="profile-info-row"><span class="profile-info-label">Mobile Number</span><span class="profile-info-val">${userProfile.phoneNumber}</span></div>` : ''}
     </div>
 
     <div class="profile-bio-section">
@@ -2094,7 +2110,12 @@ window.saveBio = async function () {
   btn.textContent = 'Saving…';
 
   try {
-    await updateDoc(doc(db, 'users', currentUser.uid), { bio });
+    // setDoc + merge instead of updateDoc: updateDoc() throws if the
+    // 'users' doc doesn't exist yet (e.g. an account whose profile write
+    // never completed). merge:true updates just the bio field on an
+    // existing doc, or creates the doc with just this field if it's
+    // missing — either way the save succeeds.
+    await setDoc(doc(db, 'users', currentUser.uid), { bio }, { merge: true });
     userProfile = { ...(userProfile || {}), bio };
 
     btn.textContent = 'Saved ✓';

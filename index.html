@@ -303,6 +303,11 @@
         <input type="tel" class="form-input" placeholder="09XXXXXXXXX" id="signupPhone" autocomplete="tel" />
         <div class="field-error" id="signupPhoneError"></div>
       </div>
+      <div class="form-group">
+        <label class="form-label" for="signupBirthdate">Birthdate</label>
+        <input type="date" class="form-input" id="signupBirthdate" autocomplete="bday" />
+        <div class="field-error" id="signupBirthdateError"></div>
+      </div>
       <div class="form-grid-2">
         <div class="form-group">
           <label class="form-label" for="signupCourse">Course</label>
@@ -455,6 +460,27 @@ function isValidPhone(phone) {
   return /^[0-9+\-\s]{7,15}$/.test(phone);
 }
 
+// Computes whole-years age from a "YYYY-MM-DD" date string (the format
+// <input type="date"> gives us), accounting for whether this year's
+// birthday has happened yet. Returns null for empty/unparsable input.
+function calculateAge(birthdateStr) {
+  if (!birthdateStr) return null;
+  const birth = new Date(birthdateStr + 'T00:00:00');
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+// Rejects empty/unparsable dates, future dates (age would be negative),
+// and unrealistic ages (e.g. a typo'd birth year) in one check.
+function isValidBirthdate(dateStr) {
+  const age = calculateAge(dateStr);
+  return age !== null && age >= 5 && age <= 100;
+}
+
 // Turns Firebase's internal error codes into messages students understand.
 function friendlyAuthError(error) {
   const code = error?.code || '';
@@ -478,6 +504,18 @@ function friendlyAuthError(error) {
       return error?.message || 'Something went wrong. Please try again.';
   }
 }
+
+/* ─── AUTH FLOW GUARD ───────────────────────────────────────
+   Firebase fires onAuthStateChanged the instant a user is
+   created/signed in — before handleSignup/handleLogin/googleSignIn
+   get a chance to finish updateProfile()/setDoc(). That race was
+   cutting those calls off mid-flight and sending the user to
+   home.html with no Firestore profile doc ever written. This flag
+   tells the global redirect below to stand down while one of
+   those flows is actively running; each flow still does its own
+   redirect once its work is actually finished.
+──────────────────────────────────────────────────────────── */
+let authFlowInProgress = false;
 
 /* ─── LOGIN ─────────────────────────────────────────────── */
 window.handleLogin = async function (event) {
@@ -503,6 +541,7 @@ window.handleLogin = async function (event) {
   const btn = document.getElementById('loginSubmitBtn');
   btn.disabled = true;
   btn.textContent = 'Signing in…';
+  authFlowInProgress = true;
 
   try {
     const cred = await signInWithEmailAndPassword(auth, email, pass);
@@ -510,6 +549,7 @@ window.handleLogin = async function (event) {
     showToast(`Welcome back, ${firstName}! 👋`, 'success');
     setTimeout(() => { window.location.href = 'home.html'; }, 1100);
   } catch (error) {
+    authFlowInProgress = false;
     btn.disabled = false;
     btn.textContent = 'Sign In';
     const message = friendlyAuthError(error);
@@ -535,6 +575,7 @@ window.handleSignup = async function (event) {
   const studentId = document.getElementById('signupId').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
   const phoneNumber = document.getElementById('signupPhone').value.trim();
+  const birthdate = document.getElementById('signupBirthdate').value;
   const course = document.getElementById('signupCourse').value;
   const yearLevel = document.getElementById('signupYear').value;
   const section = document.getElementById('signupSection').value.trim();
@@ -552,6 +593,9 @@ window.handleSignup = async function (event) {
   if (!phoneNumber) { setFieldError('signupPhone', 'Mobile number is required'); hasError = true; }
   else if (!isValidPhone(phoneNumber)) { setFieldError('signupPhone', 'Enter a valid mobile number'); hasError = true; }
 
+  if (!birthdate) { setFieldError('signupBirthdate', 'Birthdate is required'); hasError = true; }
+  else if (!isValidBirthdate(birthdate)) { setFieldError('signupBirthdate', 'Enter a valid birthdate'); hasError = true; }
+
   if (!section) { setFieldError('signupSection', 'Section is required'); hasError = true; }
 
   if (!pass) { setFieldError('signupPass', 'Password is required'); hasError = true; }
@@ -568,6 +612,7 @@ window.handleSignup = async function (event) {
   const btn = document.getElementById('signupSubmitBtn');
   btn.disabled = true;
   btn.textContent = 'Creating account…';
+  authFlowInProgress = true;
 
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
@@ -580,6 +625,7 @@ window.handleSignup = async function (event) {
       studentId,
       email,
       phoneNumber,
+      birthdate,
       course,
       yearLevel,
       section,
@@ -590,6 +636,7 @@ window.handleSignup = async function (event) {
     showToast(`Account created! Welcome, ${fullName.split(' ')[0]} 🎉`, 'success');
     setTimeout(() => { window.location.href = 'home.html'; }, 1100);
   } catch (error) {
+    authFlowInProgress = false;
     btn.disabled = false;
     btn.textContent = 'Create Account →';
     const message = friendlyAuthError(error);
@@ -609,6 +656,7 @@ window.handleSignup = async function (event) {
 ──────────────────────────────────────────────────────────── */
 window.googleSignIn = async function (event) {
   event.preventDefault();
+  authFlowInProgress = true;
 
   try {
     const provider = new GoogleAuthProvider();
@@ -645,6 +693,7 @@ window.googleSignIn = async function (event) {
     }, 1000);
 
   } catch (error) {
+    authFlowInProgress = false;
     console.error(error);
     showToast(error.message, 'error');
   }
@@ -663,7 +712,7 @@ function showToast(msg, type = '') {
 /* ─── REDIRECT IF ALREADY LOGGED IN ─────────────────────── */
 if (isConfigured) {
   onAuthStateChanged(auth, (user) => {
-    if (user) {
+    if (user && !authFlowInProgress) {
       window.location.href = 'home.html';
     }
   });
