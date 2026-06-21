@@ -298,6 +298,11 @@
         <input type="email" class="form-input" placeholder="sh250XXX@adzu.edu.ph" id="signupEmail" autocomplete="email" />
         <div class="field-error" id="signupEmailError"></div>
       </div>
+      <div class="form-group">
+        <label class="form-label" for="signupPhone">Mobile Number</label>
+        <input type="tel" class="form-input" placeholder="09XXXXXXXXX" id="signupPhone" autocomplete="tel" />
+        <div class="field-error" id="signupPhoneError"></div>
+      </div>
       <div class="form-grid-2">
         <div class="form-group">
           <label class="form-label" for="signupCourse">Course</label>
@@ -377,6 +382,7 @@ import {
 import {
   getFirestore,
   doc,
+  getDoc,
   setDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -441,6 +447,12 @@ function setFieldError(inputId, message) {
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Loose check — just enough to catch empty/garbage input without being
+// fussy about spacing, dashes, or +63 vs 0 prefixes.
+function isValidPhone(phone) {
+  return /^[0-9+\-\s]{7,15}$/.test(phone);
 }
 
 // Turns Firebase's internal error codes into messages students understand.
@@ -522,6 +534,7 @@ window.handleSignup = async function (event) {
   const fullName = document.getElementById('signupName').value.trim();
   const studentId = document.getElementById('signupId').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
+  const phoneNumber = document.getElementById('signupPhone').value.trim();
   const course = document.getElementById('signupCourse').value;
   const yearLevel = document.getElementById('signupYear').value;
   const section = document.getElementById('signupSection').value.trim();
@@ -535,6 +548,9 @@ window.handleSignup = async function (event) {
 
   if (!email) { setFieldError('signupEmail', 'Email is required'); hasError = true; }
   else if (!isValidEmail(email)) { setFieldError('signupEmail', 'Enter a valid email address'); hasError = true; }
+
+  if (!phoneNumber) { setFieldError('signupPhone', 'Mobile number is required'); hasError = true; }
+  else if (!isValidPhone(phoneNumber)) { setFieldError('signupPhone', 'Enter a valid mobile number'); hasError = true; }
 
   if (!section) { setFieldError('signupSection', 'Section is required'); hasError = true; }
 
@@ -563,9 +579,11 @@ window.handleSignup = async function (event) {
       fullName,
       studentId,
       email,
+      phoneNumber,
       course,
       yearLevel,
       section,
+      role: 'customer',
       createdAt: serverTimestamp()
     });
 
@@ -598,13 +616,22 @@ window.googleSignIn = async function (event) {
     const result = await signInWithPopup(auth, provider);
 
     // CREATE/UPDATE USER PROFILE IN FIRESTORE
+    // Only fill in role/createdAt the first time this account signs in —
+    // on every later sign-in we'd otherwise stomp an existing profile
+    // (e.g. silently demoting a runner back to "customer").
+    const userRef  = doc(db, "users", result.user.uid);
+    const existing = await getDoc(userRef);
+
     await setDoc(
-      doc(db, "users", result.user.uid),
-      {
-        fullName: result.user.displayName,
-        email: result.user.email,
-        createdAt: serverTimestamp()
-      },
+      userRef,
+      existing.exists()
+        ? { fullName: result.user.displayName, email: result.user.email }
+        : {
+            fullName: result.user.displayName,
+            email: result.user.email,
+            role: 'customer',
+            createdAt: serverTimestamp()
+          },
       { merge: true }
     );
 

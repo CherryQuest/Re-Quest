@@ -100,6 +100,17 @@
     }
     .form-input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(252,76,2,.12); }
     .form-input::placeholder { color: #9CA3AF; }
+    .form-select {
+      padding: 13px 16px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 0.95rem;
+      background: var(--surface); color: var(--text);
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+      padding-right: 40px; width: 100%;
+    }
+    .form-select:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(252,76,2,.12); }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
     /* ─── BADGE ───────────────────────────────────────────── */
     .badge {
@@ -157,6 +168,19 @@
     .auth-tab { flex: 1; text-align: center; padding: 9px 0; border-radius: 7px; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
     .auth-tab.active { background: var(--surface); color: var(--orange); box-shadow: var(--shadow-sm); }
     .auth-form { display: flex; flex-direction: column; gap: 14px; }
+    .auth-switch {
+      text-align: center; font-size: 0.82rem; color: var(--muted);
+      margin-top: 20px; line-height: 1.6;
+    }
+    .auth-switch-link { color: var(--orange); font-weight: 700; }
+    .auth-switch-link:hover { text-decoration: underline; }
+
+    /* The runner application form has a lot more fields than the
+       login card, so it gets a bit more breathing room and sits
+       near the top instead of dead-center (which would push a tall
+       card's header off-screen on short viewports). */
+    .apply-shell { align-items: flex-start; padding-top: 36px; padding-bottom: 36px; }
+    .apply-card  { max-width: 480px; }
 
     /* ══════════════════════════════════════════════════════════
        DASHBOARD — topbar, filters, order feed
@@ -287,18 +311,13 @@
 </div>
 
 <!-- ══════════════════════════════════════════
-     PAGE: RUNNER AUTH (login / register)
+     PAGE: RUNNER AUTH (log in)
 ═══════════════════════════════════════════ -->
 <div class="page" id="pageAuth">
   <div class="auth-shell">
     <div class="auth-card">
       <div class="auth-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
-      <div class="auth-tagline">Runner Portal — campus delivery, on demand</div>
-
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="authTab_login" onclick="showAuthMode('login')">Log In</button>
-        <button class="auth-tab" id="authTab_register" onclick="showAuthMode('register')">Register</button>
-      </div>
+      <div class="auth-tagline">Runner Portal — log in with your Re:Quest account</div>
 
       <!-- Login form -->
       <div class="auth-form" id="authLogin">
@@ -313,29 +332,80 @@
         <button class="btn btn-primary w-full btn-lg mt-2" id="loginBtn" onclick="handleLogin()">Log In</button>
       </div>
 
-      <!-- Register form -->
-      <div class="auth-form hidden" id="authRegister">
+      <div class="auth-switch">
+        Don't have a Re:Quest account yet?
+        <a href="index.html" class="auth-switch-link">Sign up here →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: BECOME A RUNNER (application form)
+     Shown to any logged-in account whose role in
+     Firestore isn't "runner" yet.
+═══════════════════════════════════════════ -->
+<div class="page" id="pageApply">
+  <div class="auth-shell apply-shell">
+    <div class="auth-card apply-card">
+      <div class="auth-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
+      <div class="auth-tagline">Become a Runner — tell us a bit about yourself to start accepting deliveries</div>
+
+      <div class="auth-form" id="applyForm">
         <div class="form-group">
           <label class="form-label">Full Name</label>
-          <input type="text" class="form-input" placeholder="Juan Dela Cruz" id="regName" />
+          <input type="text" class="form-input" id="applyName" placeholder="Juan Dela Cruz" />
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Age</label>
+            <input type="number" class="form-input" id="applyAge" placeholder="19" min="15" max="100" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year Level</label>
+            <select class="form-select" id="applyYearLevel">
+              <option value="">Select...</option>
+              <option>GRADE 11</option><option>GRADE 12</option>
+              <option>STAFF</option><option>COLLEGE</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Course</label>
+            <select class="form-select" id="applyCourse">
+              <option value="">Select...</option>
+              <option>STEM</option><option>HUMSS</option><option>ABM</option><option>STAFF</option><option>COLLEGE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Section</label>
+            <input type="text" class="form-input" id="applySection" placeholder="e.g. SACCHERI" />
+          </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Contact Number</label>
-          <input type="tel" class="form-input" placeholder="09XXXXXXXXX" id="regPhone" />
+          <label class="form-label">Mobile Number</label>
+          <input type="tel" class="form-input" id="applyMobile" placeholder="09XXXXXXXXX" />
         </div>
         <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" placeholder="you@example.com" id="regEmail" />
+          <label class="form-label">Facebook Name or Profile Link</label>
+          <input type="text" class="form-input" id="applyFacebook" placeholder="facebook.com/juandelacruz" />
         </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input type="password" class="form-input" placeholder="At least 6 characters" id="regPassword" />
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Building</label>
+            <input type="text" class="form-input" id="applyBuilding" placeholder="e.g. Engineering Bldg" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Room Number</label>
+            <input type="text" class="form-input" id="applyRoom" placeholder="e.g. Room 204" />
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Confirm Password</label>
-          <input type="password" class="form-input" placeholder="Re-enter password" id="regPassword2" onkeydown="if(event.key==='Enter')handleRegister()" />
-        </div>
-        <button class="btn btn-primary w-full btn-lg mt-2" id="registerBtn" onclick="handleRegister()">Create Runner Account</button>
+        <button class="btn btn-primary w-full btn-lg mt-2" id="applyBtn" onclick="submitRunnerApplication()">Submit Application →</button>
+      </div>
+
+      <div class="auth-switch">
+        <button class="btn btn-ghost btn-sm" onclick="handleLogout()">Log out</button>
       </div>
     </div>
   </div>
@@ -377,7 +447,6 @@ import {
   getAuth,
   onAuthStateChanged,
   signOut,
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
@@ -397,8 +466,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ── Firebase Config ───────────────────────────────────────
-   Same project as home.html / index.html (request-f183d), so
-   runners and customers read/write the same `orders` data.
+   Same project as home.html / index.html (request-f183d). Runner
+   accounts are now just regular Re:Quest accounts — there's no
+   separate "runners" collection or separate login anymore. A
+   student logs in with the same email/password they signed up
+   with on the main app, then either lands on the dashboard (if
+   their `users/{uid}` doc already has role:"runner") or sees the
+   "Become a Runner" application form (any other role).
 ─────────────────────────────────────────────────────────── */
 const firebaseConfig = {
   apiKey:            "AIzaSyB3ZfZNm8D2qUcbWFvv86ipCR23X5KkOsg",
@@ -415,7 +489,7 @@ const db   = getFirestore(app);
 
 /* ── State ─────────────────────────────────────────────── */
 let currentRunner   = null;   // Firebase Auth user
-let runnerProfile   = null;   // { name, phone, email }
+let runnerProfile   = null;   // the matching users/{uid} doc: { fullName, phoneNumber, role, ... }
 let orders          = [];     // live cache of every order, from onSnapshot
 let ordersUnsub     = null;
 let activeFilter    = 'pending';
@@ -429,15 +503,8 @@ function goToPage(id) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   AUTH — runner registration & login
+   AUTH — log in with an existing Re:Quest account
 ══════════════════════════════════════════════════════════ */
-window.showAuthMode = function (mode) {
-  document.getElementById('authLogin').classList.toggle('hidden', mode !== 'login');
-  document.getElementById('authRegister').classList.toggle('hidden', mode !== 'register');
-  document.getElementById('authTab_login').classList.toggle('active', mode === 'login');
-  document.getElementById('authTab_register').classList.toggle('active', mode === 'register');
-};
-
 function friendlyAuthError(err) {
   const code = err?.code || '';
   if (code.includes('email-already-in-use')) return 'An account with this email already exists';
@@ -448,37 +515,6 @@ function friendlyAuthError(err) {
   return 'Something went wrong. Please try again.';
 }
 
-window.handleRegister = async function () {
-  const name  = document.getElementById('regName').value.trim();
-  const phone = document.getElementById('regPhone').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const pass  = document.getElementById('regPassword').value;
-  const pass2 = document.getElementById('regPassword2').value;
-
-  if (!name || !phone || !email || !pass) { showToast('Please fill in all fields', 'error'); return; }
-  if (pass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
-  if (pass !== pass2) { showToast('Passwords do not match', 'error'); return; }
-
-  const btn = document.getElementById('registerBtn');
-  btn.disabled = true;
-  const original = btn.innerHTML;
-  btn.innerHTML = '⏳ Creating account…';
-
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    await setDoc(doc(db, 'runners', cred.user.uid), {
-      name, phone, email, createdAt: serverTimestamp()
-    });
-    showToast('✓ Runner account created!', 'success');
-    // onAuthStateChanged below picks up the new session automatically
-  } catch (err) {
-    console.error(err);
-    showToast(friendlyAuthError(err), 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = original;
-  }
-};
 
 window.handleLogin = async function () {
   const email = document.getElementById('loginEmail').value.trim();
@@ -511,7 +547,10 @@ window.handleLogout = async function () {
   }
 };
 
-/* ── Auth guard: route to dashboard or login ───────────── */
+/* ── Auth guard: route to dashboard, application form, or login ──
+   Every account — customer or runner — lives in the same `users`
+   collection now. This just reads that doc's `role` field to decide
+   where to send someone after they log in. ──────────────────── */
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     currentRunner = null;
@@ -521,28 +560,115 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
+  currentRunner = user;
+
   try {
-    const snap = await getDoc(doc(db, 'runners', user.uid));
+    const snap = await getDoc(doc(db, 'users', user.uid));
+
     if (!snap.exists()) {
-      // This Firebase account exists but isn't registered as a runner
-      // (e.g. it's a customer account) — keep them out of this portal.
+      // Every account is created by the main app's sign-up flow, which
+      // always writes this doc — if it's missing, this Firebase login
+      // doesn't have a Re:Quest profile to attach a runner role to yet.
+      showToast("We couldn't find a Re:Quest profile for this account. Please sign up in the main app first.", 'error');
       await signOut(auth);
-      showToast("This account isn't registered as a runner", 'error');
       hideLoading();
       return;
     }
-    currentRunner = user;
+
     runnerProfile = snap.data();
-    document.getElementById('runnerNameLabel').textContent = runnerProfile.name || user.email;
-    goToPage('pageDashboard');
-    subscribeOrders();
+
+    if (runnerProfile.role === 'runner') {
+      document.getElementById('runnerNameLabel').textContent = runnerProfile.fullName || user.email;
+      goToPage('pageDashboard');
+      subscribeOrders();
+    } else {
+      prefillApplicationForm();
+      goToPage('pageApply');
+    }
   } catch (err) {
     console.error(err);
-    showToast('Could not load your runner profile', 'error');
+    showToast('Could not load your account', 'error');
   } finally {
     hideLoading();
   }
 });
+
+// Carries over anything the student already gave us at sign-up so
+// they're not retyping their name/section/course/year/mobile number.
+function prefillApplicationForm() {
+  document.getElementById('applyName').value     = runnerProfile.fullName    || '';
+  document.getElementById('applySection').value   = runnerProfile.section    || '';
+  document.getElementById('applyCourse').value    = runnerProfile.course     || '';
+  document.getElementById('applyYearLevel').value = runnerProfile.yearLevel  || '';
+  document.getElementById('applyMobile').value    = runnerProfile.phoneNumber || '';
+}
+
+/* ══════════════════════════════════════════════════════════
+   RUNNER APPLICATION — promotes a customer account to a runner
+══════════════════════════════════════════════════════════ */
+window.submitRunnerApplication = async function () {
+  const fullName  = document.getElementById('applyName').value.trim();
+  const age       = document.getElementById('applyAge').value.trim();
+  const yearLevel = document.getElementById('applyYearLevel').value;
+  const course    = document.getElementById('applyCourse').value;
+  const section   = document.getElementById('applySection').value.trim();
+  const mobile    = document.getElementById('applyMobile').value.trim();
+  const facebook  = document.getElementById('applyFacebook').value.trim();
+  const building  = document.getElementById('applyBuilding').value.trim();
+  const room      = document.getElementById('applyRoom').value.trim();
+
+  if (!fullName || !age || !yearLevel || !course || !section || !mobile || !facebook || !building || !room) {
+    showToast('Please fill in every field', 'error');
+    return;
+  }
+
+  const ageNum = Number(age);
+  if (!Number.isFinite(ageNum) || ageNum < 15 || ageNum > 100) {
+    showToast('Enter a valid age', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('applyBtn');
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '⏳ Submitting…';
+
+  try {
+    // 1) Record the application itself as its own document — a
+    //    standalone snapshot of what they applied with.
+    await addDoc(collection(db, 'applications'), {
+      uid: currentRunner.uid,
+      fullName,
+      age: ageNum,
+      yearLevel,
+      course,
+      section,
+      mobileNumber: mobile,
+      facebook,
+      building,
+      roomNumber: room,
+      status: 'approved',
+      appliedAt: serverTimestamp()
+    });
+
+    // 2) Promote their account: customer → runner. setDoc + merge so
+    //    this works even on the rare doc-missing edge case.
+    await setDoc(doc(db, 'users', currentRunner.uid), { role: 'runner' }, { merge: true });
+
+    runnerProfile = { ...(runnerProfile || {}), role: 'runner', fullName, phoneNumber: mobile };
+    document.getElementById('runnerNameLabel').textContent = fullName;
+
+    showToast("🎉 You're now a Re:Quest runner!", 'success');
+    goToPage('pageDashboard');
+    subscribeOrders();
+  } catch (err) {
+    console.error(err);
+    showToast('Could not submit your application. Try again.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+};
 
 function hideLoading() {
   const ls = document.getElementById('loadingScreen');
@@ -727,8 +853,8 @@ window.acceptOrder = async function (orderId) {
       if (snap.data().riderId) throw new Error('TAKEN');
       tx.update(ref, {
         riderId:    currentRunner.uid,
-        riderName:  runnerProfile.name,
-        riderPhone: runnerProfile.phone,
+        riderName:  runnerProfile.fullName,
+        riderPhone: runnerProfile.phoneNumber,
         status:     'accepted',
         acceptedAt: serverTimestamp()
       });
@@ -825,7 +951,7 @@ window.sendRunnerMessage = async function () {
       text,
       senderId:   currentRunner.uid,
       senderRole: 'rider',
-      senderName: runnerProfile.name,
+      senderName: runnerProfile.fullName,
       createdAt:  serverTimestamp()
     });
   } catch (err) {

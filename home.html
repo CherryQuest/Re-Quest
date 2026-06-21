@@ -668,6 +668,25 @@
     .profile-info-label { color: var(--muted); font-weight: 500; }
     .profile-info-val { font-weight: 600; }
 
+    /* ── Editable bio ───────────────────────────────────── */
+    .profile-bio-section { margin-bottom: 20px; }
+    .profile-bio-label {
+      font-size: 0.82rem; font-weight: 600; color: var(--text);
+      margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+    }
+    .profile-bio-textarea {
+      min-height: 80px; font-size: 0.88rem;
+    }
+    .profile-bio-foot {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 8px; gap: 10px;
+    }
+    .profile-bio-hint { font-size: 0.72rem; color: var(--muted); }
+    .profile-bio-save {
+      padding: 8px 18px; font-size: 0.82rem; border-radius: var(--radius-sm);
+    }
+    .profile-bio-save.saved { background: var(--success); }
+
     /* ══════════════════════════════════════════════════════════
        LOADING SCREEN
     ══════════════════════════════════════════════════════════ */
@@ -1566,6 +1585,7 @@ import {
   getFirestore,
   addDoc,
   getDoc,
+  updateDoc,
   collection,
   query,
   orderBy,
@@ -2009,11 +2029,22 @@ function updateGreeting() {
 setInterval(updateGreeting, 60000);
 
 /* ═══════════════════════════════════════════════════════════
-   PROFILE MODAL — show account info + logout
+   PROFILE MODAL — show account info, editable bio, and logout
 ══════════════════════════════════════════════════════════ */
+// Minimal escaping so a bio containing quotes/angle-brackets can't
+// break out of the textarea or inject markup.
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 window.toggleProfile = function () {
   const name    = userProfile?.fullName || currentUser?.displayName || 'Student';
   const initials = name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
+  const bio     = userProfile?.bio || '';
 
   document.getElementById('profileModalContent').innerHTML = `
     <div class="profile-header">
@@ -2024,16 +2055,64 @@ window.toggleProfile = function () {
       </div>
     </div>
     <div class="profile-info-list">
-      ${userProfile?.studentId ? `<div class="profile-info-row"><span class="profile-info-label">Student ID</span><span class="profile-info-val">${userProfile.studentId}</span></div>` : ''}
-      ${userProfile?.course    ? `<div class="profile-info-row"><span class="profile-info-label">Course / Strand</span><span class="profile-info-val">${userProfile.course}</span></div>` : ''}
-      ${userProfile?.yearLevel ? `<div class="profile-info-row"><span class="profile-info-label">Year Level</span><span class="profile-info-val">${userProfile.yearLevel}</span></div>` : ''}
-      ${userProfile?.section   ? `<div class="profile-info-row"><span class="profile-info-label">Section</span><span class="profile-info-val">${userProfile.section}</span></div>` : ''}
+      ${userProfile?.studentId   ? `<div class="profile-info-row"><span class="profile-info-label">Student ID</span><span class="profile-info-val">${userProfile.studentId}</span></div>` : ''}
+      ${userProfile?.course      ? `<div class="profile-info-row"><span class="profile-info-label">Course / Strand</span><span class="profile-info-val">${userProfile.course}</span></div>` : ''}
+      ${userProfile?.yearLevel   ? `<div class="profile-info-row"><span class="profile-info-label">Year Level</span><span class="profile-info-val">${userProfile.yearLevel}</span></div>` : ''}
+      ${userProfile?.section     ? `<div class="profile-info-row"><span class="profile-info-label">Section</span><span class="profile-info-val">${userProfile.section}</span></div>` : ''}
+      ${userProfile?.phoneNumber ? `<div class="profile-info-row"><span class="profile-info-label">Mobile Number</span><span class="profile-info-val">${userProfile.phoneNumber}</span></div>` : ''}
     </div>
+
+    <div class="profile-bio-section">
+      <div class="profile-bio-label">📝 Bio</div>
+      <textarea class="form-textarea profile-bio-textarea" id="profileBioInput"
+        placeholder="Tell other students a bit about yourself…">${escapeHtml(bio)}</textarea>
+      <div class="profile-bio-foot">
+        <span class="profile-bio-hint" id="profileBioHint">Visible on your profile</span>
+        <button class="btn btn-primary profile-bio-save" id="profileBioSaveBtn" onclick="saveBio()">Save</button>
+      </div>
+    </div>
+
     <button class="btn btn-danger w-full" onclick="handleLogout()" style="border-radius:var(--radius-sm);padding:14px">
       🚪 Sign Out
     </button>
   `;
   document.getElementById('profileModal').classList.add('open');
+};
+
+// Persists the bio straight to the student's Firestore profile doc —
+// this is the "live" part: it's not just sitting in local state, the
+// textarea is reloaded from this same field every time the modal opens.
+window.saveBio = async function () {
+  if (!currentUser) return;
+
+  const input = document.getElementById('profileBioInput');
+  const btn   = document.getElementById('profileBioSaveBtn');
+  const hint  = document.getElementById('profileBioHint');
+  const bio   = input.value.trim();
+
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    await updateDoc(doc(db, 'users', currentUser.uid), { bio });
+    userProfile = { ...(userProfile || {}), bio };
+
+    btn.textContent = 'Saved ✓';
+    btn.classList.add('saved');
+    hint.textContent = 'Visible on your profile';
+    showToast('✓ Bio updated', 'success');
+
+    setTimeout(() => {
+      btn.classList.remove('saved');
+      btn.textContent = 'Save';
+      btn.disabled = false;
+    }, 1400);
+  } catch (err) {
+    console.warn('Could not save bio:', err);
+    btn.disabled = false;
+    btn.textContent = 'Save';
+    showToast('Could not save your bio — try again', 'error');
+  }
 };
 
 window.closeProfileModal = function (e) {
