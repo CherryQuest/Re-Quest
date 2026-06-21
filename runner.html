@@ -262,17 +262,6 @@
     .receipt-total-val { font-weight: 800; font-size: 1.1rem; color: var(--orange); }
     .note-box { border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 6px; }
 
-    /* ── Chat (shared visual language with the customer app) ── */
-    .chat-thread { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 0 10px; }
-    .chat-bubble { max-width: 78%; padding: 9px 13px; border-radius: 14px; font-size: 0.85rem; line-height: 1.4; }
-    .chat-bubble.me   { align-self: flex-end;   background: var(--orange); color: #fff; border-bottom-right-radius: 4px; }
-    .chat-bubble.them { align-self: flex-start; background: var(--bg);     color: var(--text); border-bottom-left-radius: 4px; }
-    .chat-meta { font-size: 0.65rem; color: var(--muted); margin-top: 3px; }
-    .chat-bubble.me .chat-meta { color: rgba(255,255,255,.7); text-align: right; }
-    .chat-empty { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 18px 0; }
-    .chat-input-row { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
-    .chat-input-row .form-input { flex: 1; }
-
     /* ══════════════════════════════════════════════════════════
        RESPONSIVE
     ══════════════════════════════════════════════════════════ */
@@ -494,7 +483,6 @@ let orders          = [];     // live cache of every order, from onSnapshot
 let ordersUnsub     = null;
 let activeFilter    = 'pending';
 let selectedOrderId = null;
-let chatUnsub       = null;
 
 /* ── Page navigation ───────────────────────────────────── */
 function goToPage(id) {
@@ -540,7 +528,6 @@ window.handleLogin = async function () {
 window.handleLogout = async function () {
   try {
     if (ordersUnsub) { ordersUnsub(); ordersUnsub = null; }
-    if (chatUnsub)   { chatUnsub();   chatUnsub   = null; }
     await signOut(auth);
   } catch (err) {
     showToast('Error signing out', 'error');
@@ -763,7 +750,6 @@ window.openOrderDetail = function (orderId) {
 window.closeOrderDetail = function () {
   document.getElementById('orderOverlay').classList.remove('open');
   document.getElementById('orderDrawer').classList.remove('open');
-  if (chatUnsub) { chatUnsub(); chatUnsub = null; }
   selectedOrderId = null;
 };
 
@@ -824,19 +810,12 @@ function renderOrderDetailDrawer() {
     ${actionHTML}
     ${isMine ? `
       <div class="confirm-section mt-3">
-        <div class="confirm-section-title">💬 Chat with ${o.customerName || 'customer'}</div>
+        <div class="confirm-section-title">💬 Message ${o.customerName || 'customer'}</div>
         <div class="confirm-section-body">
-          <div class="chat-thread" id="runnerChatThread" style="max-height:220px"></div>
-          <div class="chat-input-row">
-            <input type="text" class="form-input" placeholder="Type a message…" id="runnerChatInput" onkeydown="if(event.key==='Enter')sendRunnerMessage()" />
-            <button class="btn btn-primary" onclick="sendRunnerMessage()">Send</button>
-          </div>
+          <a href="relay.html" class="btn btn-primary w-full">💬 Open Re:Lay Messages →</a>
         </div>
       </div>` : ''}
   `;
-
-  if (isMine) subscribeRunnerChat(o.id);
-  else if (chatUnsub) { chatUnsub(); chatUnsub = null; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -909,54 +888,6 @@ window.cancelOrder = async function (orderId) {
     if (err.message === 'NOT_MINE')           showToast('This order is no longer assigned to you', 'error');
     else if (err.message === 'ALREADY_DELIVERED') showToast('This order has already been delivered', 'error');
     else { console.error(err); showToast('Could not cancel order. Try again.', 'error'); }
-  }
-};
-
-/* ══════════════════════════════════════════════════════════
-   CHAT — runner ↔ customer, scoped to the selected order
-══════════════════════════════════════════════════════════ */
-function subscribeRunnerChat(orderId) {
-  if (chatUnsub) chatUnsub();
-  const q = query(collection(db, 'orders', orderId, 'messages'), orderBy('createdAt', 'asc'));
-  chatUnsub = onSnapshot(q, (snap) => {
-    const thread = document.getElementById('runnerChatThread');
-    if (!thread) return; // drawer was closed while this resolved
-    if (snap.empty) {
-      thread.innerHTML = `<div class="chat-empty">No messages yet. Say hi 👋</div>`;
-      return;
-    }
-    thread.innerHTML = snap.docs.map(d => {
-      const m    = d.data();
-      const mine = m.senderId === currentRunner?.uid;
-      const time = m.createdAt?.toDate
-        ? m.createdAt.toDate().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })
-        : 'sending…';
-      return `
-        <div class="chat-bubble ${mine ? 'me' : 'them'}">
-          ${m.text}
-          <div class="chat-meta">${mine ? 'You' : (m.senderName || 'Customer')} · ${time}</div>
-        </div>`;
-    }).join('');
-    thread.scrollTop = thread.scrollHeight;
-  });
-}
-
-window.sendRunnerMessage = async function () {
-  const input = document.getElementById('runnerChatInput');
-  const text  = input.value.trim();
-  if (!text || !selectedOrderId) return;
-  input.value = '';
-  try {
-    await addDoc(collection(db, 'orders', selectedOrderId, 'messages'), {
-      text,
-      senderId:   currentRunner.uid,
-      senderRole: 'rider',
-      senderName: runnerProfile.fullName,
-      createdAt:  serverTimestamp()
-    });
-  } catch (err) {
-    console.error(err);
-    showToast('Message failed to send', 'error');
   }
 };
 

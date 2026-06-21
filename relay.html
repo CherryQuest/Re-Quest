@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Re:Lay — Re:Quest Messaging</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ══════════════════════════════════════════════════════════
+     TOKENS — copied verbatim from Re:Quest home.html so Re:Lay
+     feels like a native page of the same app, not a bolt-on.
+  ══════════════════════════════════════════════════════════ */
+  :root {
+    --orange:      #FC4C02;
+    --orange-dark: #d93e00;
+    --orange-light:#fff2ed;
+    --bg:          #F3F4F6;
+    --surface:     #FFFFFF;
+    --text:        #111827;
+    --muted:       #6B7280;
+    --border:      #E5E7EB;
+    --success:     #10B981;
+    --danger:      #EF4444;
+    --radius-sm:   8px;
+    --radius:      14px;
+    --radius-lg:   20px;
+    --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+    --shadow:      0 4px 16px rgba(0,0,0,.10);
+    --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
+  }
+
+  /* ─── RESET ───────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden; /* Re:Lay is a single-screen app — panes scroll internally */
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; display: block; }
+  button { cursor: pointer; border: none; background: none; font-family: inherit; }
+  input, select, textarea { font-family: inherit; }
+  a { color: inherit; text-decoration: none; }
+
+  /* ─── UTILITIES ───────────────────────────────────────── */
+  .hidden { display: none !important; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .justify-center { justify-content: center; }
+  .gap-2 { gap: 8px; }
+  .gap-3 { gap: 12px; }
+  .gap-4 { gap: 16px; }
+  .w-full { width: 100%; }
+  .text-center { text-align: center; }
+  .text-sm { font-size: 0.875rem; }
+  .text-xs { font-size: 0.75rem; }
+  .font-semibold { font-weight: 600; }
+  .font-bold { font-weight: 700; }
+  .text-muted { color: var(--muted); }
+  .text-orange { color: var(--orange); }
+  .mt-1 { margin-top: 4px; }
+  .mt-2 { margin-top: 8px; }
+  .mt-3 { margin-top: 12px; }
+
+  /* ─── BUTTONS (copied from home.html) ─────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 14px 24px; border-radius: var(--radius);
+    font-size: 0.95rem; font-weight: 600; transition: all .18s ease;
+    line-height: 1; white-space: nowrap;
+  }
+  .btn-primary { background: var(--orange); color: #fff; box-shadow: 0 4px 14px rgba(252,76,2,.35); }
+  .btn-primary:hover { background: var(--orange-dark); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1.5px solid var(--border); box-shadow: var(--shadow-sm); }
+  .btn-secondary:disabled { opacity: .65; cursor: not-allowed; }
+  .btn-ghost { color: var(--muted); padding: 10px 16px; border-radius: var(--radius-sm); }
+  .btn-ghost:hover { background: var(--bg); color: var(--text); }
+  .btn-danger { background: #fee2e2; color: #991b1b; border: 1.5px solid #fecaca; font-weight: 600; font-size: 0.9rem; }
+  .btn-danger:hover { background: #991b1b; color: #fff; }
+  .btn-icon {
+    width: 40px; height: 40px; padding: 0; border-radius: 50%;
+    background: var(--surface); border: 1.5px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text); flex-shrink: 0; box-shadow: var(--shadow-sm); transition: all .15s;
+  }
+  .btn-icon:hover { border-color: var(--orange); color: var(--orange); }
+  .btn-icon svg { width: 19px; height: 19px; }
+  .btn-sm { padding: 9px 16px; font-size: 0.82rem; border-radius: var(--radius-sm); }
+
+  /* ─── FORM ELEMENTS (copied) ──────────────────────────── */
+  .form-input {
+    padding: 13px 16px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 0.95rem;
+    background: var(--surface); color: var(--text);
+    transition: border-color .15s, box-shadow .15s; width: 100%;
+  }
+  .form-input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(252,76,2,.12); }
+  .form-input::placeholder { color: #9CA3AF; }
+  .search-input-wrap { position: relative; }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 1rem; pointer-events: none; }
+  .search-input {
+    width: 100%; padding: 12px 14px 12px 42px;
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-size: 0.9rem; background: var(--bg); transition: all .15s;
+  }
+  .search-input:focus { outline: none; border-color: var(--orange); background: var(--surface); box-shadow: 0 0 0 3px rgba(252,76,2,.1); }
+
+  /* ─── BADGES (copied) ─────────────────────────────────── */
+  .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-gray   { background: var(--bg); color: var(--muted); }
+  .badge-blue   { background: #dbeafe; color: #1e40af; }
+  .badge-green  { background: #d1fae5; color: #065f46; }
+
+  /* ─── PROFILE MODAL PIECES (copied from home.html, reused
+     for the slide-out panel's "My Profile" + search results) ── */
+  .profile-avatar-lg {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--orange), #ff8c42);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0;
+  }
+  .profile-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 2px; }
+  .profile-sub { font-size: 0.78rem; color: var(--muted); }
+  .profile-info-list { display: flex; flex-direction: column; gap: 10px; background: var(--bg); border-radius: var(--radius-sm); padding: 14px 16px; margin: 14px 0; }
+  .profile-info-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; gap: 10px; }
+  .profile-info-label { color: var(--muted); font-weight: 500; flex-shrink: 0; }
+  .profile-info-val { font-weight: 600; text-align: right; }
+
+  /* ─── CHAT BUBBLES (copied from runner.html so DM + delivery
+     chat threads look pixel-identical to the existing rider chat) ── */
+  .chat-thread { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 16px; }
+  .chat-bubble { max-width: 74%; padding: 10px 14px; border-radius: 14px; font-size: 0.87rem; line-height: 1.4; }
+  .chat-bubble.me   { align-self: flex-end;   background: var(--orange); color: #fff; border-bottom-right-radius: 4px; }
+  .chat-bubble.them { align-self: flex-start; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .chat-meta { font-size: 0.65rem; color: var(--muted); margin-top: 3px; }
+  .chat-bubble.me .chat-meta { color: rgba(255,255,255,.75); text-align: right; }
+  .chat-empty { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 32px 0; margin: auto; }
+  .chat-input-row { display: flex; gap: 10px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); align-items: center; }
+  .chat-input-row .form-input { flex: 1; }
+
+  /* ─── ORDER INFO BAR (reuses home.html's confirm-section look) ── */
+  .confirm-section { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .confirm-section-title { padding: 12px 16px; font-size: 0.74rem; font-weight: 700; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .confirm-section-body { padding: 14px 16px; }
+
+  /* ─── LOADING SCREEN (copied) ─────────────────────────── */
+  .loading-screen { position: fixed; inset: 0; z-index: 9999; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+  .loading-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.6rem; color: #fff; letter-spacing: -1px; }
+  .loading-logo span { color: var(--orange); }
+  .loading-bar { width: 120px; height: 3px; background: rgba(255,255,255,.15); border-radius: 999px; overflow: hidden; }
+  .loading-fill { height: 100%; width: 0%; background: var(--orange); border-radius: 999px; animation: load 1.2s ease forwards; }
+  @keyframes load { to { width: 100%; } }
+  .loading-sub { color: rgba(255,255,255,.4); font-size: 0.8rem; }
+
+  /* ─── TOAST (copied) ──────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #fff; padding: 12px 20px;
+    border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
+    z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap;
+    display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { background: #064e3b; }
+  .toast.error { background: #7f1d1d; }
+
+  /* ─── TOPNAV (copied) ─────────────────────────────────── */
+  .topnav {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 16px; height: 60px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: var(--shadow-sm); z-index: 10;
+  }
+  .topnav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 4px; }
+  .topnav-logo span.re { color: var(--orange); }
+  .topnav-logo span.colon { color: var(--muted); }
+  .topnav-logo span.lay { color: var(--text); }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--orange), #ff8c42);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 0.85rem;
+    cursor: pointer; flex-shrink: 0; transition: box-shadow .18s;
+  }
+  .avatar:hover { box-shadow: 0 0 0 3px rgba(252,76,2,.25); }
+
+  /* ══════════════════════════════════════════════════════════
+     RE:LAY APP SHELL
+  ══════════════════════════════════════════════════════════ */
+  .relay-app { height: 100vh; display: flex; flex-direction: column; width: 100%; }
+  .relay-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+  /* ── List pane (conversations / delivery chats) ────────── */
+  .relay-list-pane { width: 100%; display: flex; flex-direction: column; background: var(--surface); min-height: 0; }
+  .relay-tabs { display: flex; gap: 8px; padding: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .relay-tab {
+    flex: 1; text-align: center; padding: 10px 8px; border-radius: var(--radius-sm);
+    font-size: 0.8rem; font-weight: 700; color: var(--muted); background: var(--bg);
+    transition: all .15s; cursor: pointer;
+  }
+  .relay-tab.active { background: var(--orange); color: #fff; box-shadow: 0 4px 14px rgba(252,76,2,.3); }
+  .relay-list-scroll { flex: 1; overflow-y: auto; padding: 8px 10px; min-height: 0; }
+
+  .conv-card { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius); cursor: pointer; transition: background .15s; margin-bottom: 2px; }
+  .conv-card:hover { background: var(--bg); }
+  .conv-card.active { background: var(--orange-light); }
+  .conv-avatar {
+    width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--orange), #ff8c42);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 0.9rem;
+  }
+  .conv-avatar.delivery { background: linear-gradient(135deg, #1a1a2e, #1f2d45); font-size: 1.2rem; }
+  .conv-info { flex: 1; min-width: 0; }
+  .conv-name-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .conv-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv-time { font-size: 0.68rem; color: var(--muted); flex-shrink: 0; }
+  .conv-preview-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 3px; }
+  .conv-preview { font-size: 0.79rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv-unread { min-width: 19px; height: 19px; border-radius: 999px; background: var(--orange); color: #fff; font-size: 0.66rem; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 5px; flex-shrink: 0; }
+
+  .relay-empty-state { text-align: center; color: var(--muted); padding: 50px 24px; margin: auto; }
+  .relay-empty-state .icon { font-size: 2.4rem; margin-bottom: 10px; }
+
+  /* ── Thread pane (active conversation) ─────────────────── */
+  .relay-thread-pane { display: none; flex: 1; flex-direction: column; background: var(--bg); min-height: 0; }
+  .relay-thread-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  #threadActive { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  #threadBody { background: var(--bg); }
+
+  /* Mobile: only one pane visible at a time, toggled via .show-thread */
+  .relay-body.show-thread .relay-list-pane { display: none; }
+  .relay-body.show-thread .relay-thread-pane { display: flex; }
+
+  /* ── Slide-out panel (Profile / Search / Navigation) ──────
+     Hidden off the right edge by default; slides in on demand
+     and deliberately stops short of full width so the app
+     behind it stays visible. Mirrors the cart-drawer's easing
+     curve from home.html for a consistent "feel". ──────── */
+  .relay-panel-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5);
+    z-index: 300; opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .relay-panel-overlay.open { opacity: 1; pointer-events: all; }
+  .relay-panel {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 360px; max-width: 86vw; background: var(--surface);
+    z-index: 301; box-shadow: -8px 0 40px rgba(0,0,0,.18);
+    transform: translateX(100%); transition: transform .32s cubic-bezier(.16,1,.3,1);
+    display: flex; flex-direction: column; overflow-y: auto; padding: 20px;
+  }
+  .relay-panel.open { transform: translateX(0); }
+  .relay-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .relay-panel-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; }
+  .relay-panel-section { margin-bottom: 22px; }
+  .relay-panel-label { font-size: 0.72rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+  .search-result-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 13px; margin-bottom: 10px; }
+  .nav-link-btn {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+    border-radius: var(--radius-sm); font-weight: 600; font-size: 0.87rem;
+    color: var(--text); background: var(--bg); margin-bottom: 8px; transition: all .15s; cursor: pointer;
+  }
+  .nav-link-btn:hover, .nav-link-btn.active { background: var(--orange-light); color: var(--orange); }
+  .nav-link-btn .unread-pill { margin-left: auto; }
+
+  /* Send button */
+  .relay-send-btn {
+    width: 44px; height: 44px; border-radius: 50%; background: var(--orange);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all .15s;
+  }
+  .relay-send-btn svg { width: 18px; height: 18px; }
+  .relay-send-btn:hover { background: var(--orange-dark); transform: scale(1.05); }
+  .relay-send-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* ══════════════════════════════════════════════════════════
+     RESPONSIVE DESKTOP — same breakpoint convention as home.html
+  ══════════════════════════════════════════════════════════ */
+  @media (min-width: 900px) {
+    .relay-app { max-width: 1100px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+    .relay-list-pane { width: 380px; flex-shrink: 0; border-right: 1px solid var(--border); display: flex !important; }
+    .relay-thread-pane { display: flex !important; }
+    .relay-body.show-thread .relay-list-pane { display: flex !important; }
+    .relay-thread-back { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">Re<span>:</span>Lay</div>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+  <div class="loading-sub">Connecting…</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<div class="relay-app">
+
+  <!-- ════════════════ TOP NAV ════════════════ -->
+  <nav class="topnav">
+    <div class="flex items-center gap-3">
+      <a class="btn-icon" href="home.html" title="Back to Re:Quest">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="topnav-logo"><span class="re">Re</span><span class="colon">:</span><span class="lay">Lay</span></div>
+    </div>
+    <div class="avatar" id="relayAvatar" onclick="togglePanel()" title="Profile, search & navigation">?</div>
+  </nav>
+
+  <!-- ════════════════ MAIN BODY ════════════════ -->
+  <div class="relay-body" id="relayBody">
+
+    <!-- ── LIST PANE ── -->
+    <div class="relay-list-pane" id="relayListPane">
+      <div class="relay-tabs">
+        <div class="relay-tab active" id="tabDM" onclick="switchSection('dm')">💬 Direct Messages</div>
+        <div class="relay-tab" id="tabDelivery" onclick="switchSection('delivery')">🛵 Delivery Chats</div>
+      </div>
+
+      <div class="relay-list-scroll" id="dmList">
+        <div class="relay-empty-state"><div class="icon">⏳</div><div class="text-sm">Loading conversations…</div></div>
+      </div>
+      <div class="relay-list-scroll hidden" id="deliveryList">
+        <div class="relay-empty-state"><div class="icon">⏳</div><div class="text-sm">Loading deliveries…</div></div>
+      </div>
+    </div>
+
+    <!-- ── THREAD PANE ── -->
+    <div class="relay-thread-pane" id="relayThreadPane">
+      <div class="relay-empty-state" id="threadEmptyState">
+        <div class="icon">💬</div>
+        <div class="font-semibold">Select a conversation</div>
+        <div class="text-sm mt-1">Pick someone from the list, or tap your avatar to find a new person to message.</div>
+      </div>
+
+      <div id="threadActive" class="hidden">
+        <div class="relay-thread-header" id="threadHeader"></div>
+        <div id="deliveryOrderBar"></div>
+        <div class="chat-thread" id="threadBody"></div>
+        <div class="chat-input-row">
+          <input type="text" class="form-input" id="messageInput" placeholder="Type a message…"
+                 onkeydown="if(event.key==='Enter')sendMessage()" />
+          <button class="relay-send-btn" id="sendBtn" onclick="sendMessage()" title="Send">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════ SLIDE-OUT PANEL ════════════════ -->
+<div class="relay-panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
+<div class="relay-panel" id="relayPanel">
+  <div class="relay-panel-header">
+    <div class="relay-panel-title">Menu</div>
+    <button class="btn-icon" onclick="closePanel()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <!-- 1. MY PROFILE -->
+  <div class="relay-panel-section">
+    <div class="relay-panel-label">My Profile</div>
+    <div id="myProfileCard">
+      <div class="text-sm text-muted">Loading…</div>
+    </div>
+  </div>
+
+  <!-- 2. USER SEARCH -->
+  <div class="relay-panel-section">
+    <div class="relay-panel-label">Find Someone to Message</div>
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="userSearchInput" placeholder="Search by name…"
+             oninput="handleUserSearch(event)" onfocus="ensureUserSearchLoaded()" />
+    </div>
+    <div id="userSearchResults" style="margin-top:10px"></div>
+  </div>
+
+  <!-- 3 & 4. NAVIGATION -->
+  <div class="relay-panel-section">
+    <div class="relay-panel-label">Go To</div>
+    <div class="nav-link-btn active" id="navDM" onclick="switchSection('dm'); closePanel();">
+      💬 Direct Messages
+    </div>
+    <div class="nav-link-btn" id="navDelivery" onclick="switchSection('delivery'); closePanel();">
+      🛵 Delivery Chats
+    </div>
+  </div>
+
+  <button class="btn btn-danger w-full" onclick="handleLogout()" style="margin-top:auto">🚪 Sign Out</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT — Firebase v9 Modular SDK
+     Same project / SDK version as the rest of Re:Quest.
+══════════════════════════════════════════════════════════ -->
+<script type="module">
+
+/* ── Firebase Imports ──────────────────────────────────── */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  doc, getDoc, getDocs, setDoc, updateDoc, addDoc, deleteDoc,
+  collection, query, where, orderBy, limit,
+  onSnapshot, serverTimestamp, increment, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ── Firebase Config — same project used across Re:Quest ── */
+const firebaseConfig = {
+  apiKey:            "AIzaSyB3ZfZNm8D2qUcbWFvv86ipCR23X5KkOsg",
+  authDomain:        "request-f183d.firebaseapp.com",
+  projectId:         "request-f183d",
+  storageBucket:     "request-f183d.firebasestorage.app",
+  messagingSenderId: "189332484631",
+  appId:             "G-J1K0VM2XGF"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ── State ─────────────────────────────────────────────── */
+let currentUser   = null;
+let userProfile   = null;
+
+let activeSection          = 'dm';   // 'dm' | 'delivery'
+let activeConversationId   = null;
+let activeDeliveryChatId   = null;
+
+const conversations  = new Map();    // conversationId -> data
+const deliveryChats  = new Map();    // orderId        -> data
+const ordersAsCustomer = new Map();
+const ordersAsRunner   = new Map();
+
+let allUsersCache    = [];
+let userSearchLoaded = false;
+
+let dmMessagesUnsub       = null;
+let deliveryMessagesUnsub = null;
+
+const backArrowSvg = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>`;
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH GUARD — same pattern as home.html: bounce to login if
+   the visitor isn't signed in.
+══════════════════════════════════════════════════════════ */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.replace('index.html');
+    return;
+  }
+  currentUser = user;
+
+  try {
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (snap.exists()) userProfile = snap.data();
+  } catch (err) {
+    console.warn('Could not load profile:', err);
+  }
+
+  populateAvatar();
+  subscribeMyProfile();
+  subscribeConversations();
+  subscribeMyOrdersAsCustomer();
+  subscribeMyOrdersAsRunner();
+  subscribeMyDeliveryChatsAsCustomer();
+  subscribeMyDeliveryChatsAsRunner();
+
+  setTimeout(() => {
+    const ls = document.getElementById('loadingScreen');
+    ls.style.opacity = '0';
+    ls.style.transition = 'opacity .4s';
+    setTimeout(() => ls.style.display = 'none', 400);
+  }, 700);
+});
+
+/* ── Small helpers ─────────────────────────────────────── */
+function initials(name) {
+  return (name || '?').trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
+}
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function profileRow(label, val) {
+  return `<div class="profile-info-row"><span class="profile-info-label">${label}</span><span class="profile-info-val">${escapeHtml(val)}</span></div>`;
+}
+function formatTimestamp(ts) {
+  if (!ts?.toDate) return '';
+  const d = ts.toDate();
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+  }
+  const diffDays = Math.floor((now - d) / 86400000);
+  if (diffDays < 7) return d.toLocaleDateString('en-PH', { weekday: 'short' });
+  return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+}
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function populateAvatar() {
+  const name = userProfile?.fullName || currentUser?.displayName || 'User';
+  const el = document.getElementById('relayAvatar');
+  if (el) el.textContent = initials(name);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SLIDE-OUT PANEL — open/close
+══════════════════════════════════════════════════════════ */
+window.togglePanel = function () {
+  const open = document.getElementById('relayPanel').classList.toggle('open');
+  document.getElementById('panelOverlay').classList.toggle('open', open);
+  if (open) renderMyProfileCard();
+};
+window.closePanel = function () {
+  document.getElementById('relayPanel').classList.remove('open');
+  document.getElementById('panelOverlay').classList.remove('open');
+};
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 1 — MY PROFILE
+   Live Firestore listener so an edit made elsewhere in the app
+   (e.g. the bio editor on home.html) reflects here instantly.
+══════════════════════════════════════════════════════════ */
+function subscribeMyProfile() {
+  onSnapshot(doc(db, 'users', currentUser.uid), (snap) => {
+    if (snap.exists()) {
+      userProfile = snap.data();
+      populateAvatar();
+      renderMyProfileCard();
+    }
+  }, (err) => console.warn('Profile listener error:', err));
+}
+
+function renderMyProfileCard() {
+  const el = document.getElementById('myProfileCard');
+  if (!el) return;
+  const name     = userProfile?.fullName || currentUser?.displayName || 'Student';
+  const isRunner = userProfile?.role === 'runner';
+
+  el.innerHTML = `
+    <div class="flex items-center gap-3" style="margin-bottom:14px">
+      <div class="profile-avatar-lg">${initials(name)}</div>
+      <div style="min-width:0">
+        <div class="profile-name">${escapeHtml(name)}</div>
+        <div class="profile-sub">${escapeHtml(userProfile?.email || currentUser?.email || '')}</div>
+        <span class="badge ${isRunner ? 'badge-blue' : 'badge-gray'}" style="margin-top:6px">${isRunner ? '🏃 Runner' : '🎓 Student'}</span>
+      </div>
+    </div>
+    <div class="profile-info-list">
+      ${userProfile?.studentId ? profileRow('Student ID', userProfile.studentId) : ''}
+      ${userProfile?.course    ? profileRow('Course / Strand', userProfile.course) : ''}
+      ${userProfile?.yearLevel ? profileRow('Year Level', userProfile.yearLevel) : ''}
+      ${userProfile?.section   ? profileRow('Section', userProfile.section) : ''}
+    </div>
+    ${userProfile?.bio ? `<div class="text-sm text-muted" style="line-height:1.5">📝 ${escapeHtml(userProfile.bio)}</div>` : ''}
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 2 — USER SEARCH
+   Loaded lazily (only once the search box is first focused) to
+   avoid an unnecessary Firestore read on every page load. Kept
+   live via onSnapshot, filtered client-side as the user types.
+   Fine for a campus-scale user base — for much larger scale,
+   swap this for a dedicated search index (e.g. Algolia).
+══════════════════════════════════════════════════════════ */
+window.ensureUserSearchLoaded = function () {
+  if (userSearchLoaded) return;
+  userSearchLoaded = true;
+  onSnapshot(query(collection(db, 'users'), limit(500)), (snap) => {
+    allUsersCache = snap.docs
+      .map(d => ({ uid: d.id, ...d.data() }))
+      .filter(u => u.uid !== currentUser.uid && u.fullName);
+  }, (err) => console.warn('User search listener error:', err));
+};
+
+window.handleUserSearch = function (e) {
+  const q = e.target.value.trim().toLowerCase();
+  const resultsEl = document.getElementById('userSearchResults');
+  if (!q) { resultsEl.innerHTML = ''; return; }
+
+  const matches = allUsersCache
+    .filter(u => u.fullName.toLowerCase().includes(q))
+    .slice(0, 20);
+
+  if (matches.length === 0) {
+    resultsEl.innerHTML = `<div class="text-sm text-muted text-center" style="padding:14px 0">No one found</div>`;
+    return;
+  }
+
+  resultsEl.innerHTML = matches.map(u => {
+    const isRunner = u.role === 'runner';
+    const metaLine = [u.course, u.section, u.yearLevel].filter(Boolean).join(' · ');
+    return `
+      <div class="search-result-card">
+        <div class="flex items-center gap-3">
+          <div class="profile-avatar-lg" style="width:42px;height:42px;font-size:0.95rem">${initials(u.fullName)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="profile-name" style="font-size:0.9rem">${escapeHtml(u.fullName)}</div>
+            ${metaLine ? `<div class="profile-sub">${escapeHtml(metaLine)}</div>` : ''}
+          </div>
+          <span class="badge ${isRunner ? 'badge-blue' : 'badge-gray'}">${isRunner ? 'Runner' : 'Student'}</span>
+        </div>
+        ${u.bio ? `<div class="text-sm text-muted mt-2" style="line-height:1.4">${escapeHtml(u.bio)}</div>` : ''}
+        <button class="btn btn-primary btn-sm w-full mt-3" onclick="startConversationWith('${u.uid}')">💬 Message</button>
+      </div>`;
+  }).join('');
+};
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 3 — DIRECT MESSAGES
+   conversationId is deterministic (sorted uid pair) so the
+   same two people can never end up with two conversations.
+══════════════════════════════════════════════════════════ */
+function conversationIdFor(uidA, uidB) {
+  return [uidA, uidB].sort().join('_');
+}
+
+async function getOrCreateConversation(otherUser) {
+  const cid = conversationIdFor(currentUser.uid, otherUser.uid);
+  const ref = doc(db, 'conversations', cid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    const myName = userProfile?.fullName || currentUser.displayName || 'Student';
+    await setDoc(ref, {
+      participants: [currentUser.uid, otherUser.uid].sort(),
+      participantInfo: {
+        [currentUser.uid]: { fullName: myName, role: userProfile?.role || 'student' },
+        [otherUser.uid]:   { fullName: otherUser.fullName, role: otherUser.role || 'student' }
+      },
+      lastMessage: null,
+      lastMessageAt: serverTimestamp(),
+      unreadCount: { [currentUser.uid]: 0, [otherUser.uid]: 0 },
+      createdAt: serverTimestamp()
+    });
+  }
+  return cid;
+}
+
+window.startConversationWith = async function (uid) {
+  const otherUser = allUsersCache.find(u => u.uid === uid);
+  if (!otherUser) { showToast('Could not find that person', 'error'); return; }
+
+  try {
+    const cid = await getOrCreateConversation(otherUser);
+    closePanel();
+    switchSection('dm');
+    openConversation(cid);
+  } catch (err) {
+    console.error(err);
+    showToast('Could not start that conversation', 'error');
+  }
+};
+
+function subscribeConversations() {
+  const q = query(collection(db, 'conversations'), where('participants', 'array-contains', currentUser.uid));
+  onSnapshot(q, (snap) => {
+    conversations.clear();
+    snap.forEach(d => conversations.set(d.id, { id: d.id, ...d.data() }));
+    renderDMList();
+  }, (err) => {
+    console.error('Conversations listener error:', err);
+    showToast('Could not load conversations', 'error');
+  });
+}
+
+function renderDMList() {
+  const el = document.getElementById('dmList');
+  const list = Array.from(conversations.values()).sort((a, b) => {
+    const at = a.lastMessageAt?.toMillis ? a.lastMessageAt.toMillis() : 0;
+    const bt = b.lastMessageAt?.toMillis ? b.lastMessageAt.toMillis() : 0;
+    return bt - at;
+  });
+
+  if (list.length === 0) {
+    el.innerHTML = `<div class="relay-empty-state"><div class="icon">💬</div><div class="font-semibold">No conversations yet</div><div class="text-sm mt-1">Tap your avatar above to find someone to message</div></div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(c => {
+    const otherUid = c.participants.find(p => p !== currentUser.uid);
+    const other    = c.participantInfo?.[otherUid] || { fullName: 'Student' };
+    const unread   = c.unreadCount?.[currentUser.uid] || 0;
+    const preview  = c.lastMessage?.text || 'Say hello 👋';
+    return `
+      <div class="conv-card ${c.id === activeConversationId ? 'active' : ''}" onclick="openConversation('${c.id}')">
+        <div class="conv-avatar">${initials(other.fullName)}</div>
+        <div class="conv-info">
+          <div class="conv-name-row">
+            <span class="conv-name">${escapeHtml(other.fullName)}</span>
+            <span class="conv-time">${formatTimestamp(c.lastMessageAt)}</span>
+          </div>
+          <div class="conv-preview-row">
+            <span class="conv-preview">${escapeHtml(preview)}</span>
+            ${unread > 0 ? `<span class="conv-unread">${unread}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+window.openConversation = function (cid) {
+  const convo = conversations.get(cid);
+  if (!convo) return;
+
+  activeConversationId = cid;
+  activeDeliveryChatId = null;
+  showThreadPane();
+
+  const otherUid = convo.participants.find(p => p !== currentUser.uid);
+  const other = convo.participantInfo?.[otherUid] || { fullName: 'Student' };
+
+  document.getElementById('deliveryOrderBar').innerHTML = '';
+  document.getElementById('threadHeader').innerHTML = `
+    <button class="btn-icon relay-thread-back" onclick="closeThread()">${backArrowSvg}</button>
+    <div class="conv-avatar">${initials(other.fullName)}</div>
+    <div style="flex:1;min-width:0">
+      <div class="font-semibold" style="font-size:0.94rem">${escapeHtml(other.fullName)}</div>
+      <div class="text-xs text-muted">${other.role === 'runner' ? '🏃 Runner' : '🎓 Student'}</div>
+    </div>
+  `;
+
+  // Mark as read for me
+  updateDoc(doc(db, 'conversations', cid), { [`unreadCount.${currentUser.uid}`]: 0 }).catch(() => {});
+
+  if (dmMessagesUnsub) dmMessagesUnsub();
+  const q = query(collection(db, 'conversations', cid, 'directMessages'), orderBy('createdAt', 'asc'));
+  dmMessagesUnsub = onSnapshot(q, (snap) => renderMessages(snap), (err) => {
+    console.error('DM thread listener error:', err);
+    showToast('Could not load messages', 'error');
+  });
+
+  renderDMList();
+};
+
+async function sendDirectMessage(cid, text) {
+  const convo = conversations.get(cid);
+  const otherUid = convo.participants.find(p => p !== currentUser.uid);
+  const myName = userProfile?.fullName || currentUser.displayName || 'Student';
+
+  await addDoc(collection(db, 'conversations', cid, 'directMessages'), {
+    text, senderId: currentUser.uid, senderName: myName, createdAt: serverTimestamp()
+  });
+
+  await updateDoc(doc(db, 'conversations', cid), {
+    lastMessage: { text, senderId: currentUser.uid },
+    lastMessageAt: serverTimestamp(),
+    [`unreadCount.${otherUid}`]: increment(1)
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 4 — DELIVERY CHATS
+   Re:Lay watches the existing `orders` collection (read-only —
+   nothing here writes back to an order) and, the moment it sees
+   an order belonging to the signed-in user with a riderId set,
+   it stands up the matching deliveryChats/{orderId} document.
+   That's what makes the chat "automatically become available"
+   without touching home.html or runner.html.
+══════════════════════════════════════════════════════════ */
+function subscribeMyOrdersAsCustomer() {
+  const q = query(collection(db, 'orders'), where('userId', '==', currentUser.uid));
+  onSnapshot(q, (snap) => {
+    snap.forEach(d => {
+      const o = { id: d.id, ...d.data() };
+      ordersAsCustomer.set(d.id, o);
+      if (o.riderId) ensureDeliveryChatExists(o);
+    });
+  }, (err) => console.warn('orders(customer) listener error:', err));
+}
+
+function subscribeMyOrdersAsRunner() {
+  const q = query(collection(db, 'orders'), where('riderId', '==', currentUser.uid));
+  onSnapshot(q, (snap) => {
+    snap.forEach(d => {
+      const o = { id: d.id, ...d.data() };
+      ordersAsRunner.set(d.id, o);
+      ensureDeliveryChatExists(o);
+    });
+  }, (err) => console.warn('orders(runner) listener error:', err));
+}
+
+// Idempotent — safe to call every time the underlying order changes.
+// Only ever touches denormalized display fields; never overwrites
+// confirmation flags or revives an already-archived chat.
+async function ensureDeliveryChatExists(order) {
+  if (!order.riderId) return;
+  const ref = doc(db, 'deliveryChats', order.id);
+  try {
+    const snap = await getDoc(ref);
+    const denorm = {
+      orderId:      order.id,
+      customerId:   order.userId,
+      customerName: order.fullName || order.customerName || 'Customer',
+      riderId:      order.riderId,
+      riderName:    order.riderName || 'Runner',
+      items:        order.items || [],
+      total:        order.total || 0,
+      location:     order.location || '',
+      orderStatus:  order.status || 'accepted'
+    };
+
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        ...denorm,
+        customerConfirmed: false,
+        riderConfirmed: false,
+        archived: false,
+        lastMessage: null,
+        lastMessageAt: serverTimestamp(),
+        createdAt: serverTimestamp()
+      });
+    } else if (!snap.data().archived) {
+      await setDoc(ref, denorm, { merge: true });
+    }
+  } catch (err) {
+    console.warn('Could not sync delivery chat for order', order.id, err);
+  }
+}
+
+function subscribeMyDeliveryChatsAsCustomer() {
+  const q = query(collection(db, 'deliveryChats'), where('customerId', '==', currentUser.uid));
+  onSnapshot(q, (snap) => {
+    snap.docChanges().forEach(change => {
+      if (change.type === 'removed') deliveryChats.delete(change.doc.id);
+      else deliveryChats.set(change.doc.id, { id: change.doc.id, ...change.doc.data() });
+    });
+    renderDeliveryList();
+    if (activeDeliveryChatId) renderDeliveryThreadHeader();
+  }, (err) => console.warn('deliveryChats(customer) listener error:', err));
+}
+
+function subscribeMyDeliveryChatsAsRunner() {
+  const q = query(collection(db, 'deliveryChats'), where('riderId', '==', currentUser.uid));
+  onSnapshot(q, (snap) => {
+    snap.docChanges().forEach(change => {
+      if (change.type === 'removed') deliveryChats.delete(change.doc.id);
+      else deliveryChats.set(change.doc.id, { id: change.doc.id, ...change.doc.data() });
+    });
+    renderDeliveryList();
+    if (activeDeliveryChatId) renderDeliveryThreadHeader();
+  }, (err) => console.warn('deliveryChats(runner) listener error:', err));
+}
+
+function renderDeliveryList() {
+  const el = document.getElementById('deliveryList');
+  const list = Array.from(deliveryChats.values())
+    .filter(c => !c.archived)
+    .sort((a, b) => {
+      const at = a.lastMessageAt?.toMillis ? a.lastMessageAt.toMillis() : 0;
+      const bt = b.lastMessageAt?.toMillis ? b.lastMessageAt.toMillis() : 0;
+      return bt - at;
+    });
+
+  if (list.length === 0) {
+    el.innerHTML = `<div class="relay-empty-state"><div class="icon">🛵</div><div class="font-semibold">No active deliveries</div><div class="text-sm mt-1">A chat appears here as soon as a runner accepts your order</div></div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(c => {
+    const iAmCustomer = c.customerId === currentUser.uid;
+    const otherName   = iAmCustomer ? c.riderName : c.customerName;
+    const preview      = c.lastMessage?.text || 'Delivery in progress';
+    const awaiting      = (c.customerConfirmed || c.riderConfirmed);
+    return `
+      <div class="conv-card ${c.id === activeDeliveryChatId ? 'active' : ''}" onclick="openDeliveryChat('${c.id}')">
+        <div class="conv-avatar delivery">🛵</div>
+        <div class="conv-info">
+          <div class="conv-name-row">
+            <span class="conv-name">${escapeHtml(otherName)}</span>
+            <span class="conv-time">${formatTimestamp(c.lastMessageAt)}</span>
+          </div>
+          <div class="conv-preview-row">
+            <span class="conv-preview">${escapeHtml(preview)}</span>
+            <span class="badge ${awaiting ? 'badge-orange' : 'badge-gray'}" style="font-size:0.6rem">${awaiting ? 'Awaiting confirm' : 'In progress'}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+window.openDeliveryChat = function (did) {
+  const c = deliveryChats.get(did);
+  if (!c) return;
+
+  activeDeliveryChatId = did;
+  activeConversationId = null;
+  showThreadPane();
+  renderDeliveryThreadHeader();
+
+  if (deliveryMessagesUnsub) deliveryMessagesUnsub();
+  const q = query(collection(db, 'deliveryChats', did, 'deliveryMessages'), orderBy('createdAt', 'asc'));
+  deliveryMessagesUnsub = onSnapshot(q, (snap) => renderMessages(snap), (err) => {
+    console.error('Delivery thread listener error:', err);
+    showToast('Could not load messages', 'error');
+  });
+
+  renderDeliveryList();
+};
+
+function renderDeliveryThreadHeader() {
+  const c = deliveryChats.get(activeDeliveryChatId);
+  if (!c) return;
+
+  const iAmCustomer    = c.customerId === currentUser.uid;
+  const otherName      = iAmCustomer ? c.riderName : c.customerName;
+  const myConfirmed    = iAmCustomer ? c.customerConfirmed : c.riderConfirmed;
+  const otherConfirmed = iAmCustomer ? c.riderConfirmed : c.customerConfirmed;
+
+  document.getElementById('threadHeader').innerHTML = `
+    <button class="btn-icon relay-thread-back" onclick="closeThread()">${backArrowSvg}</button>
+    <div class="conv-avatar delivery">🛵</div>
+    <div style="flex:1;min-width:0">
+      <div class="font-semibold" style="font-size:0.94rem">${escapeHtml(otherName)}</div>
+      <div class="text-xs text-muted">${iAmCustomer ? '🏃 Your Runner' : '🎓 Customer'}</div>
+    </div>
+  `;
+
+  const itemNames = (c.items || []).map(i => `${i.qty}× ${i.name}`).join(', ') || 'Order';
+
+  document.getElementById('deliveryOrderBar').innerHTML = `
+    <div class="confirm-section">
+      <div class="confirm-section-title">Order Details</div>
+      <div class="confirm-section-body">
+        <div class="text-sm" style="margin-bottom:8px">${escapeHtml(itemNames)}</div>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-muted">📍 ${escapeHtml(c.location || '—')}</span>
+          <span class="font-bold text-orange">₱${c.total || 0}</span>
+        </div>
+        <div class="mt-3">
+          ${myConfirmed
+            ? `<button class="btn btn-secondary btn-sm w-full" disabled>✓ You confirmed delivery</button>`
+            : `<button class="btn btn-primary btn-sm w-full" onclick="confirmDelivery('${c.id}')">✓ Confirm Delivery ${iAmCustomer ? 'Received' : 'Complete'}</button>`}
+        </div>
+        ${myConfirmed && !otherConfirmed ? `<div class="text-xs text-muted text-center mt-2">Waiting for ${iAmCustomer ? 'the runner' : 'the customer'} to confirm…</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+async function sendDeliveryMessage(did, text) {
+  const c = deliveryChats.get(did);
+  const iAmCustomer = c.customerId === currentUser.uid;
+  const myName = userProfile?.fullName || currentUser.displayName || (iAmCustomer ? 'Customer' : 'Runner');
+
+  await addDoc(collection(db, 'deliveryChats', did, 'deliveryMessages'), {
+    text, senderId: currentUser.uid, senderRole: iAmCustomer ? 'customer' : 'runner',
+    senderName: myName, createdAt: serverTimestamp()
+  });
+
+  await updateDoc(doc(db, 'deliveryChats', did), {
+    lastMessage: { text, senderId: currentUser.uid },
+    lastMessageAt: serverTimestamp()
+  });
+}
+
+window.confirmDelivery = async function (did) {
+  const c = deliveryChats.get(did);
+  if (!c) return;
+  const iAmCustomer = c.customerId === currentUser.uid;
+  const field = iAmCustomer ? 'customerConfirmed' : 'riderConfirmed';
+
+  try {
+    await updateDoc(doc(db, 'deliveryChats', did), { [field]: true });
+    showToast('✓ Confirmed', 'success');
+
+    const freshSnap = await getDoc(doc(db, 'deliveryChats', did));
+    const fresh = freshSnap.data();
+    if (fresh?.customerConfirmed && fresh?.riderConfirmed && !fresh?.archived) {
+      await archiveDeliveryChat(did);
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Could not confirm delivery — try again', 'error');
+  }
+};
+
+// Both sides confirmed: permanently delete the message thread and
+// flag the chat archived so it drops off the active list, per spec.
+async function archiveDeliveryChat(did) {
+  try {
+    const msgsSnap = await getDocs(collection(db, 'deliveryChats', did, 'deliveryMessages'));
+    const batch = writeBatch(db);
+    msgsSnap.forEach(m => batch.delete(m.ref));
+    batch.update(doc(db, 'deliveryChats', did), {
+      archived: true, archivedAt: serverTimestamp(), lastMessage: null
+    });
+    await batch.commit();
+
+    if (activeDeliveryChatId === did) {
+      closeThread();
+      activeDeliveryChatId = null;
+    }
+    showToast('✓ Delivery complete — chat archived', 'success');
+  } catch (err) {
+    console.error('Archive failed:', err);
+    showToast('Confirmed, but the chat could not be archived', 'error');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SHARED THREAD RENDERING + COMPOSER
+══════════════════════════════════════════════════════════ */
+function renderMessages(snap) {
+  const body = document.getElementById('threadBody');
+  if (!body) return;
+  if (snap.empty) {
+    body.innerHTML = `<div class="chat-empty">No messages yet. Say hi 👋</div>`;
+    return;
+  }
+  body.innerHTML = snap.docs.map(d => {
+    const m = d.data();
+    const mine = m.senderId === currentUser.uid;
+    const time = m.createdAt?.toDate
+      ? m.createdAt.toDate().toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })
+      : 'sending…';
+    return `
+      <div class="chat-bubble ${mine ? 'me' : 'them'}">
+        ${escapeHtml(m.text)}
+        <div class="chat-meta">${mine ? 'You' : escapeHtml(m.senderName || '')} · ${time}</div>
+      </div>`;
+  }).join('');
+  body.scrollTop = body.scrollHeight;
+}
+
+window.sendMessage = async function () {
+  const input = document.getElementById('messageInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  try {
+    if (activeConversationId) {
+      await sendDirectMessage(activeConversationId, text);
+    } else if (activeDeliveryChatId) {
+      await sendDeliveryMessage(activeDeliveryChatId, text);
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Message failed to send', 'error');
+    input.value = text; // give the text back so nothing is lost
+  } finally {
+    btn.disabled = false;
+    input.focus();
+  }
+};
+
+function showThreadPane() {
+  document.getElementById('relayBody').classList.add('show-thread');
+  document.getElementById('threadEmptyState').classList.add('hidden');
+  document.getElementById('threadActive').classList.remove('hidden');
+}
+
+window.closeThread = function () {
+  document.getElementById('relayBody').classList.remove('show-thread');
+};
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION SWITCHING (Direct Messages ↔ Delivery Chats)
+══════════════════════════════════════════════════════════ */
+window.switchSection = function (section) {
+  activeSection = section;
+  document.getElementById('tabDM').classList.toggle('active', section === 'dm');
+  document.getElementById('tabDelivery').classList.toggle('active', section === 'delivery');
+  document.getElementById('navDM').classList.toggle('active', section === 'dm');
+  document.getElementById('navDelivery').classList.toggle('active', section === 'delivery');
+  document.getElementById('dmList').classList.toggle('hidden', section !== 'dm');
+  document.getElementById('deliveryList').classList.toggle('hidden', section !== 'delivery');
+
+  document.getElementById('relayBody').classList.remove('show-thread');
+  document.getElementById('threadActive').classList.add('hidden');
+  document.getElementById('threadEmptyState').classList.remove('hidden');
+  activeConversationId = null;
+  activeDeliveryChatId = null;
+  if (dmMessagesUnsub) { dmMessagesUnsub(); dmMessagesUnsub = null; }
+  if (deliveryMessagesUnsub) { deliveryMessagesUnsub(); deliveryMessagesUnsub = null; }
+};
+
+/* ═══════════════════════════════════════════════════════════
+   LOGOUT
+══════════════════════════════════════════════════════════ */
+window.handleLogout = async function () {
+  try {
+    await signOut(auth);
+    window.location.replace('index.html');
+  } catch (err) {
+    showToast('Error signing out. Try again.', 'error');
+  }
+};
+
+</script>
+</body>
+</html>
