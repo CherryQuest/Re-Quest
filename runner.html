@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    /* Applies a saved dark-mode preference before anything paints.
+       Shared across every Re:Quest page via the same localStorage key
+       (the toggle itself lives in home.html's profile panel). */
+    (function () {
+      try {
+        if (localStorage.getItem('requestTheme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Re:Quest — Runner Portal</title>
@@ -25,6 +37,22 @@
       --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
       --shadow:      0 4px 16px rgba(0,0,0,.10);
       --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
+    }
+
+    /* ─── DARK MODE ───────────────────────────────────────────
+       Same token set, different values — switched on by
+       data-theme="dark" on <html>, set from home.html's profile
+       panel and remembered in localStorage. ── */
+    [data-theme="dark"] {
+      --orange-light:#2b1810;
+      --bg:          #0F1115;
+      --surface:     #1A1D24;
+      --text:        #F3F4F6;
+      --muted:       #9CA3AF;
+      --border:      #2A2E37;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.4);
+      --shadow:      0 4px 16px rgba(0,0,0,.5);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,.6);
     }
 
     /* ─── RESET ───────────────────────────────────────────── */
@@ -139,9 +167,10 @@
     /* ─── TOAST ───────────────────────────────────────────── */
     .toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: var(--text); color: #fff; padding: 12px 20px;
+      background: #111827; color: #fff; padding: 12px 20px;
       border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
-      z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap;
+      z-index: 999; opacity: 0; transition: all .3s; white-space: normal;
+      max-width: calc(100vw - 40px); text-align: center; line-height: 1.4;
       box-shadow: var(--shadow-lg);
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -187,12 +216,18 @@
     ══════════════════════════════════════════════════════════ */
     .runner-topbar {
       position: sticky; top: 0; z-index: 100;
-      background: var(--text); color: #fff;
+      background: #111827; color: #fff;
       padding: 0 20px; height: 60px;
       display: flex; align-items: center; justify-content: space-between;
     }
     .runner-topbar .auth-logo { margin: 0; text-align: left; font-size: 1.3rem; }
     .runner-topbar .auth-logo span.quest { color: #fff; }
+    .runner-topbar-back {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+      color: rgba(255,255,255,.75); transition: background .15s, color .15s;
+    }
+    .runner-topbar-back:hover { background: rgba(255,255,255,.12); color: #fff; }
     .runner-id { display: flex; align-items: center; gap: 10px; }
     .runner-badge {
       font-size: 0.62rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase;
@@ -265,6 +300,72 @@
     /* ══════════════════════════════════════════════════════════
        RESPONSIVE
     ══════════════════════════════════════════════════════════ */
+
+    /* ── Mobile (phones up to 480px) ────────────────────── */
+    @media (max-width: 480px) {
+      /* Collapse 2-column form grids to single column —
+         half-width inputs (~130px) are too cramped to type in */
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      /* Tighten auth / apply card horizontal padding */
+      .auth-card {
+        padding: 22px 16px;
+      }
+
+      /* Topbar: shrink side padding so items don't overflow */
+      .runner-topbar {
+        padding: 0 10px;
+      }
+      /* Hide the runner name label — badge + button already
+         identify the user, and the name pushes things off-screen */
+      .runner-name {
+        display: none;
+      }
+      /* Compact the Log Out button so it fits beside the badge */
+      .runner-id .btn-ghost {
+        padding: 8px 10px;
+        font-size: 0.78rem;
+      }
+      /* Shrink topbar logo so the back arrow + logo + right-side
+         controls all comfortably share 360px */
+      .runner-topbar .auth-logo {
+        font-size: 1.1rem;
+      }
+
+      /* Slightly tighten feed and filter row for phone gutters */
+      .order-feed {
+        padding: 12px 14px 90px;
+      }
+      .filter-row {
+        padding: 10px 14px;
+      }
+
+      /* Large buttons: reduce vertical padding slightly */
+      .btn-lg {
+        padding: 16px 24px;
+        font-size: 1rem;
+      }
+
+      /* Drawer: reduce padding so content uses available space */
+      .order-drawer {
+        padding: 16px;
+      }
+    }
+
+    /* ── Very small phones (≤ 360px, e.g. iPhone SE 1st gen) ─ */
+    @media (max-width: 360px) {
+      .auth-card {
+        padding: 18px 12px;
+      }
+      .runner-badge {
+        font-size: 0.55rem;
+        padding: 3px 6px;
+      }
+    }
+
+    /* ── Desktop drawer centred ───────────────────────────── */
     @media (min-width: 900px) {
       .order-drawer { max-width: 480px; left: 50%; transform: translateX(-50%) translateY(100%); }
       .order-drawer.open { transform: translateX(-50%) translateY(0); }
@@ -401,11 +502,40 @@
 </div>
 
 <!-- ══════════════════════════════════════════
+     PAGE: APPLICATION SENT (confirmation)
+     Shown right after submitting the runner application.
+     Role is NOT changed automatically anymore — an admin
+     reviews applications and promotes the account to
+     "runner" manually in Firestore.
+═══════════════════════════════════════════ -->
+<div class="page" id="pageApplicationSent">
+  <div class="auth-shell">
+    <div class="auth-card" style="text-align:center">
+      <div class="auth-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
+      <div style="font-size:2.8rem;margin:18px 0 10px">📨</div>
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:10px">Application Sent!</h2>
+      <p class="text-sm text-muted" style="line-height:1.6;margin-bottom:26px">
+        Thanks for applying to become a Re:Quest runner. We'll review your application and notify you once you're approved — check back here after that to access the runner dashboard.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <a href="home.html" class="btn btn-primary w-full btn-lg">← Back to Home</a>
+        <button class="btn btn-ghost btn-sm" onclick="handleLogout()">Log out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      PAGE: RUNNER DASHBOARD
 ═══════════════════════════════════════════ -->
 <div class="page" id="pageDashboard">
   <nav class="runner-topbar">
-    <div class="auth-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
+    <div class="flex items-center gap-2">
+      <a class="runner-topbar-back" href="home.html" title="Back to Re:Quest">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.3"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+      <div class="auth-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
+    </div>
     <div class="runner-id">
       <span class="runner-badge">Runner</span>
       <span class="runner-name" id="runnerNameLabel">—</span>
@@ -442,11 +572,13 @@ import {
   getFirestore,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   collection,
   addDoc,
   query,
+  where,
   orderBy,
   limit,
   onSnapshot,
@@ -569,8 +701,17 @@ onAuthStateChanged(auth, async (user) => {
       goToPage('pageDashboard');
       subscribeOrders();
     } else {
-      prefillApplicationForm();
-      goToPage('pageApply');
+      // Not a runner yet — but if they've already applied and are just
+      // waiting on manual approval, show the "sent" screen again
+      // instead of an empty form (and instead of letting them spam
+      // duplicate applications).
+      const existing = await getDocs(query(collection(db, 'applications'), where('uid', '==', user.uid)));
+      if (!existing.empty) {
+        goToPage('pageApplicationSent');
+      } else {
+        prefillApplicationForm();
+        goToPage('pageApply');
+      }
     }
   } catch (err) {
     console.error(err);
@@ -621,8 +762,10 @@ window.submitRunnerApplication = async function () {
   btn.innerHTML = '⏳ Submitting…';
 
   try {
-    // 1) Record the application itself as its own document — a
-    //    standalone snapshot of what they applied with.
+    // Record the application as its own document for manual review.
+    // We deliberately do NOT touch the users/{uid} role here anymore —
+    // an admin promotes "customer" → "runner" by hand in Firestore
+    // once the application is approved.
     await addDoc(collection(db, 'applications'), {
       uid: currentRunner.uid,
       fullName,
@@ -634,20 +777,12 @@ window.submitRunnerApplication = async function () {
       facebook,
       building,
       roomNumber: room,
-      status: 'approved',
+      status: 'pending',
       appliedAt: serverTimestamp()
     });
 
-    // 2) Promote their account: customer → runner. setDoc + merge so
-    //    this works even on the rare doc-missing edge case.
-    await setDoc(doc(db, 'users', currentRunner.uid), { role: 'runner' }, { merge: true });
-
-    runnerProfile = { ...(runnerProfile || {}), role: 'runner', fullName, phoneNumber: mobile };
-    document.getElementById('runnerNameLabel').textContent = fullName;
-
-    showToast("🎉 You're now a Re:Quest runner!", 'success');
-    goToPage('pageDashboard');
-    subscribeOrders();
+    showToast('✓ Application submitted!', 'success');
+    goToPage('pageApplicationSent');
   } catch (err) {
     console.error(err);
     showToast('Could not submit your application. Try again.', 'error');

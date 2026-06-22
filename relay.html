@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+  /* Applies a saved dark-mode preference before anything paints.
+     Shared across every Re:Quest page via the same localStorage key
+     (the toggle itself lives in home.html's profile panel). */
+  (function () {
+    try {
+      if (localStorage.getItem('requestTheme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (e) {}
+  })();
+</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Re:Lay — Re:Quest Messaging</title>
@@ -30,6 +42,21 @@
     --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
   }
 
+  /* ─── DARK MODE — same tokens, different values, switched on by
+     data-theme="dark" on <html> (set from home.html's profile panel
+     and remembered in localStorage) ─────────────────────────── */
+  [data-theme="dark"] {
+    --orange-light:#2b1810;
+    --bg:          #0F1115;
+    --surface:     #1A1D24;
+    --text:        #F3F4F6;
+    --muted:       #9CA3AF;
+    --border:      #2A2E37;
+    --shadow-sm:   0 1px 3px rgba(0,0,0,.4);
+    --shadow:      0 4px 16px rgba(0,0,0,.5);
+    --shadow-lg:   0 8px 32px rgba(0,0,0,.6);
+  }
+
   /* ─── RESET ───────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -38,6 +65,10 @@
     background: var(--bg);
     color: var(--text);
     height: 100vh;
+    height: 100dvh; /* tracks the *visible* viewport on mobile, so the
+                       composer at the bottom never ends up hidden below
+                       the address bar — 100vh alone measures the tallest
+                       possible viewport, not what's actually shown */
     overflow: hidden; /* Re:Lay is a single-screen app — panes scroll internally */
     -webkit-font-smoothing: antialiased;
   }
@@ -127,6 +158,28 @@
     display: flex; align-items: center; justify-content: center;
     color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0;
   }
+
+  /* ── "My Profile" avatar with the upload (+) button ────
+     Only used for the signed-in user's OWN avatar — other
+     students' avatars elsewhere stay plain (read-only). ── */
+  .my-avatar-wrap { position: relative; flex-shrink: 0; }
+  .avatar-edit-btn {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--orange); color: #fff; border: 2.5px solid var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; font-weight: 800; line-height: 1; padding: 0;
+    cursor: pointer; box-shadow: var(--shadow-sm);
+    transition: transform .15s, background .15s;
+  }
+  .avatar-edit-btn:hover  { background: var(--orange-dark); transform: scale(1.08); }
+  .avatar-edit-btn.is-busy { cursor: wait; }
+  .avatar-spinner {
+    width: 11px; height: 11px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+    animation: avatarSpin .7s linear infinite;
+  }
+  @keyframes avatarSpin { to { transform: rotate(360deg); } }
   .profile-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 2px; }
   .profile-sub { font-size: 0.78rem; color: var(--muted); }
   .profile-info-list { display: flex; flex-direction: column; gap: 10px; background: var(--bg); border-radius: var(--radius-sm); padding: 14px 16px; margin: 14px 0; }
@@ -137,14 +190,22 @@
   /* ─── CHAT BUBBLES (copied from runner.html so DM + delivery
      chat threads look pixel-identical to the existing rider chat) ── */
   .chat-thread { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 16px; }
-  .chat-bubble { max-width: 74%; padding: 10px 14px; border-radius: 14px; font-size: 0.87rem; line-height: 1.4; }
+  .chat-bubble { max-width: 74%; padding: 10px 14px; border-radius: 14px; font-size: 0.87rem; line-height: 1.4; overflow-wrap: anywhere; word-break: break-word; }
   .chat-bubble.me   { align-self: flex-end;   background: var(--orange); color: #fff; border-bottom-right-radius: 4px; }
   .chat-bubble.them { align-self: flex-start; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
   .chat-meta { font-size: 0.65rem; color: var(--muted); margin-top: 3px; }
   .chat-bubble.me .chat-meta { color: rgba(255,255,255,.75); text-align: right; }
   .chat-empty { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 32px 0; margin: auto; }
-  .chat-input-row { display: flex; gap: 10px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); align-items: center; }
+  .chat-input-row { display: flex; gap: 10px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); align-items: flex-end; }
   .chat-input-row .form-input { flex: 1; }
+  .chat-input-row textarea#messageInput {
+    resize: none;               /* no manual drag-handle — height is automatic */
+    overflow-y: auto;
+    max-height: 120px;          /* roughly 5 lines, then it scrolls internally */
+    line-height: 1.4;
+    overflow-wrap: anywhere;    /* wraps long no-space text too, same as chat bubbles */
+    word-break: break-word;
+  }
 
   /* ─── ORDER INFO BAR (reuses home.html's confirm-section look) ── */
   .confirm-section { background: var(--surface); border-bottom: 1px solid var(--border); }
@@ -163,7 +224,7 @@
   /* ─── TOAST (copied) ──────────────────────────────────── */
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: var(--text); color: #fff; padding: 12px 20px;
+    background: #111827; color: #fff; padding: 12px 20px;
     border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
     z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap;
     display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg);
@@ -195,7 +256,7 @@
   /* ══════════════════════════════════════════════════════════
      RE:LAY APP SHELL
   ══════════════════════════════════════════════════════════ */
-  .relay-app { height: 100vh; display: flex; flex-direction: column; width: 100%; }
+  .relay-app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; width: 100%; }
   .relay-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
   /* ── List pane (conversations / delivery chats) ────────── */
@@ -207,6 +268,7 @@
     transition: all .15s; cursor: pointer;
   }
   .relay-tab.active { background: var(--orange); color: #fff; box-shadow: 0 4px 14px rgba(252,76,2,.3); }
+  .relay-inline-search { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .relay-list-scroll { flex: 1; overflow-y: auto; padding: 8px 10px; min-height: 0; }
 
   .conv-card { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius); cursor: pointer; transition: background .15s; margin-bottom: 2px; }
@@ -329,6 +391,16 @@
         <div class="relay-tab" id="tabDelivery" onclick="switchSection('delivery')">🛵 Delivery Chats</div>
       </div>
 
+      <div class="relay-inline-search">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="inlineSearchInput" placeholder="Find someone by name…"
+                 oninput="handleInlineSearch(event)" onfocus="ensureUserSearchLoaded()" />
+        </div>
+      </div>
+
+      <div class="relay-list-scroll hidden" id="inlineSearchResults"></div>
+
       <div class="relay-list-scroll" id="dmList">
         <div class="relay-empty-state"><div class="icon">⏳</div><div class="text-sm">Loading conversations…</div></div>
       </div>
@@ -336,6 +408,7 @@
         <div class="relay-empty-state"><div class="icon">⏳</div><div class="text-sm">Loading deliveries…</div></div>
       </div>
     </div>
+
 
     <!-- ── THREAD PANE ── -->
     <div class="relay-thread-pane" id="relayThreadPane">
@@ -350,8 +423,9 @@
         <div id="deliveryOrderBar"></div>
         <div class="chat-thread" id="threadBody"></div>
         <div class="chat-input-row">
-          <input type="text" class="form-input" id="messageInput" placeholder="Type a message…"
-                 onkeydown="if(event.key==='Enter')sendMessage()" />
+          <textarea class="form-input" id="messageInput" placeholder="Type a message…" rows="1"
+                    oninput="autoResizeComposer(this)"
+                    onkeydown="handleComposerKeydown(event)"></textarea>
           <button class="relay-send-btn" id="sendBtn" onclick="sendMessage()" title="Send">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
           </button>
@@ -435,13 +509,14 @@ const firebaseConfig = {
   appId:             "G-J1K0VM2XGF"
 };
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+const app     = initializeApp(firebaseConfig);
+const auth    = getAuth(app);
+const db      = getFirestore(app);
 
 /* ── State ─────────────────────────────────────────────── */
 let currentUser   = null;
 let userProfile   = null;
+let avatarUploading = false; // true while a new profile picture is mid-upload
 
 let activeSection          = 'dm';   // 'dm' | 'delivery'
 let activeConversationId   = null;
@@ -502,6 +577,61 @@ function escapeHtml(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+// Returns what goes INSIDE an avatar circle: a cover-fit <img> if that
+// person has a profile picture, otherwise the same initials fallback
+// as before. Used for everyone's avatar, not just the signed-in user's
+// — this is what makes a photo "visible to every user".
+function avatarInner(name, photoURL) {
+  if (photoURL) {
+    return `<img src="${photoURL}" alt="${escapeHtml(name)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block" onerror="this.outerHTML='${initials(name)}'" />`;
+  }
+  return initials(name);
+}
+
+// Downsizes a picked image file so its longest edge is at most maxDim
+// pixels and re-encodes it as a JPEG Blob — keeps uploads fast and the
+// stored file small.
+function resizeImageToBlob(file, maxDim = 480, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let { width, height } = img;
+      if (width > height && width > maxDim) {
+        height = Math.round(height * (maxDim / width));
+        width = maxDim;
+      } else if (height >= width && height > maxDim) {
+        width = Math.round(width * (maxDim / height));
+        height = maxDim;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error('Could not process image')),
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Could not read image')); };
+    img.src = objectUrl;
+  });
+}
+
+// Converts a Blob to a "data:image/jpeg;base64,..." string — saved
+// straight into the Firestore doc as a plain string field, same as
+// home.html, so no separate file-storage service is involved.
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Could not read image'));
+    reader.readAsDataURL(blob);
+  });
+}
 function profileRow(label, val) {
   return `<div class="profile-info-row"><span class="profile-info-label">${label}</span><span class="profile-info-val">${escapeHtml(val)}</span></div>`;
 }
@@ -527,7 +657,7 @@ function showToast(msg, type = '') {
 function populateAvatar() {
   const name = userProfile?.fullName || currentUser?.displayName || 'User';
   const el = document.getElementById('relayAvatar');
-  if (el) el.textContent = initials(name);
+  if (el) el.innerHTML = avatarInner(name, userProfile?.photoURL);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -558,6 +688,28 @@ function subscribeMyProfile() {
   }, (err) => console.warn('Profile listener error:', err));
 }
 
+// The "My Profile" avatar circle + its "+" upload button/spinner.
+// Pulled into its own function so an in-progress upload can refresh
+// just this piece (see handleAvatarFileChange) without re-rendering
+// the whole panel.
+function avatarWrapHtml(name) {
+  return `
+    <div class="my-avatar-wrap">
+      <div class="profile-avatar-lg" id="myAvatarCircle">${avatarInner(name, userProfile?.photoURL)}</div>
+      ${avatarUploading
+        ? `<div class="avatar-edit-btn is-busy"><span class="avatar-spinner"></span></div>`
+        : `<button type="button" class="avatar-edit-btn" onclick="document.getElementById('avatarFileInput').click()" title="Change profile picture">+</button>`}
+      <input type="file" accept="image/*" id="avatarFileInput" class="hidden" onchange="handleAvatarFileChange(event)" />
+    </div>`;
+}
+
+function refreshAvatarWrap() {
+  const wrap = document.querySelector('#myProfileCard .my-avatar-wrap');
+  if (!wrap) return;
+  const name = userProfile?.fullName || currentUser?.displayName || 'Student';
+  wrap.outerHTML = avatarWrapHtml(name);
+}
+
 function renderMyProfileCard() {
   const el = document.getElementById('myProfileCard');
   if (!el) return;
@@ -566,7 +718,7 @@ function renderMyProfileCard() {
 
   el.innerHTML = `
     <div class="flex items-center gap-3" style="margin-bottom:14px">
-      <div class="profile-avatar-lg">${initials(name)}</div>
+      ${avatarWrapHtml(name)}
       <div style="min-width:0">
         <div class="profile-name">${escapeHtml(name)}</div>
         <div class="profile-sub">${escapeHtml(userProfile?.email || currentUser?.email || '')}</div>
@@ -582,6 +734,62 @@ function renderMyProfileCard() {
     ${userProfile?.bio ? `<div class="text-sm text-muted" style="line-height:1.5">📝 ${escapeHtml(userProfile.bio)}</div>` : ''}
   `;
 }
+
+// Triggered by picking a file in the hidden <input type="file"> behind
+// the "+" button. Same resize → save-to-Firestore flow as home.html
+// (no separate file-storage service — Cloud Storage requires the
+// project to be on a paid Firebase plan), so re-opening either page
+// shows the same photo since they both just read/write the same
+// `users/{uid}.photoURL` field.
+window.handleAvatarFileChange = async function (event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file || !currentUser) return;
+
+  if (!file.type.startsWith('image/')) {
+    showToast('Please choose an image file', 'error');
+    return;
+  }
+  if (file.size > 12 * 1024 * 1024) {
+    showToast('That image is too large — please choose one under 12MB', 'error');
+    return;
+  }
+
+  avatarUploading = true;
+  refreshAvatarWrap();
+
+  try {
+    let blob = await resizeImageToBlob(file, 480, 0.85);
+
+    // Belt-and-suspenders for unusually "busy"/noisy photos that don't
+    // compress as well — fall back to a smaller, lower-quality resize
+    // rather than risk pushing the Firestore document over its 1MB cap.
+    if (blob.size > 700 * 1024) {
+      blob = await resizeImageToBlob(file, 320, 0.7);
+    }
+    if (blob.size > 700 * 1024) {
+      throw new Error('TOO_BIG_AFTER_RESIZE');
+    }
+
+    const dataUrl = await blobToDataURL(blob);
+
+    await setDoc(doc(db, 'users', currentUser.uid), { photoURL: dataUrl }, { merge: true });
+    userProfile = { ...(userProfile || {}), photoURL: dataUrl };
+
+    showToast('✓ Profile picture updated', 'success');
+  } catch (err) {
+    console.error('Avatar update failed:', err);
+    if (err.message === 'TOO_BIG_AFTER_RESIZE') {
+      showToast('That photo is too detailed to save — try a simpler one', 'error');
+    } else {
+      showToast('Could not save your photo — try again', 'error');
+    }
+  } finally {
+    avatarUploading = false;
+    refreshAvatarWrap();
+    populateAvatar();
+  }
+};
 
 /* ═══════════════════════════════════════════════════════════
    SECTION 2 — USER SEARCH
@@ -621,7 +829,7 @@ window.handleUserSearch = function (e) {
     return `
       <div class="search-result-card">
         <div class="flex items-center gap-3">
-          <div class="profile-avatar-lg" style="width:42px;height:42px;font-size:0.95rem">${initials(u.fullName)}</div>
+          <div class="profile-avatar-lg" style="width:42px;height:42px;font-size:0.95rem">${avatarInner(u.fullName, u.photoURL)}</div>
           <div style="flex:1;min-width:0">
             <div class="profile-name" style="font-size:0.9rem">${escapeHtml(u.fullName)}</div>
             ${metaLine ? `<div class="profile-sub">${escapeHtml(metaLine)}</div>` : ''}
@@ -630,6 +838,56 @@ window.handleUserSearch = function (e) {
         </div>
         ${u.bio ? `<div class="text-sm text-muted mt-2" style="line-height:1.4">${escapeHtml(u.bio)}</div>` : ''}
         <button class="btn btn-primary btn-sm w-full mt-3" onclick="startConversationWith('${u.uid}')">💬 Message</button>
+      </div>`;
+  }).join('');
+};
+
+// Inline search box that sits between the tabs and the conversation /
+// delivery lists. Reuses the same live `allUsersCache` as the panel's
+// search, just rendered as conv-card rows so it blends into the list
+// it's sitting above. Clearing the box restores whichever tab was active.
+window.handleInlineSearch = function (e) {
+  const q = e.target.value.trim().toLowerCase();
+  const resultsEl = document.getElementById('inlineSearchResults');
+
+  if (!q) {
+    resultsEl.classList.add('hidden');
+    resultsEl.innerHTML = '';
+    document.getElementById('dmList').classList.toggle('hidden', activeSection !== 'dm');
+    document.getElementById('deliveryList').classList.toggle('hidden', activeSection !== 'delivery');
+    return;
+  }
+
+  // While actively searching, the tab list underneath is swapped out
+  // for results so there's no confusing double-list on screen.
+  document.getElementById('dmList').classList.add('hidden');
+  document.getElementById('deliveryList').classList.add('hidden');
+  resultsEl.classList.remove('hidden');
+
+  const matches = allUsersCache
+    .filter(u => u.fullName.toLowerCase().includes(q))
+    .slice(0, 30);
+
+  if (matches.length === 0) {
+    resultsEl.innerHTML = `<div class="relay-empty-state"><div class="icon">🔍</div><div class="text-sm">No one found</div></div>`;
+    return;
+  }
+
+  resultsEl.innerHTML = matches.map(u => {
+    const isRunner = u.role === 'runner';
+    const metaLine = [u.course, u.section, u.yearLevel].filter(Boolean).join(' · ') || u.bio || 'Tap to message';
+    return `
+      <div class="conv-card" onclick="startConversationWith('${u.uid}')">
+        <div class="conv-avatar">${avatarInner(u.fullName, u.photoURL)}</div>
+        <div class="conv-info">
+          <div class="conv-name-row">
+            <span class="conv-name">${escapeHtml(u.fullName)}</span>
+            <span class="badge ${isRunner ? 'badge-blue' : 'badge-gray'}" style="font-size:0.6rem">${isRunner ? 'Runner' : 'Student'}</span>
+          </div>
+          <div class="conv-preview-row">
+            <span class="conv-preview">${escapeHtml(metaLine)}</span>
+          </div>
+        </div>
       </div>`;
   }).join('');
 };
@@ -653,8 +911,8 @@ async function getOrCreateConversation(otherUser) {
     await setDoc(ref, {
       participants: [currentUser.uid, otherUser.uid].sort(),
       participantInfo: {
-        [currentUser.uid]: { fullName: myName, role: userProfile?.role || 'student' },
-        [otherUser.uid]:   { fullName: otherUser.fullName, role: otherUser.role || 'student' }
+        [currentUser.uid]: { fullName: myName, role: userProfile?.role || 'student', photoURL: userProfile?.photoURL || null },
+        [otherUser.uid]:   { fullName: otherUser.fullName, role: otherUser.role || 'student', photoURL: otherUser.photoURL || null }
       },
       lastMessage: null,
       lastMessageAt: serverTimestamp(),
@@ -712,7 +970,7 @@ function renderDMList() {
     const preview  = c.lastMessage?.text || 'Say hello 👋';
     return `
       <div class="conv-card ${c.id === activeConversationId ? 'active' : ''}" onclick="openConversation('${c.id}')">
-        <div class="conv-avatar">${initials(other.fullName)}</div>
+        <div class="conv-avatar">${avatarInner(other.fullName, other.photoURL)}</div>
         <div class="conv-info">
           <div class="conv-name-row">
             <span class="conv-name">${escapeHtml(other.fullName)}</span>
@@ -741,7 +999,7 @@ window.openConversation = function (cid) {
   document.getElementById('deliveryOrderBar').innerHTML = '';
   document.getElementById('threadHeader').innerHTML = `
     <button class="btn-icon relay-thread-back" onclick="closeThread()">${backArrowSvg}</button>
-    <div class="conv-avatar">${initials(other.fullName)}</div>
+    <div class="conv-avatar">${avatarInner(other.fullName, other.photoURL)}</div>
     <div style="flex:1;min-width:0">
       <div class="font-semibold" style="font-size:0.94rem">${escapeHtml(other.fullName)}</div>
       <div class="text-xs text-muted">${other.role === 'runner' ? '🏃 Runner' : '🎓 Student'}</div>
@@ -1051,11 +1309,28 @@ function renderMessages(snap) {
   body.scrollTop = body.scrollHeight;
 }
 
+// Grows the composer as the user types past one line, capped by the
+// max-height set in CSS (after that it scrolls internally instead).
+window.autoResizeComposer = function (el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+};
+
+// Enter sends the message (like most chat apps); Shift+Enter inserts
+// an actual line break instead, for people composing longer messages.
+window.handleComposerKeydown = function (event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+};
+
 window.sendMessage = async function () {
   const input = document.getElementById('messageInput');
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
+  input.style.height = 'auto'; // collapse back to one line after sending
 
   const btn = document.getElementById('sendBtn');
   btn.disabled = true;
@@ -1069,6 +1344,7 @@ window.sendMessage = async function () {
     console.error(err);
     showToast('Message failed to send', 'error');
     input.value = text; // give the text back so nothing is lost
+    autoResizeComposer(input);
   } finally {
     btn.disabled = false;
     input.focus();
@@ -1094,6 +1370,10 @@ window.switchSection = function (section) {
   document.getElementById('tabDelivery').classList.toggle('active', section === 'delivery');
   document.getElementById('navDM').classList.toggle('active', section === 'dm');
   document.getElementById('navDelivery').classList.toggle('active', section === 'delivery');
+
+  document.getElementById('inlineSearchInput').value = '';
+  document.getElementById('inlineSearchResults').classList.add('hidden');
+  document.getElementById('inlineSearchResults').innerHTML = '';
   document.getElementById('dmList').classList.toggle('hidden', section !== 'dm');
   document.getElementById('deliveryList').classList.toggle('hidden', section !== 'delivery');
 

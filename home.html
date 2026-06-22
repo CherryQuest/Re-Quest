@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    /* Applies a saved dark-mode preference before anything paints,
+       so the page never "flashes" light before switching to dark.
+       Shared across every Re:Quest page via the same localStorage key. */
+    (function () {
+      try {
+        if (localStorage.getItem('requestTheme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Re:Quest — ADZU Campus Delivery</title>
@@ -25,6 +37,22 @@
       --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
       --shadow:      0 4px 16px rgba(0,0,0,.10);
       --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
+    }
+
+    /* ─── DARK MODE ───────────────────────────────────────────
+       Every color in this app is already a CSS variable, so
+       dark mode is just a second set of values for the same
+       tokens, switched on by data-theme="dark" on <html>. ── */
+    [data-theme="dark"] {
+      --orange-light:#2b1810;
+      --bg:          #0F1115;
+      --surface:     #1A1D24;
+      --text:        #F3F4F6;
+      --muted:       #9CA3AF;
+      --border:      #2A2E37;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.4);
+      --shadow:      0 4px 16px rgba(0,0,0,.5);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,.6);
     }
 
     /* ─── RESET ───────────────────────────────────────────── */
@@ -134,7 +162,8 @@
     .form-textarea {
       padding: 13px 16px; border: 1.5px solid var(--border);
       border-radius: var(--radius-sm); font-size: 0.95rem;
-      background: var(--surface); resize: vertical; min-height: 90px; width: 100%;
+      background: var(--surface); color: var(--text);
+      resize: vertical; min-height: 90px; width: 100%;
     }
     .form-textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(252,76,2,.12); }
 
@@ -573,7 +602,7 @@
       overflow: hidden; box-shadow: var(--shadow);
     }
     .receipt-card-header {
-      background: var(--text); padding: 16px 20px;
+      background: #111827; padding: 16px 20px;
       display: flex; justify-content: space-between; align-items: center;
     }
     .receipt-brand {
@@ -608,11 +637,66 @@
     }
 
     /* ══════════════════════════════════════════════════════════
+       PAGE 7 — MY ORDERS (order history + pending), opened from
+       the link inside the cart drawer
+    ══════════════════════════════════════════════════════════ */
+    .cart-myorders-link {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; padding: 11px 14px; margin-bottom: 14px;
+      background: var(--orange-light); color: var(--orange);
+      border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 700;
+      transition: background .15s, color .15s;
+    }
+    .cart-myorders-link:hover { background: var(--orange); color: #fff; }
+    .myorders-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--orange);
+      flex-shrink: 0;
+    }
+    .cart-myorders-link:hover .myorders-dot { background: #fff; }
+
+    .myorders-filter-row {
+      padding: 14px 20px; background: var(--surface);
+      border-bottom: 1px solid var(--border); overflow-x: auto;
+      display: flex; gap: 8px; position: sticky; top: 60px; z-index: 50;
+    }
+    .myorders-filter-row::-webkit-scrollbar { display: none; }
+    .myorders-chip {
+      flex-shrink: 0; padding: 7px 16px; border-radius: 999px;
+      border: 1.5px solid var(--border); font-size: 0.8rem; font-weight: 600;
+      background: var(--surface); color: var(--muted); transition: all .15s;
+    }
+    .myorders-chip.active, .myorders-chip:hover {
+      background: var(--orange); color: #fff; border-color: var(--orange);
+    }
+
+    .myorder-list { padding: 16px 20px 40px; display: flex; flex-direction: column; gap: 12px; }
+    .myorder-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); padding: 16px;
+    }
+    .myorder-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .myorder-id { font-weight: 700; font-size: 0.88rem; }
+    .myorder-date { font-size: 0.74rem; color: var(--muted); margin-top: 2px; }
+    .myorder-items { font-size: 0.82rem; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
+    .myorder-card-bottom {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      border-top: 1px dashed var(--border); padding-top: 12px;
+    }
+    .myorder-total { font-weight: 800; font-size: 1rem; color: var(--orange); }
+    .myorder-note { font-size: 0.78rem; font-weight: 600; color: var(--orange); text-align: right; }
+    .myorder-note-done { color: var(--success); }
+
+    .myorders-empty { text-align: center; padding: 70px 20px; }
+    .myorders-empty-icon { font-size: 2.8rem; margin-bottom: 14px; }
+    .myorders-empty-title { font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: 6px; }
+    .myorders-empty-sub { font-size: 0.85rem; color: var(--muted); max-width: 280px; margin: 0 auto; line-height: 1.5; }
+
+    /* ══════════════════════════════════════════════════════════
        TOAST NOTIFICATION
     ══════════════════════════════════════════════════════════ */
     .toast {
       position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: var(--text); color: #fff; padding: 12px 20px;
+      background: #111827; color: #fff; padding: 12px 20px;
       border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
       z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap;
       display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg);
@@ -654,6 +738,28 @@
       color: #fff; font-weight: 800; font-size: 1.3rem;
       flex-shrink: 0;
     }
+
+    /* ── "My Profile" avatar with the upload (+) button ────
+       Only used for the signed-in user's OWN avatar — other
+       students' avatars elsewhere stay plain (read-only). ── */
+    .my-avatar-wrap { position: relative; flex-shrink: 0; }
+    .avatar-edit-btn {
+      position: absolute; bottom: -2px; right: -2px;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--orange); color: #fff; border: 2.5px solid var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.95rem; font-weight: 800; line-height: 1; padding: 0;
+      cursor: pointer; box-shadow: var(--shadow-sm);
+      transition: transform .15s, background .15s;
+    }
+    .avatar-edit-btn:hover  { background: var(--orange-dark); transform: scale(1.08); }
+    .avatar-edit-btn.is-busy { cursor: wait; }
+    .avatar-spinner {
+      width: 11px; height: 11px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+      animation: avatarSpin .7s linear infinite;
+    }
+    @keyframes avatarSpin { to { transform: rotate(360deg); } }
     .profile-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 2px; }
     .profile-sub { font-size: 0.78rem; color: var(--muted); }
     .profile-info-list {
@@ -686,6 +792,27 @@
       padding: 8px 18px; font-size: 0.82rem; border-radius: var(--radius-sm);
     }
     .profile-bio-save.saved { background: var(--success); }
+
+    /* ── Settings row + dark mode switch ───────────────────── */
+    .settings-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg); border-radius: var(--radius-sm);
+      padding: 14px 16px; margin-bottom: 10px;
+      font-size: 0.9rem; font-weight: 600;
+    }
+    .theme-switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+    .theme-switch input { opacity: 0; width: 0; height: 0; }
+    .theme-switch .slider {
+      position: absolute; inset: 0; cursor: pointer;
+      background: var(--border); border-radius: 999px; transition: background .2s ease;
+    }
+    .theme-switch .slider::before {
+      content: ''; position: absolute; left: 3px; bottom: 3px;
+      width: 20px; height: 20px; border-radius: 50%; background: #fff;
+      box-shadow: var(--shadow-sm); transition: transform .2s ease;
+    }
+    .theme-switch input:checked + .slider { background: var(--orange); }
+    .theme-switch input:checked + .slider::before { transform: translateX(20px); }
 
     /* ══════════════════════════════════════════════════════════
        LOADING SCREEN
@@ -1007,6 +1134,10 @@
     <h3 style="font-size:1.05rem;font-weight:700">🛒 Your Order</h3>
     <button class="btn btn-ghost btn-sm" onclick="closeCart()">✕ Close</button>
   </div>
+  <button class="cart-myorders-link" onclick="openMyOrders()">
+    📋 Order History &amp; Pending Orders
+    <span class="myorders-dot hidden" id="myOrdersDot"></span>
+  </button>
   <div id="cartItems"></div>
   <div id="cartEmpty" style="text-align:center;padding:28px 0;color:var(--muted)">
     <div style="font-size:2.5rem;margin-bottom:8px">🛍️</div>
@@ -1562,10 +1693,44 @@
       </div>
     </div>
 
+    <!-- Live cancel / status — filled by renderReceiptStatus(), updates
+         in real time the moment a runner accepts (see subscribeToReceiptOrder) -->
+    <div id="receiptStatusSection" style="padding:0 20px 16px"></div>
+
     <div style="padding:0 20px 24px">
       <button class="btn btn-primary w-full btn-lg" onclick="goToPage('pageMenu')">
         Place Another Order 🍱
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: MY ORDERS — order history + pending
+     (opened via the link inside the cart drawer)
+═══════════════════════════════════════════ -->
+<div class="page" id="pageMyOrders">
+  <nav class="topnav">
+    <button class="btn btn-ghost btn-sm" onclick="goToPage('pageHome')" style="padding:8px">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="confirm-title" style="font-size:1rem;font-weight:700">My Orders</div>
+    <div style="width:42px"></div>
+  </nav>
+
+  <div class="myorders-filter-row">
+    <button class="myorders-chip active" data-filter="all" onclick="setMyOrdersFilter('all', this)">📋 All</button>
+    <button class="myorders-chip" data-filter="pending" onclick="setMyOrdersFilter('pending', this)">⏳ Pending</button>
+    <button class="myorders-chip" data-filter="accepted" onclick="setMyOrdersFilter('accepted', this)">🏃 Accepted</button>
+    <button class="myorders-chip" data-filter="delivered" onclick="setMyOrdersFilter('delivered', this)">✅ Delivered</button>
+  </div>
+
+  <div class="page-body" style="padding-bottom:40px">
+    <div class="myorder-list" id="myOrdersList"></div>
+    <div class="myorders-empty hidden" id="myOrdersEmpty">
+      <div class="myorders-empty-icon">🧾</div>
+      <div class="myorders-empty-title">No orders here yet</div>
+      <div class="myorders-empty-sub">Your order history and any pending orders will show up here once you place one.</div>
     </div>
   </div>
 </div>
@@ -1591,12 +1756,13 @@ import {
   collection,
   query,
   orderBy,
+  limit,
   onSnapshot,
   serverTimestamp,
   deleteDoc,
+  runTransaction,
   doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 /* ── Firebase Config ───────────────────────────────────── */
 // Same project used in index.html (request-f183d).
 // NOTE: Replace appId with the real one from Firebase Console →
@@ -1611,9 +1777,9 @@ const firebaseConfig = {
   appId:             "G-J1K0VM2XGF"
 };
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+const app     = initializeApp(firebaseConfig);
+const auth    = getAuth(app);
+const db      = getFirestore(app);
 
 /* ── State ─────────────────────────────────────────────── */
 let currentUser   = null;
@@ -1622,10 +1788,22 @@ let cart          = [];
 let selectedStore = null;   // the store currently being viewed on pageMenu
 let searchQuery   = '';
 let storeSearchQuery = '';  // search text on the pageStores stall list
+let avatarUploading = false; // true while a new profile picture is mid-upload
 
 /* ── Borrow / SOS Board state ───────────────────────────── */
 let pendingAcceptId    = null; // id of the request waiting on the confirm dialog
 let currentFulfillment = null; // request shown on the fulfillment page
+
+/* ── Receipt page: live status of the order just placed, so the
+   Cancel button disappears the instant a runner accepts ───── */
+let receiptOrderUnsub = null;
+
+/* ── My Orders page: every order in Firestore (all students),
+   filtered down to the signed-in student when rendering. Reusing
+   one always-on listener (like the SOS board) means the list and
+   the dot in the cart drawer stay live without extra reads. ──── */
+let allOrdersFeed   = [];
+let myOrdersFilter  = 'all';
 
 /* ── Stores (24 stalls) ────────────────────────────────────
    To add a new store: copy a block below, give it the next
@@ -1994,6 +2172,10 @@ onAuthStateChanged(auth, async (user) => {
   renderStores();
   updateGreeting();
 
+  // Start watching every order so the My Orders page (and the dot in
+  // the cart drawer) reflect this student's history and pending orders live
+  subscribeToOrdersFeed();
+
   // Hide loading screen
   setTimeout(() => {
     const ls = document.getElementById('loadingScreen');
@@ -2005,11 +2187,10 @@ onAuthStateChanged(auth, async (user) => {
 
 /* ── Populate UI from user profile ────────────────────── */
 function populateUserUI() {
-  const name     = userProfile?.fullName || currentUser.displayName || 'Student';
-  const initials = name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
+  const name = userProfile?.fullName || currentUser.displayName || 'Student';
 
-  // Avatar initials
-  document.getElementById('homeAvatar').textContent = initials;
+  // Avatar (photo if the student has uploaded one, initials otherwise)
+  document.getElementById('homeAvatar').innerHTML = avatarInner(name, userProfile?.photoURL);
 
   // Pre-fill checkout form with account info
   document.getElementById('confirmName').value     = name;
@@ -2043,6 +2224,65 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+function initials(name) {
+  return (name || '?').trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
+}
+
+// Returns what goes INSIDE an avatar circle: a cover-fit <img> if a
+// profile picture is set, otherwise the same initials fallback as
+// before. The fallback also kicks in if the image URL ever 404s.
+function avatarInner(name, photoURL) {
+  if (photoURL) {
+    return `<img src="${photoURL}" alt="${escapeHtml(name)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block" onerror="this.outerHTML='${initials(name)}'" />`;
+  }
+  return initials(name);
+}
+
+// Downsizes a picked image file so its longest edge is at most maxDim
+// pixels and re-encodes it as a JPEG Blob. A profile picture doesn't
+// need to be full camera resolution — this keeps uploads fast and the
+// stored file small.
+function resizeImageToBlob(file, maxDim = 480, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let { width, height } = img;
+      if (width > height && width > maxDim) {
+        height = Math.round(height * (maxDim / width));
+        width = maxDim;
+      } else if (height >= width && height > maxDim) {
+        width = Math.round(width * (maxDim / height));
+        height = maxDim;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error('Could not process image')),
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Could not read image')); };
+    img.src = objectUrl;
+  });
+}
+
+// Converts a Blob to a "data:image/jpeg;base64,..." string — this is
+// what lets us save the photo straight into the Firestore doc as a
+// plain string field, with no separate file-storage service involved.
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Could not read image'));
+    reader.readAsDataURL(blob);
+  });
+}
+
 // Computes whole-years age from the "YYYY-MM-DD" birthdate string
 // stored in Firestore, accounting for whether this year's birthday
 // has happened yet. Returns null if there's no birthdate on file.
@@ -2057,15 +2297,30 @@ function calculateAge(birthdateStr) {
   return age;
 }
 
+// The "My Profile" avatar circle + its "+" upload button/spinner.
+// Pulled into its own function so an in-progress upload can refresh
+// just this piece (see handleAvatarFileChange) without re-rendering
+// the whole modal and clobbering an unsaved bio edit in progress.
+function avatarWrapHtml(name) {
+  return `
+    <div class="my-avatar-wrap">
+      <div class="profile-avatar-lg" id="myAvatarCircle">${avatarInner(name, userProfile?.photoURL)}</div>
+      ${avatarUploading
+        ? `<div class="avatar-edit-btn is-busy"><span class="avatar-spinner"></span></div>`
+        : `<button type="button" class="avatar-edit-btn" onclick="document.getElementById('avatarFileInput').click()" title="Change profile picture">+</button>`}
+      <input type="file" accept="image/*" id="avatarFileInput" class="hidden" onchange="handleAvatarFileChange(event)" />
+    </div>`;
+}
+
 window.toggleProfile = function () {
   const name    = userProfile?.fullName || currentUser?.displayName || 'Student';
-  const initials = name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
   const bio     = userProfile?.bio || '';
   const age     = calculateAge(userProfile?.birthdate);
+  const isDark  = document.documentElement.getAttribute('data-theme') === 'dark';
 
   document.getElementById('profileModalContent').innerHTML = `
     <div class="profile-header">
-      <div class="profile-avatar-lg">${initials}</div>
+      ${avatarWrapHtml(name)}
       <div>
         <div class="profile-name">${name}</div>
         <div class="profile-sub">${userProfile?.email || currentUser?.email || ''}</div>
@@ -2089,11 +2344,29 @@ window.toggleProfile = function () {
       </div>
     </div>
 
+    <div class="settings-row">
+      <span>🌙 Dark Mode</span>
+      <label class="theme-switch">
+        <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" ${isDark ? 'checked' : ''} />
+        <span class="slider"></span>
+      </label>
+    </div>
+
     <button class="btn btn-danger w-full" onclick="handleLogout()" style="border-radius:var(--radius-sm);padding:14px">
       🚪 Sign Out
     </button>
   `;
   document.getElementById('profileModal').classList.add('open');
+};
+
+// Flips the whole app between light/dark by toggling one attribute on
+// <html> — every color in the stylesheet is a CSS variable, so this is
+// all it takes. Saved to localStorage so it carries over to every other
+// Re:Quest page (index/runner/relay) the next time each one loads.
+window.toggleDarkMode = function () {
+  const isDark = document.getElementById('darkModeToggle').checked;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  try { localStorage.setItem('requestTheme', isDark ? 'dark' : 'light'); } catch (e) {}
 };
 
 // Persists the bio straight to the student's Firestore profile doc —
@@ -2143,6 +2416,72 @@ window.closeProfileModal = function (e) {
   }
 };
 
+// Triggered by picking a file in the hidden <input type="file"> behind
+// the "+" button on the avatar. Resizes the image client-side, then
+// saves it directly on the student's `users` doc as a base64 data URL
+// — no separate file-storage service involved, since Cloud Storage
+// requires the project to be on a paid Firebase plan. A resized 480px
+// JPEG comfortably fits Firestore's 1MB-per-document limit. Saving it
+// here (same field, same doc) is what makes it visible to everyone
+// else too — search results, the Re:Lay conversation list, etc. all
+// read from this same doc.
+window.handleAvatarFileChange = async function (event) {
+  const file = event.target.files[0];
+  event.target.value = ''; // so picking the same file again still fires 'change'
+  if (!file || !currentUser) return;
+
+  if (!file.type.startsWith('image/')) {
+    showToast('Please choose an image file', 'error');
+    return;
+  }
+  if (file.size > 12 * 1024 * 1024) {
+    showToast('That image is too large — please choose one under 12MB', 'error');
+    return;
+  }
+
+  avatarUploading = true;
+  refreshAvatarWrap();
+
+  try {
+    let blob = await resizeImageToBlob(file, 480, 0.85);
+
+    // Belt-and-suspenders for unusually "busy"/noisy photos that don't
+    // compress as well — fall back to a smaller, lower-quality resize
+    // rather than risk pushing the Firestore document over its 1MB cap.
+    if (blob.size > 700 * 1024) {
+      blob = await resizeImageToBlob(file, 320, 0.7);
+    }
+    if (blob.size > 700 * 1024) {
+      throw new Error('TOO_BIG_AFTER_RESIZE');
+    }
+
+    const dataUrl = await blobToDataURL(blob);
+
+    await setDoc(doc(db, 'users', currentUser.uid), { photoURL: dataUrl }, { merge: true });
+    userProfile = { ...(userProfile || {}), photoURL: dataUrl };
+
+    showToast('✓ Profile picture updated', 'success');
+  } catch (err) {
+    console.error('Avatar update failed:', err);
+    if (err.message === 'TOO_BIG_AFTER_RESIZE') {
+      showToast('That photo is too detailed to save — try a simpler one', 'error');
+    } else {
+      showToast('Could not save your photo — try again', 'error');
+    }
+  } finally {
+    avatarUploading = false;
+    refreshAvatarWrap();
+    populateUserUI();
+  }
+};
+
+function refreshAvatarWrap() {
+  const wrap = document.querySelector('#profileModalContent .my-avatar-wrap');
+  if (!wrap) return;
+  const name = userProfile?.fullName || currentUser?.displayName || 'Student';
+  wrap.outerHTML = avatarWrapHtml(name);
+}
+
 window.handleLogout = async function () {
   try {
     await signOut(auth);
@@ -2161,9 +2500,24 @@ window.goToPage = function (id) {
   document.getElementById(id).querySelector('.page-body')?.scrollTo(0, 0);
   updateAllCartCounts();
 
+  // Stop watching the just-placed order once the customer leaves the
+  // receipt page — no need to keep listening in the background.
+  if (id !== 'pageReceipt' && receiptOrderUnsub) {
+    receiptOrderUnsub();
+    receiptOrderUnsub = null;
+  }
+
   // Refresh the SOS board (and its "posted X ago" labels) every time it's opened
   if (id === 'pageBorrow') {
     renderSOSBoard();
+  }
+
+  // Reset to the "All" tab and re-render every time the page is opened
+  if (id === 'pageMyOrders') {
+    myOrdersFilter = 'all';
+    document.querySelectorAll('#pageMyOrders .myorders-chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('#pageMyOrders .myorders-chip[data-filter="all"]')?.classList.add('active');
+    renderMyOrders();
   }
 
   // Re-fill confirm form every time user lands on checkout
@@ -2366,6 +2720,11 @@ window.closeCart = function () {
   document.getElementById('cartDrawer').classList.remove('open');
 };
 
+window.openMyOrders = function () {
+  closeCart();
+  goToPage('pageMyOrders');
+};
+
 /* ── Fee calculation helper ────────────────────────────── */
 function computeFees() {
   const subtotal    = cart.reduce((a, b) => a + b.price * b.qty, 0);
@@ -2521,6 +2880,7 @@ window.placeOrder = async function () {
     });
 
     renderReceipt(docRef.id, { customerName, phoneNumber, location, items, subtotal, deliveryFee, extraFee, total });
+    subscribeToReceiptOrder(docRef.id);
 
     // Clear cart and form
     cart = [];
@@ -2572,6 +2932,194 @@ function renderReceipt(orderId, order) {
       <span class="val">₱${item.lineTotal.toFixed(2)}</span>
     </div>
   `).join('');
+}
+
+/* ── Live order status on the receipt page ───────────────────
+   Watches the just-placed order so the Cancel button vanishes
+   the instant a runner accepts — no refresh needed. ───────── */
+function subscribeToReceiptOrder(orderId) {
+  if (receiptOrderUnsub) receiptOrderUnsub();
+  receiptOrderUnsub = onSnapshot(doc(db, 'orders', orderId), (snap) => {
+    renderReceiptStatus(orderId, snap.exists() ? snap.data() : null);
+  });
+}
+
+function renderReceiptStatus(orderId, data) {
+  const el = document.getElementById('receiptStatusSection');
+  if (!el) return; // navigated away before this resolved
+
+  if (!data) {
+    // Order's gone (e.g. just cancelled) — nothing more to show here.
+    el.innerHTML = '';
+    return;
+  }
+
+  const status = data.status || 'pending';
+
+  if (status === 'pending' && !data.riderId) {
+    el.innerHTML = `
+      <button class="btn btn-danger w-full" onclick="cancelMyOrder('${orderId}')" id="cancelOrderBtn">
+        ✕ Cancel Order
+      </button>
+      <div class="text-center" style="font-size:0.78rem;color:var(--muted);margin-top:8px">
+        Free to cancel until a runner accepts it.
+      </div>`;
+  } else if (status === 'accepted') {
+    el.innerHTML = `
+      <div class="text-center" style="background:var(--orange-light);color:var(--orange);font-weight:600;font-size:0.85rem;padding:12px 14px;border-radius:var(--radius-sm)">
+        🏃 ${escapeHtml(data.riderName || 'A runner')} has accepted your order — it can no longer be cancelled.
+      </div>`;
+  } else if (status === 'delivered') {
+    el.innerHTML = `
+      <div class="text-center" style="background:#d1fae5;color:#065f46;font-weight:600;font-size:0.85rem;padding:12px 14px;border-radius:var(--radius-sm)">
+        ✓ This order has been delivered.
+      </div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+// Wrapped in a transaction so a customer can't yank an order out from
+// under a runner who accepted it a split-second earlier — the same
+// safety pattern runner.html uses for acceptOrder/cancelOrder.
+//
+// btnEl is optional: the receipt page's lone button falls back to its
+// id, while the My Orders list (which can render several cancel
+// buttons at once) passes the exact button that was clicked.
+window.cancelMyOrder = async function (orderId, btnEl) {
+  if (!confirm("Cancel this order? This can't be undone.")) return;
+
+  const btn = btnEl || document.getElementById('cancelOrderBtn');
+  const originalLabel = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Cancelling…'; }
+
+  try {
+    await runTransaction(db, async (tx) => {
+      const ref  = doc(db, 'orders', orderId);
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error('MISSING');
+      const data = snap.data();
+      if (data.userId !== currentUser.uid) throw new Error('NOT_MINE');
+      if (data.riderId || (data.status || 'pending') !== 'pending') throw new Error('ALREADY_TAKEN');
+      tx.delete(ref);
+    });
+    showToast('Order cancelled', 'success');
+    // No need to touch the UI manually — the onSnapshot listener(s) above
+    // see the deletion and re-render on their own (receipt status section
+    // and/or the My Orders list, whichever is currently open).
+  } catch (err) {
+    if (err.message === 'ALREADY_TAKEN') {
+      showToast('Too late — a runner already accepted this order', 'error');
+    } else {
+      console.error('Cancel order failed:', err);
+      showToast('Could not cancel your order. Try again.', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
+    }
+  }
+};
+
+/* ══════════════════════════════════════════════════════════
+   MY ORDERS — history + pending, opened from inside the cart
+══════════════════════════════════════════════════════════ */
+
+// One always-on listener for the whole 'orders' collection (same
+// approach runner.html uses), filtered down to this student's own
+// orders wherever it's rendered. Keeps things live with no extra
+// per-page queries, and avoids needing a composite Firestore index.
+function subscribeToOrdersFeed() {
+  const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(200));
+  onSnapshot(q, (snapshot) => {
+    allOrdersFeed = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderMyOrders();
+    updateMyOrdersDot();
+  });
+}
+
+window.setMyOrdersFilter = function (filter, btnEl) {
+  myOrdersFilter = filter;
+  document.querySelectorAll('#pageMyOrders .myorders-chip').forEach(c => c.classList.remove('active'));
+  btnEl.classList.add('active');
+  renderMyOrders();
+};
+
+function renderMyOrders() {
+  const list  = document.getElementById('myOrdersList');
+  const empty = document.getElementById('myOrdersEmpty');
+  if (!list || !empty || !currentUser) return; // page not in DOM yet, or no user
+
+  let mine = allOrdersFeed.filter(o => o.userId === currentUser.uid);
+  if (myOrdersFilter !== 'all') {
+    mine = mine.filter(o => (o.status || 'pending') === myOrdersFilter);
+  }
+
+  if (mine.length === 0) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = mine.map(myOrderCardHtml).join('');
+}
+
+// A small dot on the cart drawer's "Order History" link, so a student
+// who still has something pending or out for delivery notices it
+// without having to open the page.
+function updateMyOrdersDot() {
+  const dot = document.getElementById('myOrdersDot');
+  if (!dot || !currentUser) return;
+  const hasActive = allOrdersFeed.some(o =>
+    o.userId === currentUser.uid && (o.status || 'pending') !== 'delivered'
+  );
+  dot.classList.toggle('hidden', !hasActive);
+}
+
+function myOrderStatusBadge(o) {
+  const status = o.status || 'pending';
+  if (status === 'delivered') return `<span class="badge badge-green">✅ Delivered</span>`;
+  if (status === 'accepted')  return `<span class="badge badge-blue">🏃 Accepted</span>`;
+  return `<span class="badge badge-yellow">⏳ Pending</span>`;
+}
+
+function formatOrderDate(ts) {
+  if (!ts || typeof ts.toDate !== 'function') return 'Just now';
+  const d = ts.toDate();
+  const dateStr = d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+  const timeStr = d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+  return `${dateStr}, ${timeStr}`;
+}
+
+function myOrderCardHtml(o) {
+  const shortId   = o.id.slice(-6).toUpperCase();
+  const status    = o.status || 'pending';
+  const canCancel = status === 'pending' && !o.riderId;
+  const itemsLine = (o.items || [])
+    .map(it => `${it.emoji} ${escapeHtml(it.name)} ×${it.qty}`)
+    .join(', ');
+
+  let footRight = '';
+  if (canCancel) {
+    footRight = `<button class="btn btn-danger btn-sm" onclick="cancelMyOrder('${o.id}', this)">✕ Cancel</button>`;
+  } else if (status === 'accepted') {
+    footRight = `<span class="myorder-note">🏃 ${escapeHtml(o.riderName || 'A runner')} is on the way</span>`;
+  } else if (status === 'delivered') {
+    footRight = `<span class="myorder-note myorder-note-done">✓ Delivered</span>`;
+  }
+
+  return `
+    <div class="myorder-card">
+      <div class="myorder-card-top">
+        <div>
+          <div class="myorder-id">Order #${shortId}</div>
+          <div class="myorder-date">${formatOrderDate(o.createdAt)}</div>
+        </div>
+        ${myOrderStatusBadge(o)}
+      </div>
+      <div class="myorder-items">${itemsLine || '—'}</div>
+      <div class="myorder-card-bottom">
+        <span class="myorder-total">₱${(o.total || 0).toFixed(2)}</span>
+        ${footRight}
+      </div>
+    </div>`;
 }
 
 /* ══════════════════════════════════════════════════════════

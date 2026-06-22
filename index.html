@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    /* Applies a saved dark-mode preference before anything paints.
+       Shared across every Re:Quest page via the same localStorage key
+       (the toggle itself lives in home.html's profile panel). */
+    (function () {
+      try {
+        if (localStorage.getItem('requestTheme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Re:Quest — ADZU Campus Delivery</title>
@@ -25,6 +37,22 @@
       --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
       --shadow:      0 4px 16px rgba(0,0,0,.10);
       --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
+    }
+
+    /* ─── DARK MODE ───────────────────────────────────────────
+       Same token set, different values — switched on by
+       data-theme="dark" on <html>, set from home.html's profile
+       panel and remembered in localStorage. ── */
+    [data-theme="dark"] {
+      --orange-light:#2b1810;
+      --bg:          #0F1115;
+      --surface:     #1A1D24;
+      --text:        #F3F4F6;
+      --muted:       #9CA3AF;
+      --border:      #2A2E37;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.4);
+      --shadow:      0 4px 16px rgba(0,0,0,.5);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,.6);
     }
 
     /* ─── RESET ───────────────────────────────────────────── */
@@ -190,7 +218,7 @@
     /* ─── TOAST ───────────────────────────────────────────── */
     .toast {
       position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: var(--text); color: #fff; padding: 12px 20px;
+      background: #111827; color: #fff; padding: 12px 20px;
       border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
       z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap;
       display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg);
@@ -272,8 +300,30 @@
         <label class="form-label" for="loginPass">Password</label>
         <input type="password" class="form-input" placeholder="Enter your password" id="loginPass" autocomplete="current-password" />
         <div class="field-error" id="loginPassError"></div>
+        <div style="text-align:right;margin-top:6px">
+          <a href="#" onclick="openForgotPassword(event)" style="font-size:0.8rem;font-weight:600;color:var(--orange)">Forgot password?</a>
+        </div>
       </div>
       <button class="btn btn-primary w-full btn-lg" id="loginSubmitBtn" type="submit">Sign In</button>
+    </form>
+
+    <!-- FORGOT PASSWORD FORM -->
+    <form id="forgotPasswordForm" class="auth-form hidden" onsubmit="return handleForgotPassword(event)" novalidate>
+      <div style="margin-bottom:18px">
+        <div style="font-weight:700;font-size:1.02rem;margin-bottom:6px">Reset your password</div>
+        <div style="font-size:0.85rem;color:var(--muted);line-height:1.5">
+          Enter the email you signed up with and we'll send you a link to reset your password.
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="forgotEmail">Email Address</label>
+        <input type="email" class="form-input" placeholder="sh250XXX@adzu.edu.ph" id="forgotEmail" autocomplete="email" />
+        <div class="field-error" id="forgotEmailError"></div>
+      </div>
+      <button class="btn btn-primary w-full btn-lg" id="forgotSubmitBtn" type="submit">Send Reset Link</button>
+      <div style="text-align:center;margin-top:16px">
+        <a href="#" onclick="closeForgotPassword(event)" style="font-size:0.85rem;font-weight:600;color:var(--muted)">← Back to Sign In</a>
+      </div>
     </form>
 
     <!-- SIGNUP FORM -->
@@ -313,7 +363,9 @@
           <label class="form-label" for="signupCourse">Course</label>
           <select class="form-select" id="signupCourse">
             <option value="">Select...</option>
-            <option>STEM</option><option>HUMSS</option><option>ABM</option><option>STAFF</option><option>COLLEGE</option>
+            <option>STEM</option><option>HUMSS</option><option>ABM</option><option>ASSH</option><option>BE</option><option>STAFF</option><option>COLLEGE</option>
+
+
           </select>
         </div>
         <div class="form-group">
@@ -378,6 +430,7 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   updateProfile,
   signOut,
@@ -436,6 +489,65 @@ window.switchAuthTab = function (tab) {
   document.getElementById('loginTab').classList.toggle('active', tab === 'login');
   document.getElementById('signupTab').classList.toggle('active', tab === 'signup');
   clearErrors();
+};
+
+// "Forgot password?" isn't a third peer tab alongside Sign In/Sign Up —
+// it's a sub-flow reached from inside the login form, so it swaps in
+// over the top of the tab switcher rather than becoming its own tab.
+window.openForgotPassword = function (event) {
+  event.preventDefault();
+  document.querySelector('.auth-tabs').classList.add('hidden');
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('signupForm').classList.add('hidden');
+  document.getElementById('forgotPasswordForm').classList.remove('hidden');
+  clearErrors();
+
+  // Carry over whatever email they'd already typed on the login form,
+  // so they're not stuck retyping it.
+  const typedEmail = document.getElementById('loginEmail').value.trim();
+  if (typedEmail) document.getElementById('forgotEmail').value = typedEmail;
+};
+
+window.closeForgotPassword = function (event) {
+  event.preventDefault();
+  document.getElementById('forgotPasswordForm').classList.add('hidden');
+  document.querySelector('.auth-tabs').classList.remove('hidden');
+  switchAuthTab('login');
+};
+
+window.handleForgotPassword = async function (event) {
+  event.preventDefault();
+  clearErrors();
+
+  const email = document.getElementById('forgotEmail').value.trim();
+  if (!email) { setFieldError('forgotEmail', 'Email is required'); return false; }
+  if (!isValidEmail(email)) { setFieldError('forgotEmail', 'Enter a valid email address'); return false; }
+
+  const btn = document.getElementById('forgotSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showToast('✓ Reset link sent — check your inbox', 'success');
+    closeForgotPassword(event);
+  } catch (error) {
+    // Treat "no account with this email" the same as success: telling
+    // people whether an email is registered is an account-enumeration
+    // risk, and either way "check your inbox" is the correct next step.
+    if (error.code === 'auth/user-not-found') {
+      showToast('✓ Reset link sent — check your inbox', 'success');
+      closeForgotPassword(event);
+    } else if (error.code === 'auth/too-many-requests') {
+      setFieldError('forgotEmail', 'Too many attempts — try again in a few minutes');
+    } else {
+      setFieldError('forgotEmail', 'Could not send reset link — try again');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Reset Link';
+  }
+  return false;
 };
 
 function clearErrors() {
