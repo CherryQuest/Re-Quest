@@ -2727,12 +2727,28 @@ window.openMyOrders = function () {
 
 /* ── Fee calculation helper ────────────────────────────── */
 function computeFees() {
-  const subtotal    = cart.reduce((a, b) => a + b.price * b.qty, 0);
-  const deliveryFee = 15;
-  // +₱5 if cart has more than 2 distinct item types
-  const extraFee    = cart.length > 2 ? 5 : 0;
-  const total       = subtotal + deliveryFee + extraFee;
-  return { subtotal, deliveryFee, extraFee, total };
+  const subtotal = cart.reduce((a, b) => a + b.price * b.qty, 0);
+
+  let serviceFee = 0;
+
+  cart.forEach(item => {
+    // Base fee for each item type
+    serviceFee += 15;
+
+    // Additional ₱5 for every quantity beyond the first
+    if (item.qty > 1) {
+      serviceFee += (item.qty - 1) * 3;
+    }
+  });
+
+  const total = subtotal + serviceFee;
+
+  return {
+    subtotal,
+    deliveryFee: serviceFee, // keeps existing UI working
+    extraFee: 0,
+    total
+  };
 }
 
 function renderCartDrawer() {
