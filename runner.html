@@ -920,8 +920,8 @@ function renderOrderDetailDrawer() {
   const printFilesHTML = isPrint ? (() => {
     const fileUrls = o.fileUrls || [];
     const filesBlock = fileUrls.length > 0
-      ? fileUrls.map(f => `
-          <a href="${f.url}" target="_blank" download="${f.name}"
+      ? fileUrls.map((f, i) => `
+          <a href="#" onclick="event.preventDefault();downloadPrintFile('${o.id}',${i})"
              class="print-file-link"
              style="display:flex;align-items:center;gap:10px;padding:10px 12px;
                     background:var(--bg);border:1.5px solid var(--border);
@@ -1028,6 +1028,33 @@ function formatBytesRunner(b) {
   if (b < 1024 * 1024)  return `${(b / 1024).toFixed(1)} KB`;
   return `${(b / 1024 / 1024).toFixed(1)} MB`;
 }
+
+/* ── Download a print file ─────────────────────────────────
+   Files are stored as base64 data: URLs directly in Firestore
+   (no Firebase Storage plan needed). Linking <a href="data:...">
+   directly is unreliable across browsers — many (especially
+   mobile Safari) just open/garble it instead of downloading.
+   Converting to a real Blob + object URL first fixes that. */
+window.downloadPrintFile = async function (orderId, idx) {
+  const o = orders.find(x => x.id === orderId);
+  const f = o?.fileUrls?.[idx];
+  if (!f?.url) { showToast('File not found', 'error'); return; }
+  try {
+    const res      = await fetch(f.url);   // data: URLs work fine with fetch()
+    const blob     = await res.blob();
+    const blobUrl  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = f.name || 'file';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+  } catch (e) {
+    console.error(e);
+    showToast('Could not download file', 'error');
+  }
+};
 
 /* ══════════════════════════════════════════════════════════
    ACCEPT / DELIVER
