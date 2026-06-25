@@ -47,6 +47,18 @@ body {
   padding: 2px 8px; border-radius: 20px; margin-left: 10px; letter-spacing: 0.3px;
 }
 .hd-right { display: flex; align-items: center; gap: 10px; }
+.hd-left { display: flex; align-items: center; gap: 12px; }
+/* Re:Lay gets its own brand-orange pill (same accent Re:Lay uses
+   for itself) so it reads as a link to a different app, not just
+   another Re:Post action. */
+.relay-link-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: 20px;
+  background: rgba(252,76,2,0.14); color: #FC4C02;
+  font-size: 0.78rem; font-weight: 700; white-space: nowrap;
+  text-decoration: none; transition: background 0.15s;
+}
+.relay-link-btn:hover { background: rgba(252,76,2,0.22); }
 .new-btn {
   background: var(--red); color: #fff; border: none;
   border-radius: 20px; padding: 8px 20px;
@@ -186,12 +198,15 @@ textarea.field { min-height: 88px; }
 
 <!-- ── HEADER ── -->
 <header class="hd">
-  <div>
-    <div class="logo">
-      <span class="re">Re</span><span class="sep">:</span><span class="post-word">Post</span>
-      <span class="badge" id="liveCount">… live</span>
+  <div class="hd-left">
+    <a class="relay-link-btn" href="relay.html" title="Back to Re:Lay">💬 Re:Lay</a>
+    <div>
+      <div class="logo">
+        <span class="re">Re</span><span class="sep">:</span><span class="post-word">Post</span>
+        <span class="badge" id="liveCount">… live</span>
+      </div>
+      <div class="sub">Campus Freedom Wall</div>
     </div>
-    <div class="sub">Campus Freedom Wall</div>
   </div>
   <div class="hd-right">
     <button class="new-btn" onclick="openModal()">+ Post</button>
