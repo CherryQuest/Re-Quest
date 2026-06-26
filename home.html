@@ -730,6 +730,25 @@
     .myorders-empty-title { font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: 6px; }
     .myorders-empty-sub { font-size: 0.85rem; color: var(--muted); max-width: 280px; margin: 0 auto; line-height: 1.5; }
 
+    /* ── Admin order view ─────────────────────────────────── */
+    .admin-order-banner {
+      margin: 14px 20px 0; padding: 9px 14px; border-radius: var(--radius-sm);
+      background: var(--orange-light); color: var(--orange);
+      font-size: 0.78rem; font-weight: 700; text-align: center;
+      border: 1px solid rgba(252,76,2,0.25);
+    }
+    .myorder-customer {
+      font-size: 0.74rem; color: var(--muted); margin-top: 3px; font-weight: 500;
+    }
+    .admin-delete-btn {
+      font-size: 0.78rem; font-weight: 700; padding: 6px 12px;
+      border-radius: var(--radius-sm); border: 1.5px solid var(--danger);
+      color: var(--danger); background: transparent; cursor: pointer;
+      transition: background .15s, color .15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .admin-delete-btn:hover { background: #fee2e2; }
+    .admin-delete-btn.confirming { background: var(--danger); color: #fff; }
+
     /* ══════════════════════════════════════════════════════════
        TOAST NOTIFICATION
     ══════════════════════════════════════════════════════════ */
@@ -1779,6 +1798,7 @@
   </div>
 
   <div class="page-body" style="padding-bottom:40px">
+    <div class="admin-order-banner hidden" id="adminOrderBanner">🛡️ Admin view — showing all users' orders</div>
     <div class="myorder-list" id="myOrdersList"></div>
     <div class="myorders-empty hidden" id="myOrdersEmpty">
       <div class="myorders-empty-icon">🧾</div>
@@ -3150,7 +3170,41 @@ window.cancelMyOrder = async function (orderId, btnEl) {
    MY ORDERS — history + pending, opened from inside the cart
 ══════════════════════════════════════════════════════════ */
 
-// One always-on listener for the whole 'orders' collection (same
+// Admin force-delete — bypasses the transaction guard used by cancelMyOrder
+// (admins can remove any order regardless of status or riderId).
+// Two-click confirmation: first click arms it, second click within 3 s fires.
+window.adminDeleteOrder = async function (orderId, btn) {
+  if (!isAdmin()) return;
+
+  if (btn.classList.contains('confirming')) {
+    // Second click — confirmed, delete
+    clearTimeout(btn._revertTimer);
+    btn.textContent = '…';
+    btn.disabled = true;
+    try {
+      await deleteDoc(doc(db, 'orders', orderId));
+      showToast('🛡️ Order deleted.', 'success');
+    } catch(e) {
+      console.error('Admin delete order failed:', e);
+      showToast('Could not delete order. Try again.', 'error');
+      btn.disabled = false;
+      btn.classList.remove('confirming');
+      btn.textContent = btn.dataset.wasLabel || '🛡️ Delete';
+    }
+  } else {
+    // First click — arm confirmation state
+    const wasLabel = btn.textContent;
+    btn.dataset.wasLabel = wasLabel;
+    btn.classList.add('confirming');
+    btn.textContent = 'Delete?';
+    btn._revertTimer = setTimeout(() => {
+      btn.classList.remove('confirming');
+      btn.textContent = wasLabel;
+    }, 3000);
+  }
+};
+
+
 // approach runner.html uses), filtered down to this student's own
 // orders wherever it's rendered. Keeps things live with no extra
 // per-page queries, and avoids needing a composite Firestore index.
@@ -3171,22 +3225,28 @@ window.setMyOrdersFilter = function (filter, btnEl) {
 };
 
 function renderMyOrders() {
-  const list  = document.getElementById('myOrdersList');
-  const empty = document.getElementById('myOrdersEmpty');
+  const list   = document.getElementById('myOrdersList');
+  const empty  = document.getElementById('myOrdersEmpty');
+  const banner = document.getElementById('adminOrderBanner');
   if (!list || !empty || !currentUser) return; // page not in DOM yet, or no user
 
-  let mine = allOrdersFeed.filter(o => o.userId === currentUser.uid);
+  // Admins see every order; regular users see only their own
+  if (banner) banner.classList.toggle('hidden', !isAdmin());
+  let shown = isAdmin()
+    ? allOrdersFeed
+    : allOrdersFeed.filter(o => o.userId === currentUser.uid);
+
   if (myOrdersFilter !== 'all') {
-    mine = mine.filter(o => (o.status || 'pending') === myOrdersFilter);
+    shown = shown.filter(o => (o.status || 'pending') === myOrdersFilter);
   }
 
-  if (mine.length === 0) {
+  if (shown.length === 0) {
     list.innerHTML = '';
     empty.classList.remove('hidden');
     return;
   }
   empty.classList.add('hidden');
-  list.innerHTML = mine.map(myOrderCardHtml).join('');
+  list.innerHTML = shown.map(myOrderCardHtml).join('');
 }
 
 // A small dot on the cart drawer's "Order History" link, so a student
@@ -3217,10 +3277,11 @@ function formatOrderDate(ts) {
 }
 
 function myOrderCardHtml(o) {
-  const shortId   = o.id.slice(-6).toUpperCase();
-  const status    = o.status || 'pending';
-  const canCancel = status === 'pending' && !o.riderId;
-  const itemsLine = (o.items || [])
+  const shortId    = o.id.slice(-6).toUpperCase();
+  const status     = o.status || 'pending';
+  const isOwnOrder = o.userId === currentUser?.uid;
+  const canCancel  = status === 'pending' && !o.riderId && isOwnOrder;
+  const itemsLine  = (o.items || [])
     .map(it => `${it.emoji} ${escapeHtml(it.name)} ×${it.qty}`)
     .join(', ');
 
@@ -3233,19 +3294,33 @@ function myOrderCardHtml(o) {
     footRight = `<span class="myorder-note myorder-note-done">✓ Delivered</span>`;
   }
 
+  // Admin-only: force-delete button (any status, any user's order)
+  const adminDelete = isAdmin()
+    ? `<button class="admin-delete-btn" onclick="adminDeleteOrder('${o.id}', this)" title="Admin: delete order">🛡️ Delete</button>`
+    : '';
+
+  // In admin view, show whose order this is when it's not the admin's own
+  const customerLine = (isAdmin() && !isOwnOrder)
+    ? `<div class="myorder-customer">👤 ${escapeHtml(o.customerName || o.userEmail || 'Customer')}</div>`
+    : '';
+
   return `
     <div class="myorder-card">
       <div class="myorder-card-top">
         <div>
           <div class="myorder-id">Order #${shortId}</div>
           <div class="myorder-date">${formatOrderDate(o.createdAt)}</div>
+          ${customerLine}
         </div>
         ${myOrderStatusBadge(o)}
       </div>
       <div class="myorder-items">${itemsLine || '—'}</div>
       <div class="myorder-card-bottom">
         <span class="myorder-total">₱${(o.total || 0).toFixed(2)}</span>
-        ${footRight}
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${footRight}
+          ${adminDelete}
+        </div>
       </div>
     </div>`;
 }
