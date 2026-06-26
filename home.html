@@ -467,6 +467,36 @@
       box-shadow: var(--shadow-sm); cursor: pointer; transition: all .2s;
     }
     .store-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+
+    /* ── Admin store controls ────────────────────────────────── */
+    /* The card wrapper becomes position:relative so the closed
+       overlay and the admin toggle button can sit on top of it. */
+    .store-card { position: relative; }
+
+    /* Grey scrim over closed stores — visible to everyone */
+    .store-closed-overlay {
+      position: absolute; inset: 0; border-radius: var(--radius);
+      background: rgba(0,0,0,.45); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px;
+      pointer-events: none; /* clicks still fall through to admin toggle */
+      z-index: 1;
+    }
+    .store-closed-label {
+      color: #fff; font-size: 0.78rem; font-weight: 800; letter-spacing: .5px;
+      text-transform: uppercase; text-shadow: 0 1px 4px rgba(0,0,0,.6);
+    }
+
+    /* Admin toggle button — lower-right corner of each card */
+    .admin-store-toggle {
+      position: absolute; bottom: 8px; right: 8px; z-index: 2;
+      border-radius: 999px; padding: 4px 10px;
+      font-size: 0.7rem; font-weight: 700; border: none;
+      cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.25);
+      transition: opacity .15s, transform .15s;
+    }
+    .admin-store-toggle:hover { opacity: .88; transform: scale(1.05); }
+    .admin-store-toggle.open  { background: var(--danger); color: #fff; }
+    .admin-store-toggle.closed { background: var(--success); color: #fff; }
     .store-img {
       height: 90px; display: flex; align-items: center; justify-content: center;
       font-size: 2.4rem; background: var(--bg);
@@ -1373,6 +1403,14 @@
     </div>
   </div>
 
+  <!-- Admin-only closed banner — only visible when admin opens a closed store -->
+  <div id="storeClosedBanner" class="hidden" style="
+    background:#fef2f2; border-bottom:1px solid #fecaca;
+    padding:10px 20px; display:flex; align-items:center; gap:10px;
+    font-size:0.82rem; font-weight:600; color:#991b1b;">
+    🔒 This store is closed. Customers cannot place orders. Only you can see this page.
+  </div>
+
   <div class="menu-search-bar">
     <div class="search-input-wrap">
       <span class="search-icon">🔍</span>
@@ -1805,6 +1843,13 @@ let searchQuery   = '';
 let storeSearchQuery = '';  // search text on the pageStores stall list
 let avatarUploading = false; // true while a new profile picture is mid-upload
 
+// Live map of store closure states synced from Firestore:
+// { [storeId]: { closed: bool, closedBy: string, closedAt: Timestamp } }
+let storeStatuses = {};
+
+// Convenience — avoids scattering role checks everywhere
+function isAdmin() { return userProfile?.role === 'admin'; }
+
 /* ── Borrow / SOS Board state ───────────────────────────── */
 let pendingAcceptId    = null; // id of the request waiting on the confirm dialog
 let currentFulfillment = null; // request shown on the fulfillment page
@@ -2170,6 +2215,14 @@ onAuthStateChanged(auth, async (user) => {
   // Populate UI with user info
   populateUserUI();
 
+  // Sync store open/closed state from Firestore in real time so admin
+  // changes are immediately reflected on every connected device.
+  onSnapshot(collection(db, 'stores'), (snap) => {
+    storeStatuses = {};
+    snap.forEach(d => { storeStatuses[d.id] = d.data(); });
+    renderStores(); // re-render cards with updated badges / overlays
+  });
+
   // Render store list
   renderStores();
   updateGreeting();
@@ -2509,6 +2562,13 @@ window.goToPage = function (id) {
     receiptOrderUnsub = null;
   }
 
+  // Refresh the store closed banner when entering the menu page
+  if (id === 'pageMenu' && selectedStore) {
+    const status     = storeStatuses[String(selectedStore.id)] || {};
+    const banner     = document.getElementById('storeClosedBanner');
+    if (banner) banner.classList.toggle('hidden', !status.closed);
+  }
+
   // Refresh the SOS board (and its "posted X ago" labels) every time it's opened
   if (id === 'pageBorrow') {
     renderSOSBoard();
@@ -2596,17 +2656,43 @@ function renderStores() {
     return;
   }
 
-  grid.innerHTML = stores.map(store => `
-    <div class="store-card" onclick="openStore(${store.id})">
-      <div class="store-img" style="background:${store.color}">
-        <span>${store.emoji}</span>
-      </div>
-      <div class="store-body">
-        <div class="store-name">${store.name}</div>
-        <div class="store-meta">${store.desc}</div>
-      </div>
-    </div>
-  `).join('');
+  const admin = isAdmin();
+
+  grid.innerHTML = stores.map(store => {
+    const status = storeStatuses[String(store.id)] || {};
+    const closed = status.closed === true;
+
+    // Closed overlay — shown to everyone when store is closed
+    const closedOverlay = closed ? `
+      <div class="store-closed-overlay">
+        <span style="font-size:1.6rem">🔒</span>
+        <span class="store-closed-label">Closed</span>
+      </div>` : '';
+
+    // Admin-only toggle button (sits above the overlay so it's always clickable)
+    const adminToggle = admin ? `
+      <button
+        class="admin-store-toggle ${closed ? 'closed' : 'open'}"
+        onclick="event.stopPropagation(); adminToggleStore(${store.id})"
+        title="${closed ? 'Reopen this store' : 'Close this store'}">
+        ${closed ? '✓ Reopen' : '✕ Close'}
+      </button>` : '';
+
+    return `
+      <div class="store-card ${closed && !admin ? 'store-card--closed' : ''}"
+           onclick="${closed && !admin ? '' : `openStore(${store.id})`}"
+           style="${closed && !admin ? 'cursor:default;' : ''}">
+        ${closedOverlay}
+        ${adminToggle}
+        <div class="store-img" style="background:${store.color}">
+          <span>${store.emoji}</span>
+        </div>
+        <div class="store-body">
+          <div class="store-name">${store.name}</div>
+          <div class="store-meta">${store.desc}</div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 window.filterStores = function (q) {
@@ -2619,6 +2705,13 @@ window.openStore = function (id) {
   const store = STORES.find(s => s.id === id);
   if (!store) return;
 
+  // Prevent non-admins from entering a closed store
+  const status = storeStatuses[String(id)] || {};
+  if (status.closed && !isAdmin()) {
+    showToast(`${store.name} is currently closed`, 'error');
+    return;
+  }
+
   selectedStore = store;
   searchQuery = '';
 
@@ -2626,11 +2719,44 @@ window.openStore = function (id) {
   document.getElementById('storeMenuName').textContent  = store.name;
   document.getElementById('storeMenuDesc').textContent  = store.desc;
 
+  // Show a "CLOSED" banner inside the menu page for admins who browse in anyway
+  const closedBanner = document.getElementById('storeClosedBanner');
+  if (closedBanner) {
+    closedBanner.classList.toggle('hidden', !status.closed);
+  }
+
   const searchBox = document.getElementById('menuSearch');
   if (searchBox) searchBox.value = '';
 
   renderMenu();
   goToPage('pageMenu');
+};
+
+/* ── Admin: toggle a store open / closed ───────────────────
+   Writes to Firestore `stores/{storeId}` — the onSnapshot
+   listener in the auth block picks up the change and calls
+   renderStores() on every connected device automatically. ── */
+window.adminToggleStore = async function (storeId) {
+  if (!isAdmin()) return;
+  const key    = String(storeId);
+  const status = storeStatuses[key] || {};
+  const nowClosed = status.closed === true;
+  const store  = STORES.find(s => s.id === storeId);
+
+  try {
+    await setDoc(doc(db, 'stores', key), {
+      closed:   !nowClosed,
+      closedBy: userProfile?.fullName || currentUser?.email || 'Admin',
+      closedAt: serverTimestamp()
+    });
+    showToast(
+      nowClosed ? `✓ ${store?.name} is now open` : `🔒 ${store?.name} closed`,
+      nowClosed ? 'success' : ''
+    );
+  } catch (err) {
+    console.error('Toggle store failed:', err);
+    showToast('Could not update store status', 'error');
+  }
 };
 
 /* ── Menu Modal ────────────────────────────────────────── */
