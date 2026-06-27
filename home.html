@@ -235,11 +235,13 @@
     }
     .avatar:hover { box-shadow: 0 0 0 3px rgba(252,76,2,.25); }
     .cart-btn {
-      position: relative; padding: 8px 14px; border-radius: var(--radius-sm);
+      position: relative; flex-shrink: 0;
+      width: 42px; height: 42px; padding: 0; border-radius: 50%;
       background: var(--orange-light); color: var(--orange);
       font-weight: 600; font-size: 0.85rem;
-      display: flex; align-items: center; gap: 6px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
     }
+    .cart-btn .cart-label { display: none; }
     .cart-btn:hover { background: var(--orange); color: #fff; }
     .cart-count {
       position: absolute; top: -6px; right: -6px;
@@ -420,6 +422,7 @@
       transition: all .15s;
     }
     .search-input:focus { outline: none; border-color: var(--orange); background: var(--surface); box-shadow: 0 0 0 3px rgba(252,76,2,.1); }
+    .search-result-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 13px; margin-bottom: 10px; }
     .cat-scroll {
       padding: 12px 20px; background: var(--surface);
       border-bottom: 1px solid var(--border); overflow-x: auto;
@@ -943,6 +946,8 @@
       .receipt-actions { grid-template-columns: 1fr 1fr; }
       .form-grid-2 { grid-template-columns: 1fr 1fr; }
       .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+      .cart-btn { width: auto; height: auto; padding: 8px 14px; border-radius: var(--radius-sm); justify-content: flex-start; }
+      .cart-btn .cart-label { display: inline; }
     }
     @media (min-width: 900px) {
       .page-body { max-width: 720px; margin: 0 auto; }
@@ -1290,6 +1295,23 @@
       <span>🧭 Navigate</span>
       <button class="btn-icon" onclick="closeNavPanel()" style="width:34px;height:34px;font-size:1rem">✕</button>
     </div>
+    <div style="margin-bottom:20px">
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">My Profile</div>
+      <div id="navMyProfileCard" onclick="closeNavPanel();toggleProfile();" style="cursor:pointer">
+        <div class="text-sm text-muted">Loading…</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px">
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Find Someone to Message</div>
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="navUserSearchInput" placeholder="Search by name…"
+               oninput="handleUserSearch(event)" onfocus="ensureUserSearchLoaded()" />
+      </div>
+      <div id="navUserSearchResults" style="margin-top:10px"></div>
+    </div>
+
     <a class="topnav-nav-link repost" href="repost.html">📌 Re:Post — Freedom Wall <span style="margin-left:auto;opacity:.6;font-size:.8rem">↗</span></a>
     <a class="topnav-nav-link" href="relay.html">💬 Re:Lay — Messages <span style="margin-left:auto;opacity:.6;font-size:.8rem">↗</span></a>
     <a class="topnav-nav-link" href="runner.html">🏃 Runner Portal <span style="margin-left:auto;opacity:.6;font-size:.8rem">↗</span></a>
@@ -1301,15 +1323,17 @@
 ═══════════════════════════════════════════ -->
 <div class="page active" id="pageHome">
   <nav class="topnav">
-    <div class="topnav-logo">
-      <span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span>
+    <div class="flex items-center gap-3">
+      <button class="btn-icon" onclick="openNavPanel()" title="Navigate">☰</button>
+      <div class="topnav-logo">
+        <span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span>
+      </div>
     </div>
     <div class="flex items-center gap-3">
       <button class="cart-btn" onclick="openCart()">
-        🛒 Cart
+        🛒<span class="cart-label">Cart</span>
         <div class="cart-count" id="cartCount">0</div>
       </button>
-      <button class="btn-icon" onclick="openNavPanel()" title="Navigate">☰</button>
       <a class="btn-icon" href="relay.html" title="Messages">💬</a>
       <div class="avatar" id="homeAvatar" onclick="toggleProfile()" title="My Account">?</div>
     </div>
@@ -2615,13 +2639,106 @@ window.closeProfileModal = function (e) {
 };
 
 window.openNavPanel = function () {
+  renderNavProfileCard();
   document.getElementById('navPanel').classList.add('open');
 };
+
+// Read-only echo of the profile (just like Re:Lay's panel) — tapping
+// it opens the existing Profile modal for any actual editing, rather
+// than re-implementing avatar upload a second time on the same page.
+function renderNavProfileCard() {
+  const el = document.getElementById('navMyProfileCard');
+  if (!el) return;
+  const fullName    = userProfile?.fullName || currentUser?.displayName || 'Student';
+  const nickname    = userProfile?.nickname || '';
+  const displayName = nickname || fullName;
+  const isAdmin     = userProfile?.role === 'admin';
+  const isRunner    = userProfile?.role === 'runner';
+  const badgeClass  = isAdmin ? 'badge-admin' : isRunner ? 'badge-blue' : 'badge-gray';
+  const badgeText   = isAdmin ? '👑 Admin' : isRunner ? '🏃 Runner' : '🎓 Student';
+
+  el.innerHTML = `
+    <div class="flex items-center gap-3" style="margin-bottom:14px">
+      <div class="profile-avatar-lg" style="width:48px;height:48px;font-size:1.1rem">${avatarInner(displayName, userProfile?.photoURL)}</div>
+      <div style="min-width:0">
+        <div class="profile-name" style="font-size:0.95rem">${escapeHtml(displayName)}</div>
+        ${nickname ? `<div class="profile-real-name">@${escapeHtml(fullName)}</div>` : ''}
+        <div class="profile-sub">${escapeHtml(userProfile?.email || currentUser?.email || '')}</div>
+        <span class="badge ${badgeClass}" style="margin-top:6px">${badgeText}</span>
+      </div>
+    </div>
+    <div class="profile-info-list">
+      ${userProfile?.studentId ? `<div class="profile-info-row"><span class="profile-info-label">Student ID</span><span class="profile-info-val">${escapeHtml(String(userProfile.studentId))}</span></div>` : ''}
+      ${userProfile?.course    ? `<div class="profile-info-row"><span class="profile-info-label">Course / Strand</span><span class="profile-info-val">${escapeHtml(userProfile.course)}</span></div>` : ''}
+      ${userProfile?.yearLevel ? `<div class="profile-info-row"><span class="profile-info-label">Year Level</span><span class="profile-info-val">${escapeHtml(userProfile.yearLevel)}</span></div>` : ''}
+      ${userProfile?.section   ? `<div class="profile-info-row"><span class="profile-info-label">Section</span><span class="profile-info-val">${escapeHtml(userProfile.section)}</span></div>` : ''}
+    </div>
+    ${userProfile?.bio ? `<div class="text-sm text-muted" style="line-height:1.5">📝 ${escapeHtml(userProfile.bio)}</div>` : ''}
+    <div class="text-xs text-muted text-center" style="margin-top:10px">Tap to edit your profile →</div>
+  `;
+}
 
 window.closeNavPanel = function (e) {
   if (!e || e.target === document.getElementById('navPanel')) {
     document.getElementById('navPanel').classList.remove('open');
   }
+};
+
+/* ── Side panel: "Find Someone to Message" ─────────────────
+   Same search Re:Lay uses (live cache of the `users` collection,
+   filtered client-side as the user types). Lazy-loaded on first
+   focus so it's not an extra Firestore read on every page load.
+   Home has no chat pane of its own, so a result's button just
+   sends the person to Re:Lay to actually start the conversation. */
+let allUsersCache    = [];
+let userSearchLoaded = false;
+
+window.ensureUserSearchLoaded = function () {
+  if (userSearchLoaded) return;
+  userSearchLoaded = true;
+  onSnapshot(query(collection(db, 'users'), limit(500)), (snap) => {
+    allUsersCache = snap.docs
+      .map(d => ({ uid: d.id, ...d.data() }))
+      .filter(u => u.uid !== currentUser?.uid && u.fullName);
+  }, (err) => console.warn('User search listener error:', err));
+};
+
+window.handleUserSearch = function (e) {
+  const q = e.target.value.trim().toLowerCase();
+  const resultsEl = document.getElementById('navUserSearchResults');
+  if (!q) { resultsEl.innerHTML = ''; return; }
+
+  const matches = allUsersCache
+    .filter(u => (u.fullName || '').toLowerCase().includes(q) ||
+                 (u.nickname || '').toLowerCase().includes(q))
+    .slice(0, 20);
+
+  if (matches.length === 0) {
+    resultsEl.innerHTML = `<div class="text-sm text-muted text-center" style="padding:14px 0">No one found</div>`;
+    return;
+  }
+
+  resultsEl.innerHTML = matches.map(u => {
+    const isAdmin     = u.role === 'admin';
+    const isRunner    = u.role === 'runner';
+    const badgeClass  = isAdmin ? 'badge-admin' : isRunner ? 'badge-blue' : 'badge-gray';
+    const badgeText   = isAdmin ? '👑 Admin' : isRunner ? 'Runner' : 'Student';
+    const displayName = u.nickname || u.fullName;
+    const metaLine    = [u.course, u.section, u.yearLevel].filter(Boolean).join(' · ');
+    return `
+      <div class="search-result-card">
+        <div class="flex items-center gap-3">
+          <div class="profile-avatar-lg" style="width:42px;height:42px;font-size:0.95rem">${avatarInner(displayName, u.photoURL)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="profile-name" style="font-size:0.9rem">${escapeHtml(displayName)}</div>
+            ${u.nickname ? `<div class="profile-real-name">@${escapeHtml(u.fullName)}</div>` : ''}
+            ${metaLine ? `<div class="profile-sub">${escapeHtml(metaLine)}</div>` : ''}
+          </div>
+          <span class="badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <a class="btn btn-primary btn-sm w-full mt-3" href="relay.html" style="display:block;text-align:center;text-decoration:none">💬 Message in Re:Lay</a>
+      </div>`;
+  }).join('');
 };
 
 // Triggered by picking a file in the hidden <input type="file"> behind
