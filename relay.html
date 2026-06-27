@@ -1022,25 +1022,37 @@ function renderDMList() {
   }).join('');
 }
 
-window.openConversation = function (cid) {
-  const convo = conversations.get(cid);
-  if (!convo) return;
+window.openConversation = function (cid, otherInfo) {
+  // otherInfo can be passed directly from startConversationWith so we don't
+  // depend on the conversations Map, which may not have the new doc yet
+  // (the onSnapshot fires asynchronously after setDoc completes).
+  let resolved = otherInfo;
+  if (!resolved) {
+    const convo = conversations.get(cid);
+    if (!convo) return;
+    const otherUid = convo.participants.find(p => p !== currentUser.uid);
+    const other    = convo.participantInfo?.[otherUid] || {};
+    resolved = {
+      fullName: other.fullName || 'Student',
+      nickname: other.nickname || null,
+      role:     other.role     || 'student',
+      photoURL: other.photoURL || null
+    };
+  }
 
   activeConversationId = cid;
   activeDeliveryChatId = null;
   showThreadPane();
 
-  const otherUid = convo.participants.find(p => p !== currentUser.uid);
-  const other = convo.participantInfo?.[otherUid] || { fullName: 'Student' };
-  const otherName = other.nickname || other.fullName || 'Student';
+  const otherName = resolved.nickname || resolved.fullName || 'Student';
 
   document.getElementById('deliveryOrderBar').innerHTML = '';
   document.getElementById('threadHeader').innerHTML = `
     <button class="btn-icon relay-thread-back" onclick="closeThread()">${backArrowSvg}</button>
-    <div class="conv-avatar">${avatarInner(otherName, other.photoURL)}</div>
+    <div class="conv-avatar">${avatarInner(otherName, resolved.photoURL)}</div>
     <div style="flex:1;min-width:0">
       <div class="font-semibold" style="font-size:0.94rem">${escapeHtml(otherName)}</div>
-      <div class="text-xs text-muted">${other.role === 'runner' ? '🏃 Runner' : '🎓 Student'}</div>
+      <div class="text-xs text-muted">${resolved.role === 'runner' ? '🏃 Runner' : '🎓 Student'}</div>
     </div>
   `;
 
