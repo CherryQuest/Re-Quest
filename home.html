@@ -199,6 +199,19 @@
     .badge-yellow { background: #fef3c7; color: #92400e; }
     .badge-red    { background: #fee2e2; color: #991b1b; }
     .badge-blue   { background: #dbeafe; color: #1e40af; }
+    /* Special, manually-granted badges — rank above the regular role
+       badges (admin/runner/student) and can stack alongside them. */
+    .badge-developer {
+      background: #dc2626; color: #fff;
+    }
+    .badge-founder {
+      background: #ffffff; color: #111827;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 6px rgba(255,255,255,.5), inset 0 0 0 1px rgba(255,255,255,.6);
+    }
+    /* Lets a person carry more than one badge at once — wraps so it
+       never breaks the row it's sitting in on a narrow screen. */
+    .badge-stack { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 
     /* ─── DIVIDER ─────────────────────────────────────────── */
     .divider {
@@ -1192,6 +1205,41 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- ══════════════════════════════════════════
+     USERS DIRECTORY MODAL — opens from 👥 button
+     Shows all campus users with nicknames & badges.
+     Defined globally so it works from any page tab.
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="usersDirModal" onclick="closeUsersDirIfBg(event)">
+  <div class="modal-box" onclick="event.stopPropagation()"
+       style="max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+
+    <!-- Header -->
+    <div style="padding:16px 20px 0;flex-shrink:0">
+      <div class="modal-handle"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 14px">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem">Campus Directory</div>
+          <div class="text-xs text-muted" id="usersDirCount" style="margin-top:2px">Loading…</div>
+        </div>
+        <button onclick="closeUsersDir()"
+                style="width:32px;height:32px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0">✕</button>
+      </div>
+      <!-- Search -->
+      <div class="search-input-wrap" style="margin-bottom:14px">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="usersDirSearch"
+               placeholder="Search by name or nickname…"
+               oninput="filterUsersDir(this.value)" />
+      </div>
+    </div>
+
+    <!-- Scrollable results -->
+    <div id="usersDirResults"
+         style="overflow-y:auto;padding:0 20px 28px;flex:1;min-height:0"></div>
+  </div>
+</div>
+
 <!-- ──────────────────────────────────────────────
      RUNNER SIGN-UP FAB — floating bubble, top right
 ────────────────────────────────────────────── -->
@@ -1302,16 +1350,6 @@
       </div>
     </div>
 
-    <div style="margin-bottom:20px">
-      <div style="font-size:0.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Find Someone to Message</div>
-      <div class="search-input-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="navUserSearchInput" placeholder="Search by name…"
-               oninput="handleUserSearch(event)" onfocus="ensureUserSearchLoaded()" />
-      </div>
-      <div id="navUserSearchResults" style="margin-top:10px"></div>
-    </div>
-
     <a class="topnav-nav-link repost" href="repost.html">📌 Re:Post — Freedom Wall <span style="margin-left:auto;opacity:.6;font-size:.8rem">↗</span></a>
     <a class="topnav-nav-link" href="relay.html">💬 Re:Lay — Messages <span style="margin-left:auto;opacity:.6;font-size:.8rem">↗</span></a>
     <a class="topnav-nav-link" href="runner.html">🏃 Runner Portal <span style="margin-left:auto;opacity:.6;font-size:.8rem">↗</span></a>
@@ -1335,6 +1373,7 @@
         <div class="cart-count" id="cartCount">0</div>
       </button>
       <a class="btn-icon" href="relay.html" title="Messages">💬</a>
+      <button class="btn-icon" onclick="openUsersModal()" title="Campus Directory" style="font-size:1rem">👥</button>
       <div class="avatar" id="homeAvatar" onclick="toggleProfile()" title="My Account">?</div>
     </div>
   </nav>
@@ -1539,6 +1578,7 @@
     <div class="topnav-logo">
       <span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span>
     </div>
+    <button class="btn-icon" onclick="openUsersModal()" title="Campus Directory" style="font-size:1rem">👥</button>
   </nav>
 
   <div class="page-body sos-page-body">
@@ -2373,6 +2413,37 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// `u.badges` is a small array of special, manually-granted tags
+// (e.g. ['founder', 'developer']) that sit on TOP of the normal
+// admin/runner/student role — a person can have both a special
+// badge and their regular role badge at once, side by side.
+function getUserBadges(u) {
+  const special = u.badges || [];
+  const list = [];
+  if (special.includes('founder'))   list.push({ cls: 'badge-founder',   text: '✨ Founder' });
+  if (special.includes('developer')) list.push({ cls: 'badge-developer', text: '🛠️ Developer' });
+  if (u.role === 'admin')            list.push({ cls: 'badge-admin',     text: '👑 Admin' });
+  else if (u.role === 'runner')      list.push({ cls: 'badge-blue',      text: '🏃 Runner' });
+  if (list.length === 0)             list.push({ cls: 'badge-gray',      text: '🎓 Student' });
+  return list;
+}
+function badgeStackHtml(u, extraStyle = '') {
+  return `<div class="badge-stack" style="${extraStyle}">${
+    getUserBadges(u).map(b => `<span class="badge ${b.cls}">${b.text}</span>`).join('')
+  }</div>`;
+}
+
+// Lower number = more special = sorts closer to the top of any
+// people list. Founder > Developer > Admin > Runner > Student.
+function userRankWeight(u) {
+  const special = u.badges || [];
+  if (special.includes('founder'))   return 0;
+  if (special.includes('developer')) return 1;
+  if (u.role === 'admin')            return 2;
+  if (u.role === 'runner')           return 3;
+  return 4;
+}
+
 function initials(name) {
   return (name || '?').trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
@@ -2468,11 +2539,6 @@ window.toggleProfile = function () {
   const bio     = userProfile?.bio || '';
   const age     = calculateAge(userProfile?.birthdate);
   const isDark  = document.documentElement.getAttribute('data-theme') === 'dark';
-  const role    = (userProfile?.role || 'student').toLowerCase();
-  const isAdmin  = role === 'admin';
-  const isRunner = role === 'runner';
-  const badgeClass = isAdmin ? 'badge-admin' : isRunner ? 'badge-blue' : 'badge-gray';
-  const badgeText  = isAdmin ? '👑 Admin' : isRunner ? '🏃 Runner' : '🎓 Student';
 
   document.getElementById('profileModalContent').innerHTML = `
     <div class="profile-header">
@@ -2481,7 +2547,7 @@ window.toggleProfile = function () {
         <div class="profile-name" id="profileDisplayName">${escapeHtml(name)}</div>
         ${nickname ? `<div class="profile-real-name" id="profileRealName">@${escapeHtml(fullName)}</div>` : `<div class="profile-real-name hidden" id="profileRealName"></div>`}
         <div class="profile-sub">${escapeHtml(userProfile?.email || currentUser?.email || '')}</div>
-        <span class="badge ${badgeClass}" style="margin-top:6px">${badgeText}</span>
+        ${badgeStackHtml(userProfile || {}, 'margin-top:6px')}
       </div>
     </div>
     <div class="profile-info-list">
@@ -2652,10 +2718,6 @@ function renderNavProfileCard() {
   const fullName    = userProfile?.fullName || currentUser?.displayName || 'Student';
   const nickname    = userProfile?.nickname || '';
   const displayName = nickname || fullName;
-  const isAdmin     = userProfile?.role === 'admin';
-  const isRunner    = userProfile?.role === 'runner';
-  const badgeClass  = isAdmin ? 'badge-admin' : isRunner ? 'badge-blue' : 'badge-gray';
-  const badgeText   = isAdmin ? '👑 Admin' : isRunner ? '🏃 Runner' : '🎓 Student';
 
   el.innerHTML = `
     <div class="flex items-center gap-3" style="margin-bottom:14px">
@@ -2664,7 +2726,7 @@ function renderNavProfileCard() {
         <div class="profile-name" style="font-size:0.95rem">${escapeHtml(displayName)}</div>
         ${nickname ? `<div class="profile-real-name">@${escapeHtml(fullName)}</div>` : ''}
         <div class="profile-sub">${escapeHtml(userProfile?.email || currentUser?.email || '')}</div>
-        <span class="badge ${badgeClass}" style="margin-top:6px">${badgeText}</span>
+        ${badgeStackHtml(userProfile || {}, 'margin-top:6px')}
       </div>
     </div>
     <div class="profile-info-list">
@@ -2684,62 +2746,101 @@ window.closeNavPanel = function (e) {
   }
 };
 
-/* ── Side panel: "Find Someone to Message" ─────────────────
-   Same search Re:Lay uses (live cache of the `users` collection,
-   filtered client-side as the user types). Lazy-loaded on first
-   focus so it's not an extra Firestore read on every page load.
-   Home has no chat pane of its own, so a result's button just
-   sends the person to Re:Lay to actually start the conversation. */
+/* ── Campus Directory — Users modal ─────────────────────
+   Lazy-loads the full users collection once on first open,
+   then filters client-side as the user types. Result cards
+   link straight to Re:Lay so a conversation can be started. */
 let allUsersCache    = [];
 let userSearchLoaded = false;
+
+window.openUsersDir = function () {
+  ensureUserSearchLoaded();
+  document.getElementById('usersDirModal').classList.add('open');
+  setTimeout(() => document.getElementById('usersDirSearch')?.focus(), 120);
+};
+// Alias so both the topnav button and any other caller work.
+window.openUsersModal = window.openUsersDir;
+
+window.closeUsersDir = function () {
+  document.getElementById('usersDirModal').classList.remove('open');
+};
+window.closeUsersModal  = window.closeUsersDir;
+window.closeUsersDirIfBg = function (e) {
+  if (e.target === document.getElementById('usersDirModal')) closeUsersDir();
+};
+
+window.filterUsersDir = function (val) {
+  renderUserResults(val);
+};
 
 window.ensureUserSearchLoaded = function () {
   if (userSearchLoaded) return;
   userSearchLoaded = true;
+  const resultsEl = document.getElementById('usersDirResults');
+  if (resultsEl) resultsEl.innerHTML = `<div class="text-sm text-muted text-center" style="padding:24px 0">Loading…</div>`;
   onSnapshot(query(collection(db, 'users'), limit(500)), (snap) => {
     allUsersCache = snap.docs
       .map(d => ({ uid: d.id, ...d.data() }))
       .filter(u => u.uid !== currentUser?.uid && u.fullName);
+    renderUserResults(document.getElementById('usersDirSearch')?.value || '');
   }, (err) => console.warn('User search listener error:', err));
 };
 
-window.handleUserSearch = function (e) {
-  const q = e.target.value.trim().toLowerCase();
-  const resultsEl = document.getElementById('navUserSearchResults');
-  if (!q) { resultsEl.innerHTML = ''; return; }
+// Empty query → the full roster (everyone, badges + nicknames, A-Z).
+// Non-empty query → filtered to name/nickname matches.
+function renderUserResults(rawQuery) {
+  const resultsEl = document.getElementById('usersDirResults');
+  if (!resultsEl) return;
+  const q = rawQuery.trim().toLowerCase();
 
-  const matches = allUsersCache
-    .filter(u => (u.fullName || '').toLowerCase().includes(q) ||
-                 (u.nickname || '').toLowerCase().includes(q))
-    .slice(0, 20);
+  let list;
+  if (!q) {
+    list = [...allUsersCache].sort((a, b) => {
+      const rankDiff = userRankWeight(a) - userRankWeight(b);
+      if (rankDiff !== 0) return rankDiff;
+      return (a.nickname || a.fullName || '').localeCompare(b.nickname || b.fullName || '');
+    });
+  } else {
+    list = allUsersCache
+      .filter(u => (u.fullName || '').toLowerCase().includes(q) ||
+                   (u.nickname || '').toLowerCase().includes(q))
+      .sort((a, b) => userRankWeight(a) - userRankWeight(b))
+      .slice(0, 30);
+  }
 
-  if (matches.length === 0) {
-    resultsEl.innerHTML = `<div class="text-sm text-muted text-center" style="padding:14px 0">No one found</div>`;
+  // Update the subtitle count
+  const countEl = document.getElementById('usersDirCount');
+  if (countEl) {
+    countEl.textContent = q
+      ? `${list.length} result${list.length === 1 ? '' : 's'}`
+      : `${allUsersCache.length} member${allUsersCache.length === 1 ? '' : 's'} · A–Z`;
+  }
+
+  if (list.length === 0) {
+    resultsEl.innerHTML = `<div class="text-sm text-muted text-center" style="padding:28px 0">${q ? 'Nobody matched that name.' : 'No other users yet.'}</div>`;
     return;
   }
 
-  resultsEl.innerHTML = matches.map(u => {
-    const isAdmin     = u.role === 'admin';
-    const isRunner    = u.role === 'runner';
-    const badgeClass  = isAdmin ? 'badge-admin' : isRunner ? 'badge-blue' : 'badge-gray';
-    const badgeText   = isAdmin ? '👑 Admin' : isRunner ? 'Runner' : 'Student';
+  resultsEl.innerHTML = list.map(u => {
     const displayName = u.nickname || u.fullName;
     const metaLine    = [u.course, u.section, u.yearLevel].filter(Boolean).join(' · ');
     return `
-      <div class="search-result-card">
+      <div class="search-result-card" style="margin-bottom:10px">
         <div class="flex items-center gap-3">
-          <div class="profile-avatar-lg" style="width:42px;height:42px;font-size:0.95rem">${avatarInner(displayName, u.photoURL)}</div>
+          <div class="profile-avatar-lg" style="width:44px;height:44px;font-size:1rem;flex-shrink:0">${avatarInner(displayName, u.photoURL)}</div>
           <div style="flex:1;min-width:0">
-            <div class="profile-name" style="font-size:0.9rem">${escapeHtml(displayName)}</div>
+            <div class="profile-name" style="font-size:0.92rem">${escapeHtml(displayName)}</div>
             ${u.nickname ? `<div class="profile-real-name">@${escapeHtml(u.fullName)}</div>` : ''}
             ${metaLine ? `<div class="profile-sub">${escapeHtml(metaLine)}</div>` : ''}
+            ${u.bio ? `<div class="text-xs text-muted" style="margin-top:3px;line-height:1.4">${escapeHtml(u.bio)}</div>` : ''}
           </div>
-          <span class="badge ${badgeClass}">${badgeText}</span>
+          ${badgeStackHtml(u, 'flex-shrink:0')}
         </div>
-        <a class="btn btn-primary btn-sm w-full mt-3" href="relay.html" style="display:block;text-align:center;text-decoration:none">💬 Message in Re:Lay</a>
+        <a class="btn btn-primary btn-sm w-full mt-3" href="relay.html"
+           style="display:block;text-align:center;text-decoration:none">💬 Message in Re:Lay</a>
       </div>`;
   }).join('');
-};
+}
 
 // Triggered by picking a file in the hidden <input type="file"> behind
 // the "+" button on the avatar. Resizes the image client-side, then
