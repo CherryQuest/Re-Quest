@@ -148,6 +148,7 @@
   .badge-orange { background: var(--orange-light); color: var(--orange); }
   .badge-gray   { background: var(--bg); color: var(--muted); }
   .badge-blue   { background: #dbeafe; color: #1e40af; }
+  .badge-admin  { background: #fff3cd; color: #92400e; }
   .badge-green  { background: #d1fae5; color: #065f46; }
 
   /* ─── PROFILE MODAL PIECES (copied from home.html, reused
@@ -221,30 +222,6 @@
   .loading-fill { height: 100%; width: 0%; background: var(--orange); border-radius: 999px; animation: load 1.2s ease forwards; }
   @keyframes load { to { width: 100%; } }
   .loading-sub { color: rgba(255,255,255,.4); font-size: 0.8rem; }
-
-  /* ─── USERS LIST PANEL ──────────────────────────────── */
-  .badge-admin  { background: #fff3cd; color: #92400e; }
-  .users-list-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 11px 0; border-bottom: 1px solid var(--border);
-    cursor: pointer; transition: background .12s;
-  }
-  .users-list-row:last-child { border-bottom: none; }
-  .users-list-row:hover { background: var(--bg); border-radius: var(--radius-sm); padding-left: 6px; }
-  .users-list-avatar {
-    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-    background: linear-gradient(135deg, var(--orange), #ff8c42);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-weight: 700; font-size: 0.85rem; overflow: hidden;
-  }
-  .users-list-info { flex: 1; min-width: 0; }
-  .users-list-name { font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .users-list-sub  { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
-  .users-list-badges { display: flex; gap: 4px; flex-wrap: wrap; }
-  #usersListContainer { max-height: 420px; overflow-y: auto; margin-top: 10px; }
-  .users-section-back { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; padding: 4px 0 12px; }
-  .users-section-back:hover { color: var(--text); }
-  .users-count-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
 
   /* ─── TOAST (copied) ──────────────────────────────────── */
   .toast {
@@ -508,7 +485,7 @@
   </div>
 
   <!-- 3 & 4. NAVIGATION -->
-  <div class="relay-panel-section" id="panelNavSection">
+  <div class="relay-panel-section">
     <div class="relay-panel-label">Go To</div>
     <a class="nav-link-btn repost" href="repost.html">
       📌 Re:Post — Freedom Wall
@@ -520,17 +497,6 @@
     <div class="nav-link-btn" id="navDelivery" onclick="switchSection('delivery'); closePanel();">
       🛵 Delivery Chats
     </div>
-    <div class="nav-link-btn" onclick="showUsersPanel()">
-      👥 All Users
-    </div>
-  </div>
-
-  <!-- USERS LIST SECTION (hidden by default) -->
-  <div class="relay-panel-section hidden" id="panelUsersSection">
-    <div class="users-section-back" onclick="hideUsersPanel()">← Back</div>
-    <div class="relay-panel-label">All Users</div>
-    <div class="users-count-label" id="usersCountLabel">Loading…</div>
-    <div id="usersListContainer"></div>
   </div>
 
   <button class="btn btn-danger w-full" onclick="handleLogout()" style="margin-top:auto">🚪 Sign Out</button>
@@ -773,7 +739,10 @@ function renderMyProfileCard() {
   const fullName    = userProfile?.fullName || currentUser?.displayName || 'Student';
   const nickname    = userProfile?.nickname || '';
   const displayName = nickname || fullName;
+  const isAdmin  = userProfile?.role === 'admin';
   const isRunner = userProfile?.role === 'runner';
+  const badgeClass = isAdmin ? 'badge-admin' : isRunner ? 'badge-blue' : 'badge-gray';
+  const badgeText  = isAdmin ? '👑 Admin' : isRunner ? '🏃 Runner' : '🎓 Student';
 
   el.innerHTML = `
     <div class="flex items-center gap-3" style="margin-bottom:14px">
@@ -782,7 +751,7 @@ function renderMyProfileCard() {
         <div class="profile-name">${escapeHtml(displayName)}</div>
         ${nickname ? `<div class="profile-real-name">@${escapeHtml(fullName)}</div>` : ''}
         <div class="profile-sub">${escapeHtml(userProfile?.email || currentUser?.email || '')}</div>
-        <span class="badge ${isRunner ? 'badge-blue' : 'badge-gray'}" style="margin-top:6px">${isRunner ? '🏃 Runner' : '🎓 Student'}</span>
+        <span class="badge ${badgeClass}" style="margin-top:6px">${badgeText}</span>
       </div>
     </div>
     <div class="profile-info-list">
@@ -888,7 +857,10 @@ window.handleUserSearch = function (e) {
   }
 
   resultsEl.innerHTML = matches.map(u => {
-    const isRunner   = u.role === 'runner';
+    const isAdmin   = u.role === 'admin';
+    const isRunner  = u.role === 'runner';
+    const bc = isAdmin ? 'badge-admin' : isRunner ? 'badge-blue' : 'badge-gray';
+    const bt = isAdmin ? '👑 Admin' : isRunner ? 'Runner' : 'Student';
     const displayName = u.nickname || u.fullName;
     const metaLine   = [u.course, u.section, u.yearLevel].filter(Boolean).join(' · ');
     return `
@@ -900,7 +872,7 @@ window.handleUserSearch = function (e) {
             ${u.nickname ? `<div class="profile-real-name">@${escapeHtml(u.fullName)}</div>` : ''}
             ${metaLine ? `<div class="profile-sub">${escapeHtml(metaLine)}</div>` : ''}
           </div>
-          <span class="badge ${isRunner ? 'badge-blue' : 'badge-gray'}">${isRunner ? 'Runner' : 'Student'}</span>
+          <span class="badge ${bc}">${bt}</span>
         </div>
         ${u.bio ? `<div class="text-sm text-muted mt-2" style="line-height:1.4">${escapeHtml(u.bio)}</div>` : ''}
         <button class="btn btn-primary btn-sm w-full mt-3" onclick="startConversationWith('${u.uid}')">💬 Message</button>
@@ -944,7 +916,10 @@ window.handleInlineSearch = function (e) {
   }
 
   resultsEl.innerHTML = matches.map(u => {
+    const isAdmin     = u.role === 'admin';
     const isRunner    = u.role === 'runner';
+    const bc = isAdmin ? 'badge-admin' : isRunner ? 'badge-blue' : 'badge-gray';
+    const bt = isAdmin ? '👑' : isRunner ? 'Runner' : 'Student';
     const displayName = u.nickname || u.fullName;
     const metaLine    = [u.course, u.section, u.yearLevel].filter(Boolean).join(' · ') || u.bio || 'Tap to message';
     return `
@@ -953,7 +928,7 @@ window.handleInlineSearch = function (e) {
         <div class="conv-info">
           <div class="conv-name-row">
             <span class="conv-name">${escapeHtml(displayName)}</span>
-            <span class="badge ${isRunner ? 'badge-blue' : 'badge-gray'}" style="font-size:0.6rem">${isRunner ? 'Runner' : 'Student'}</span>
+            <span class="badge ${bc}" style="font-size:0.6rem">${bt}</span>
           </div>
           <div class="conv-preview-row">
             <span class="conv-preview">${u.nickname ? `@${escapeHtml(u.fullName)}` : escapeHtml(metaLine)}</span>
@@ -1501,85 +1476,6 @@ window.switchSection = function (section) {
 /* ═══════════════════════════════════════════════════════════
    LOGOUT
 ══════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════
-   USERS LIST PANEL — shows all users with role badges
-   Roles come straight from users/{uid}.role in Firestore.
-   Admin sets role there; badges update live on next panel open.
-══════════════════════════════════════════════════════════ */
-window.showUsersPanel = function () {
-  document.getElementById('panelNavSection').classList.add('hidden');
-  document.getElementById('panelUsersSection').classList.remove('hidden');
-  renderUsersList();
-};
-
-window.hideUsersPanel = function () {
-  document.getElementById('panelUsersSection').classList.add('hidden');
-  document.getElementById('panelNavSection').classList.remove('hidden');
-};
-
-async function renderUsersList() {
-  const container = document.getElementById('usersListContainer');
-  const countLabel = document.getElementById('usersCountLabel');
-  container.innerHTML = `<div class="text-sm text-muted" style="padding:16px 0;text-align:center">Loading…</div>`;
-
-  // Load fresh from Firestore every time so roles are up-to-date
-  try {
-    const snap = await getDocs(collection(db, 'users'));
-    const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }))
-      .sort((a, b) => {
-        // Sort: admins first, then runners, then students
-        const order = { admin: 0, runner: 1, student: 2 };
-        const ra = order[a.role] ?? 2;
-        const rb = order[b.role] ?? 2;
-        if (ra !== rb) return ra - rb;
-        return (a.fullName || '').localeCompare(b.fullName || '');
-      });
-
-    countLabel.textContent = `${users.length} user${users.length !== 1 ? 's' : ''}`;
-
-    if (users.length === 0) {
-      container.innerHTML = `<div class="text-sm text-muted" style="padding:16px 0;text-align:center">No users found.</div>`;
-      return;
-    }
-
-    container.innerHTML = users.map(u => {
-      const name    = u.fullName || u.nickname || u.email || 'Unknown';
-      const role    = (u.role || 'student').toLowerCase();
-      const isAdmin  = role === 'admin';
-      const isRunner = role === 'runner';
-
-      let badgesHTML = '';
-      if (isAdmin)  badgesHTML += `<span class="badge badge-admin">👑 Admin</span>`;
-      if (isRunner) badgesHTML += `<span class="badge badge-blue">🏃 Runner</span>`;
-      if (!isAdmin && !isRunner) badgesHTML += `<span class="badge badge-gray">🎓 Student</span>`;
-
-      const sub = [u.course, u.yearLevel ? `Year ${u.yearLevel}` : '', u.section].filter(Boolean).join(' · ');
-
-      return `
-        <div class="users-list-row" onclick="startDMFromUsersList('${u.uid}')">
-          <div class="users-list-avatar">${avatarInner(name, u.photoURL)}</div>
-          <div class="users-list-info">
-            <div class="users-list-name">${escapeHtml(name)}</div>
-            ${sub ? `<div class="users-list-sub">${escapeHtml(sub)}</div>` : ''}
-            <div class="users-list-badges" style="margin-top:4px">${badgesHTML}</div>
-          </div>
-        </div>`;
-    }).join('');
-
-  } catch (err) {
-    console.error(err);
-    container.innerHTML = `<div class="text-sm text-muted" style="padding:16px 0;text-align:center">Could not load users.</div>`;
-    countLabel.textContent = '';
-  }
-}
-
-window.startDMFromUsersList = function (uid) {
-  if (uid === currentUser.uid) { showToast("That's you!", ''); return; }
-  hideUsersPanel();
-  closePanel();
-  startConversationWith(uid);
-};
-
 window.handleLogout = async function () {
   try {
     await signOut(auth);

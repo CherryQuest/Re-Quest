@@ -379,13 +379,22 @@ function buildCard(p) {
     rmBtn = `<button class="rm-post-btn" onclick="event.stopPropagation();removePost('${p.id}',this)" title="${title}">${label}</button>`;
   }
 
+  const role    = (p.authorRole || 'student').toLowerCase();
+  const isAdminPost  = role === 'admin';
+  const isRunnerPost = role === 'runner';
+  const badgeHtml = isAdminPost
+    ? `<span class="badge" style="background:#fff3cd;color:#92400e;font-size:0.65rem;padding:2px 7px;margin-left:5px">👑 Admin</span>`
+    : isRunnerPost
+    ? `<span class="badge" style="background:#dbeafe;color:#1e40af;font-size:0.65rem;padding:2px 7px;margin-left:5px">🏃 Runner</span>`
+    : '';
+
   return `
     <div class="card" data-id="${p.id}" style="background:${bg};color:${tx}">
       <div class="pin" style="background:${acc}"></div>
       <div class="card-accent" style="background:${acc}"></div>
       ${img}
       <div class="card-body">
-        <div class="card-author">📌 ${aut}</div>
+        <div class="card-author">📌 ${aut}${badgeHtml}</div>
         ${txt ? `<div class="card-text">${txt}</div>` : ""}
         <div class="card-foot">
           ${rmBtn}
@@ -497,11 +506,12 @@ async function submitPost() {
   btn.textContent = "Posting…"; btn.disabled = true;
   try {
     await addDoc(collection(db, "repost_posts"), {
-      name:      name    || null,
-      text:      text    || null,
-      image:     imgData || null,
-      uid:       currentUser?.uid || null,
-      createdAt: Timestamp.now()
+      name:       name    || null,
+      text:       text    || null,
+      image:      imgData || null,
+      uid:        currentUser?.uid || null,
+      authorRole: userProfile?.role || 'student',
+      createdAt:  Timestamp.now()
     });
     closeModal();
     showToast("📌 Pinned to the wall!");

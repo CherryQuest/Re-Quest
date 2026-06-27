@@ -537,7 +537,7 @@
       <div class="auth-logo"><span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span></div>
     </div>
     <div class="runner-id">
-      <span class="runner-badge">Runner</span>
+      <span class="runner-badge" id="runnerRoleBadge">Runner</span>
       <span class="runner-name" id="runnerNameLabel">—</span>
       <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="handleLogout()">Log Out</button>
     </div>
@@ -698,6 +698,8 @@ onAuthStateChanged(auth, async (user) => {
 
     if (runnerProfile.role === 'runner' || runnerProfile.role === 'admin') {
       document.getElementById('runnerNameLabel').textContent = runnerProfile.fullName || user.email;
+      const badge = document.getElementById('runnerRoleBadge');
+      if (runnerProfile.role === 'admin') { badge.textContent = '👑 Admin'; badge.style.background = '#fff3cd'; badge.style.color = '#92400e'; }
       goToPage('pageDashboard');
       subscribeOrders();
     } else {

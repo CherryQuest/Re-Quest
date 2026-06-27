@@ -183,7 +183,23 @@
       border-radius: 999px; font-size: 0.72rem; font-weight: 700;
       letter-spacing: .3px; text-transform: uppercase;
     }
-    .badge-orange { background: var(--orange-light); color: var(--orange); }
+    .badge-admin  { background: #fff3cd; color: #92400e; }
+    .topnav-repost-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 11px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;
+      background: rgba(255,71,87,.1); color: #ff4757; transition: background .15s;
+    }
+    .topnav-repost-btn:hover { background: rgba(255,71,87,.18); }
+    .topnav-nav-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-radius: var(--radius-sm);
+      font-size: 0.88rem; font-weight: 600; color: var(--text);
+      border: 1.5px solid var(--border); background: var(--surface);
+      margin-bottom: 8px; transition: all .15s; text-decoration: none;
+    }
+    .topnav-nav-link:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
+    .topnav-nav-link.repost { background: rgba(255,71,87,.07); border-color: rgba(255,71,87,.3); color: #ff4757; }
+    .topnav-nav-link.repost:hover { background: rgba(255,71,87,.15); }
     .badge-green  { background: #d1fae5; color: #065f46; }
     .badge-gray   { background: var(--bg); color: var(--muted); }
     .badge-yellow { background: #fef3c7; color: #92400e; }
@@ -1262,6 +1278,7 @@
         🛒 Cart
         <div class="cart-count" id="cartCount">0</div>
       </button>
+      <a class="topnav-repost-btn" href="repost.html" title="Re:Post — Freedom Wall">📌 Re:Post</a>
       <a class="btn-icon" href="relay.html" title="Messages">💬</a>
       <div class="avatar" id="homeAvatar" onclick="toggleProfile()" title="My Account">?</div>
     </div>
@@ -2392,10 +2409,15 @@ function avatarWrapHtml(name) {
 window.toggleProfile = function () {
   const fullName = userProfile?.fullName || currentUser?.displayName || 'Student';
   const nickname = userProfile?.nickname || '';
-  const name     = nickname || fullName;   // what the avatar + header show
+  const name     = nickname || fullName;
   const bio     = userProfile?.bio || '';
   const age     = calculateAge(userProfile?.birthdate);
   const isDark  = document.documentElement.getAttribute('data-theme') === 'dark';
+  const role    = (userProfile?.role || 'student').toLowerCase();
+  const isAdmin  = role === 'admin';
+  const isRunner = role === 'runner';
+  const badgeClass = isAdmin ? 'badge-admin' : isRunner ? 'badge-blue' : 'badge-gray';
+  const badgeText  = isAdmin ? '👑 Admin' : isRunner ? '🏃 Runner' : '🎓 Student';
 
   document.getElementById('profileModalContent').innerHTML = `
     <div class="profile-header">
@@ -2404,6 +2426,7 @@ window.toggleProfile = function () {
         <div class="profile-name" id="profileDisplayName">${escapeHtml(name)}</div>
         ${nickname ? `<div class="profile-real-name" id="profileRealName">@${escapeHtml(fullName)}</div>` : `<div class="profile-real-name hidden" id="profileRealName"></div>`}
         <div class="profile-sub">${escapeHtml(userProfile?.email || currentUser?.email || '')}</div>
+        <span class="badge ${badgeClass}" style="margin-top:6px">${badgeText}</span>
       </div>
     </div>
     <div class="profile-info-list">
@@ -2443,6 +2466,13 @@ window.toggleProfile = function () {
         <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" ${isDark ? 'checked' : ''} />
         <span class="slider"></span>
       </label>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Navigate</div>
+      <a class="topnav-nav-link repost" href="repost.html">📌 Re:Post — Freedom Wall <span style="margin-left:auto;opacity:.6;font-size:.8rem">↗</span></a>
+      <a class="topnav-nav-link" href="relay.html">💬 Re:Lay — Messages <span style="margin-left:auto;opacity:.6;font-size:.8rem">↗</span></a>
+      <a class="topnav-nav-link" href="runner.html">🏃 Runner Portal <span style="margin-left:auto;opacity:.6;font-size:.8rem">↗</span></a>
     </div>
 
     <button class="btn btn-danger w-full" onclick="handleLogout()" style="border-radius:var(--radius-sm);padding:14px">
