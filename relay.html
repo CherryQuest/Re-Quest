@@ -1575,27 +1575,12 @@ async function renderUsersList() {
 
 window.startDMFromUsersList = function (uid) {
   if (uid === currentUser.uid) { showToast("That's you!", ''); return; }
-  // Reuse allUsersCache or fetch the user if not cached
-  let u = allUsersCache.find(x => x.uid === uid);
-  if (!u) {
-    // Fetch and open
-    getDoc(doc(db, 'users', uid)).then(snap => {
-      if (snap.exists()) {
-        u = { uid: snap.id, ...snap.data() };
-        allUsersCache.push(u);
-        hideUsersPanel();
-        closePanel();
-        openOrCreateConversation(u);
-      }
-    });
-    return;
-  }
   hideUsersPanel();
   closePanel();
-  openOrCreateConversation(u);
+  startConversationWith(uid);
 };
 
- = async function () {
+window.handleLogout = async function () {
   try {
     await signOut(auth);
     window.location.replace('index.html');
