@@ -967,7 +967,15 @@ window.startConversationWith = async function (uid) {
     const cid = await getOrCreateConversation(otherUser);
     closePanel();
     switchSection('dm');
-    openConversation(cid);
+    // Pass otherUser info directly so openConversation doesn't have to look it
+    // up from the conversations Map — the onSnapshot fires async after setDoc,
+    // so the Map may not contain the new doc yet when we get here.
+    openConversation(cid, {
+      fullName: otherUser.fullName,
+      nickname: otherUser.nickname || null,
+      role:     otherUser.role     || 'student',
+      photoURL: otherUser.photoURL || null
+    });
   } catch (err) {
     console.error(err);
     showToast('Could not start that conversation', 'error');
@@ -1071,7 +1079,11 @@ window.openConversation = function (cid, otherInfo) {
 
 async function sendDirectMessage(cid, text) {
   const convo = conversations.get(cid);
-  const otherUid = convo.participants.find(p => p !== currentUser.uid);
+  // Fallback: conversation ID is 'uidA_uidB' (sorted), so we can derive
+  // the other UID directly if the Map entry hasn't arrived from onSnapshot yet.
+  const otherUid = convo
+    ? convo.participants.find(p => p !== currentUser.uid)
+    : cid.split('_').find(uid => uid !== currentUser.uid);
   const myName = userProfile?.nickname || userProfile?.fullName || currentUser.displayName || 'Student';
 
   await addDoc(collection(db, 'conversations', cid, 'directMessages'), {
