@@ -1697,7 +1697,7 @@
           <span class="val" id="fulfillDuration"></span>
         </div>
         <div class="fulfill-row hidden" id="fulfillRewardRow">
-          <span class="label">Reward</span>
+          <span class="label">Fee</span>
           <span class="val" id="fulfillReward" style="color:var(--orange)"></span>
         </div>
       </div>
@@ -1743,8 +1743,10 @@
         <input type="text" class="form-input" id="sosDuration" placeholder="e.g. Until 4:00 PM, 2 hours" required />
       </div>
       <div class="form-group">
-        <label class="form-label">Reward / Rental Fee <span class="text-muted" style="font-weight:400">(optional)</span></label>
-        <input type="number" min="0" class="form-input" id="sosReward" placeholder="e.g. 50" />
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--orange-light);color:var(--orange-dark);padding:12px 14px;border-radius:var(--radius-sm);font-size:0.85rem;font-weight:700">
+          <span>🧧 Borrow Fee</span>
+          <span>₱20 flat</span>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary w-full btn-lg" style="margin-top:6px">Post to Board →</button>
     </form>
@@ -3788,7 +3790,7 @@ function renderSOSBoard() {
         ${req.contact ? `<div class="sos-row"><span class="sos-k">Contact:</span><span class="sos-v">${req.contact}</span></div>` : ''}
         ${req.fb ? `<div class="sos-row"><span class="sos-k">FB:</span><span class="sos-v">${req.fb}</span></div>` : ''}
         <div class="sos-row"><span class="sos-k">Duration:</span><span class="sos-v">${req.duration}</span></div>
-        ${req.reward ? `<div class="sos-row sos-reward"><span class="sos-k">Reward:</span><span class="sos-v">₱${req.reward}</span></div>` : ''}
+        ${req.reward ? `<div class="sos-row sos-reward"><span class="sos-k">Fee:</span><span class="sos-v">₱${req.reward}</span></div>` : ''}
       </div>
       <div class="sos-card-foot">
         <span class="sos-time">Posted ${timeAgo(req.postedAt)}</span>
@@ -3825,6 +3827,10 @@ window.closePostSOSModal = function (e) {
   }
 };
 
+// Flat fee for every borrow/SOS request — no longer something the
+// poster can set themselves, so this is the one place to change it.
+const SOS_FLAT_FEE = 20;
+
 window.submitSOS = async function(event) { 
   event.preventDefault();
 
@@ -3834,7 +3840,7 @@ window.submitSOS = async function(event) {
   const contact  = document.getElementById('sosContact').value.trim();
   const fb       = document.getElementById('sosFb').value.trim();
   const duration = document.getElementById('sosDuration').value.trim();
-  const reward   = document.getElementById('sosReward').value.trim();
+  const reward   = SOS_FLAT_FEE; // Flat fee, not user-set — see constant above.
 
   if (!item || !name || !location || !contact || !duration) {
     showToast('Please fill in all required fields', 'error');
