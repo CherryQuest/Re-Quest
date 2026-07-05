@@ -451,7 +451,7 @@
     .search-input {
       width: 100%; padding: 12px 14px 12px 42px;
       border: 1.5px solid var(--border); border-radius: var(--radius);
-      font-size: 0.9rem; background: var(--bg);
+      font-size: 0.9rem; background: var(--bg); color: var(--text);
       transition: all .15s;
     }
     .search-input:focus { outline: none; border-color: var(--orange); background: var(--surface); box-shadow: 0 0 0 3px rgba(252,76,2,.1); }
@@ -950,7 +950,7 @@
     ══════════════════════════════════════════════════════════ */
     .loading-screen {
       position: fixed; inset: 0; z-index: 9999;
-      background: #1a1a2e; display: flex; flex-direction: column;
+      background: #0f0f1a; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 20px;
     }
     .loading-video-wrap {
@@ -1156,6 +1156,47 @@
     }
     .sos-accept-btn:hover { background: var(--orange-dark); transform: translateY(-1px); }
 
+    /* Cancel button — shown on the poster's own card instead of Accept */
+    .sos-cancel-btn {
+      width: 100%; background: transparent; color: #dc2626;
+      border: 1.5px solid #dc2626; font-weight: 700; font-size: 0.78rem;
+      padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: all .15s;
+    }
+    .sos-cancel-btn:hover { background: #dc2626; color: #fff; }
+
+    /* "Your Post" pill on the poster's own open cards */
+    .sos-own-tag {
+      display: inline-block; font-size: 0.58rem; font-weight: 800;
+      background: var(--orange); color: #fff;
+      padding: 2px 7px; border-radius: 999px; letter-spacing: .3px;
+      margin-left: 5px; vertical-align: middle;
+    }
+
+    /* Accepted notification banner shown to the poster above the board */
+    .sos-accepted-banner {
+      background: linear-gradient(135deg,#d1fae5,#a7f3d0);
+      border: 1.5px solid #6ee7b7; border-radius: var(--radius);
+      padding: 14px 16px; margin-bottom: 16px; display: flex;
+      flex-direction: column; gap: 10px;
+    }
+    [data-theme="dark"] .sos-accepted-banner {
+      background: linear-gradient(135deg,#064e3b,#065f46); border-color: #059669;
+    }
+    .sos-accepted-banner-title {
+      font-weight: 800; font-size: 0.88rem; color: #065f46; margin-bottom: 3px;
+    }
+    [data-theme="dark"] .sos-accepted-banner-title { color: #6ee7b7; }
+    .sos-accepted-banner-detail {
+      font-size: 0.78rem; color: #047857; line-height: 1.6;
+    }
+    [data-theme="dark"] .sos-accepted-banner-detail { color: #a7f3d0; }
+    .sos-accepted-dismiss-btn {
+      margin-top: 4px; font-size: 0.78rem; font-weight: 700; padding: 8px 16px;
+      background: #059669; color: #fff; border-radius: 999px; border: none;
+      cursor: pointer; align-self: flex-start; transition: background .15s;
+    }
+    .sos-accepted-dismiss-btn:hover { background: #047857; }
+
     /* Empty state */
     .sos-empty { grid-column: 1 / -1; text-align: center; padding: 54px 18px; }
     .sos-empty-icon { font-size: 2.8rem; margin-bottom: 12px; }
@@ -1164,6 +1205,58 @@
 
     @media (min-width: 600px) { .sos-board { grid-template-columns: repeat(3, 1fr); } }
     @media (min-width: 900px) { .sos-board { grid-template-columns: repeat(4, 1fr); } }
+
+    /* ── RADAR VIEW ─────────────────────────────────────────── */
+    .radar-wrap {
+      display: none; position: relative;
+      width: 100%; max-width: 420px; margin: 0 auto;
+    }
+    .radar-wrap.active { display: block; }
+    .sos-board.hidden-for-radar { display: none; }
+    #radarCanvas {
+      width: 100%; height: auto; border-radius: 50%;
+      display: block; cursor: crosshair;
+    }
+    .radar-view-toggle {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;
+      border: 1.5px solid var(--border); background: var(--surface); color: var(--muted);
+      cursor: pointer; transition: all .15s; margin-left: auto;
+    }
+    .radar-view-toggle.radar-on {
+      background: #0a1a0a; border-color: #22c55e; color: #22c55e;
+    }
+    .radar-blip-popup {
+      position: absolute; bottom: calc(100% + 12px); left: 50%;
+      transform: translateX(-50%); background: #0a1a0a;
+      border: 1px solid #22c55e; border-radius: 12px;
+      padding: 12px 14px; min-width: 200px; max-width: 260px;
+      box-shadow: 0 0 20px rgba(34,197,94,.3); z-index: 50;
+      animation: blipPopIn .2s ease;
+    }
+    @keyframes blipPopIn { from { opacity:0; transform:translateX(-50%) scale(.9); } to { opacity:1; transform:translateX(-50%) scale(1); } }
+    .radar-blip-popup .bp-item { font-size:1rem; font-weight:800; color:#22c55e; margin-bottom:4px; }
+    .radar-blip-popup .bp-row { font-size:0.73rem; color:#a3e8b0; margin-bottom:2px; }
+    .radar-blip-popup .bp-accept {
+      width:100%; margin-top:10px; padding:8px; border-radius:8px;
+      background:#22c55e; color:#000; font-size:0.82rem; font-weight:700; border:none; cursor:pointer;
+    }
+    .radar-blip-popup .bp-close {
+      position:absolute; top:8px; right:10px; font-size:1rem; color:#22c55e;
+      background:none; border:none; cursor:pointer; line-height:1;
+    }
+    /* Building picker */
+    .building-picker {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px;
+    }
+    .building-btn {
+      padding: 9px 10px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border); background: var(--surface); color: var(--text);
+      font-size: 0.78rem; font-weight: 600; text-align: left; cursor: pointer;
+      transition: all .15s; display: flex; align-items: center; gap: 6px;
+    }
+    .building-btn:hover { border-color: var(--orange); color: var(--orange); }
+    .building-btn.selected { background: var(--orange); color: #fff; border-color: var(--orange); }
 
     /* ── Fulfillment page ──────────────────────────────────── */
     .fulfill-banner {
@@ -1633,6 +1726,16 @@
       <button class="sos-post-btn" onclick="openPostSOSModal()">+ Post SOS</button>
     </div>
 
+    <div style="display:flex;align-items:center;justify-content:flex-end;padding:0 0 10px">
+      <button class="radar-view-toggle" id="radarToggleBtn" onclick="toggleRadarView()">📡 Radar View</button>
+    </div>
+
+    <!-- RADAR CANVAS -->
+    <div class="radar-wrap" id="radarWrap">
+      <canvas id="radarCanvas" width="420" height="420"></canvas>
+      <!-- Blip popup appears here dynamically -->
+    </div>
+
     <div class="sos-board-frame">
       <div class="sos-board" id="sosBoard"></div>
     </div>
@@ -1731,8 +1834,21 @@
         <input type="text" class="form-input" id="sosName" placeholder="Juan Dela Cruz" required />
       </div>
       <div class="form-group">
-        <label class="form-label">Room / Location</label>
-        <input type="text" class="form-input" id="sosLocation" placeholder="e.g. CTC Room 304" required />
+        <label class="form-label">Building / Area <span style="color:var(--orange)">*</span></label>
+        <div class="building-picker" id="buildingPicker">
+          <button type="button" class="building-btn" data-id="lrc"        onclick="selectBuilding(this)">📚 LRC</button>
+          <button type="button" class="building-btn" data-id="college"    onclick="selectBuilding(this)">🏫 College Bldg</button>
+          <button type="button" class="building-btn" data-id="bellarmine" onclick="selectBuilding(this)">🏛️ Bellarmine</button>
+          <button type="button" class="building-btn" data-id="kostka"     onclick="selectBuilding(this)">🏢 Kostka Bldg</button>
+          <button type="button" class="building-btn" data-id="court"      onclick="selectBuilding(this)">🏀 Covered Court</button>
+          <button type="button" class="building-btn" data-id="jesuit"     onclick="selectBuilding(this)">⛪ Jesuit Residence</button>
+          <button type="button" class="building-btn" data-id="rosauro"    onclick="selectBuilding(this)">🏩 Rosauro Bldg</button>
+          <button type="button" class="building-btn" data-id="parking"    onclick="selectBuilding(this)">🅿️ Parking Lot</button>
+          <button type="button" class="building-btn" data-id="canteen"    onclick="selectBuilding(this)">🍱 Canteen</button>
+          <button type="button" class="building-btn" data-id="other"      onclick="selectBuilding(this)">📍 Other</button>
+        </div>
+        <input type="hidden" id="sosBuilding" />
+        <input type="text" class="form-input" id="sosLocation" placeholder="Specific room or floor (optional)" style="margin-top:8px" />
       </div>
       <div class="form-grid-2">
         <div class="form-group">
@@ -1972,10 +2088,12 @@ import {
   getFirestore,
   addDoc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   collection,
   query,
+  where,
   orderBy,
   limit,
   onSnapshot,
@@ -2021,6 +2139,9 @@ function isAdmin() { return userProfile?.role === 'admin'; }
 /* ── Borrow / SOS Board state ───────────────────────────── */
 let pendingAcceptId    = null; // id of the request waiting on the confirm dialog
 let currentFulfillment = null; // request shown on the fulfillment page
+// Posts the current user made that have been accepted — shown as a
+// banner on the board so they know who's helping them.
+let myAcceptedSOS = [];
 
 /* ── Receipt page: live status of the order just placed, so the
    Cancel button disappears the instant a runner accepts ───── */
@@ -2447,6 +2568,17 @@ onAuthStateChanged(auth, async (user) => {
   // Start watching every order so the My Orders page (and the dot in
   // the cart drawer) reflect this student's history and pending orders live
   subscribeToOrdersFeed();
+
+  // Watch for any of this student's SOS posts that have been accepted —
+  // the moment someone accepts, a banner appears on the board for the
+  // poster showing who accepted and how to contact them.
+  onSnapshot(
+    query(collection(db, 'sos_posts'), where('userId', '==', user.uid), where('status', '==', 'accepted')),
+    (snap) => {
+      myAcceptedSOS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderSOSBoard();
+    }
+  );
 
   // Hide loading screen
   setTimeout(() => {
@@ -3009,6 +3141,11 @@ window.handleLogout = async function () {
    PAGE NAVIGATION
 ══════════════════════════════════════════════════════════ */
 window.goToPage = function (id) {
+  // Stop radar if leaving the borrow page
+  if (id !== 'pageBorrow' && radarActive) {
+    stopRadar();
+    closeBlipPopup();
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.getElementById(id).querySelector('.page-body')?.scrollTo(0, 0);
@@ -3812,9 +3949,29 @@ function renderSOSBoard() {
   const board = document.getElementById('sosBoard');
   if (!board) return;
 
+  const uid  = currentUser?.uid;
   const open = SOS.filter(s => s.status === 'open').sort((a, b) => b.postedAt - a.postedAt);
 
-  if (open.length === 0) {
+  // ── Accepted banners (only visible to the original poster) ──────────
+  // These sit above the card grid and tell the poster who accepted their
+  // request. The poster clicks "Done" to dismiss and delete the doc.
+  const acceptedBannersHtml = myAcceptedSOS.map(req => `
+    <div class="sos-accepted-banner">
+      <div>
+        <div class="sos-accepted-banner-title">✅ Your SOS for "${escapeHtml(req.item)}" was accepted!</div>
+        <div class="sos-accepted-banner-detail">
+          <strong>${escapeHtml(req.acceptorName || 'Someone')}</strong> is willing to lend you the item.
+          ${req.acceptorContact ? `<br>📞 Contact: <strong>${escapeHtml(req.acceptorContact)}</strong>` : ''}
+          ${req.acceptorFb     ? `<br>💬 Facebook: <strong>${escapeHtml(req.acceptorFb)}</strong>` : ''}
+        </div>
+      </div>
+      <button class="sos-accepted-dismiss-btn" onclick="dismissAcceptedSOS('${req.id}')">
+        ✓ Done — close this
+      </button>
+    </div>`).join('');
+
+  // ── Empty state ──────────────────────────────────────────────────────
+  if (open.length === 0 && myAcceptedSOS.length === 0) {
     board.innerHTML = `
       <div class="sos-empty">
         <div class="sos-empty-icon">📌</div>
@@ -3825,27 +3982,43 @@ function renderSOSBoard() {
     return;
   }
 
-  board.innerHTML = open.map((req, i) => `
+  // ── Cards ────────────────────────────────────────────────────────────
+  const cardsHtml = open.map((req, i) => {
+    const isOwn = uid && req.userId === uid;
+
+    // Poster sees "Cancel Post", everyone else sees "Accept Request"
+    const footBtn = isOwn
+      ? `<button class="sos-cancel-btn" onclick="cancelOwnSOS('${req.id}')">✕ Cancel Post</button>`
+      : `<button class="sos-accept-btn" onclick="acceptSOS('${req.id}')">Accept Request</button>`;
+
+    return `
     <div class="sos-card" data-sos-id="${req.id}" style="background:${sosColor(req.id)};--rot:${sosRotation(req.id)}deg;animation-delay:${Math.min(i * 60, 300)}ms">
       <span class="sos-pin">📌</span>
       <div class="sos-card-head">
         <span class="sos-card-emoji">${req.itemEmoji}</span>
-        <span class="sos-card-title">Need ${req.item}</span>
+        <span class="sos-card-title">Need ${escapeHtml(req.item)}${isOwn ? '<span class="sos-own-tag">Your Post</span>' : ''}</span>
       </div>
       <div class="sos-card-body">
-        <div class="sos-row"><span class="sos-k">Name:</span><span class="sos-v">${req.name}</span></div>
-        <div class="sos-row"><span class="sos-k">Location:</span><span class="sos-v">${req.location}</span></div>
-        ${req.contact ? `<div class="sos-row"><span class="sos-k">Contact:</span><span class="sos-v">${req.contact}</span></div>` : ''}
-        ${req.fb ? `<div class="sos-row"><span class="sos-k">FB:</span><span class="sos-v">${req.fb}</span></div>` : ''}
-        <div class="sos-row"><span class="sos-k">Duration:</span><span class="sos-v">${req.duration}</span></div>
-        ${req.reward ? `<div class="sos-row sos-reward"><span class="sos-k">Fee:</span><span class="sos-v">₱${req.reward}</span></div>` : ''}
+        <div class="sos-row"><span class="sos-k">Name:</span><span class="sos-v">${escapeHtml(req.name)}</span></div>
+        <div class="sos-row"><span class="sos-k">Location:</span><span class="sos-v">${escapeHtml(req.location)}</span></div>
+        ${req.contact ? `<div class="sos-row"><span class="sos-k">Contact:</span><span class="sos-v">${escapeHtml(req.contact)}</span></div>` : ''}
+        ${req.fb      ? `<div class="sos-row"><span class="sos-k">FB:</span><span class="sos-v">${escapeHtml(req.fb)}</span></div>` : ''}
+        <div class="sos-row"><span class="sos-k">Duration:</span><span class="sos-v">${escapeHtml(req.duration)}</span></div>
+        ${req.reward  ? `<div class="sos-row sos-reward"><span class="sos-k">Fee:</span><span class="sos-v">₱${req.reward}</span></div>` : ''}
       </div>
       <div class="sos-card-foot">
         <span class="sos-time">Posted ${timeAgo(req.postedAt)}</span>
-        <button class="sos-accept-btn" onclick="acceptSOS('${req.id}')">Accept Request</button>
+        ${footBtn}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+
+  board.innerHTML = acceptedBannersHtml + (open.length === 0
+    ? `<div class="sos-empty" style="grid-column:1/-1">
+        <div class="sos-empty-icon">📌</div>
+        <div class="sos-empty-title">No open requests right now</div>
+       </div>`
+    : cardsHtml);
 }
 
 /* FIRESTORE SOS LISTENER */
@@ -3882,34 +4055,55 @@ const SOS_FLAT_FEE = 20;
 window.submitSOS = async function(event) { 
   event.preventDefault();
 
-  const item     = document.getElementById('sosItem').value.trim();
-  const name     = document.getElementById('sosName').value.trim();
-  const location = document.getElementById('sosLocation').value.trim();
-  const contact  = document.getElementById('sosContact').value.trim();
-  const fb       = document.getElementById('sosFb').value.trim();
-  const duration = document.getElementById('sosDuration').value.trim();
-  const reward   = SOS_FLAT_FEE; // Flat fee, not user-set — see constant above.
+  const item       = document.getElementById('sosItem').value.trim();
+  const name       = document.getElementById('sosName').value.trim();
+  const building   = document.getElementById('sosBuilding').value.trim();
+  const locationDetail = document.getElementById('sosLocation').value.trim();
+  const location   = locationDetail ? `${getBuildingLabel(building)} — ${locationDetail}` : getBuildingLabel(building);
+  const contact    = document.getElementById('sosContact').value.trim();
+  const fb         = document.getElementById('sosFb').value.trim();
+  const duration   = document.getElementById('sosDuration').value.trim();
+  const reward     = SOS_FLAT_FEE;
 
-  if (!item || !name || !location || !contact || !duration) {
-    showToast('Please fill in all required fields', 'error');
+  if (!item || !name || !building || !contact || !duration) {
+    showToast('Please fill in all required fields and pick a building', 'error');
     return false;
   }
 
+  // Enforce one active post at a time
+  if (currentUser) {
+    const existing = await getDocs(
+      query(collection(db, 'sos_posts'),
+        where('userId', '==', currentUser.uid),
+        where('status', '==', 'open'))
+    );
+    if (!existing.empty) {
+      showToast('You already have an active SOS post. Cancel it first before posting a new one.', 'error');
+      document.getElementById('postSOSModal').classList.remove('open');
+      return false;
+    }
+  }
+
   await addDoc(collection(db, 'sos_posts'), {
-  item,
-  name,
-  location,
-  contact,
-  fb,
-  duration,
-  reward,
-  itemEmoji: guessSOSEmoji(item),
-  status: 'open',
-  postedAt: Date.now()
-});
+    item,
+    name,
+    location,
+    buildingId: building,
+    contact,
+    fb,
+    duration,
+    reward,
+    itemEmoji: guessSOSEmoji(item),
+    status: 'open',
+    userId: currentUser?.uid || null,
+    postedAt: Date.now()
+  });
+
+  // Reset building picker
+  document.querySelectorAll('.building-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('sosBuilding').value = '';
 
   document.getElementById('postSOSModal').classList.remove('open');
-  renderSOSBoard();
   showToast('✓ SOS posted to the board!', 'success');
   return false;
 };
@@ -3928,28 +4122,80 @@ window.closeAcceptConfirm = function (e) {
 
 window.confirmAcceptSOS = async function () {
   const id = pendingAcceptId;
+  if (!id) return;
+
+  // Block self-acceptance
+  const req = SOS.find(s => s.id === id);
+  if (req && req.userId && req.userId === currentUser?.uid) {
+    showToast("You can't accept your own SOS request.", 'error');
+    document.getElementById('acceptConfirmModal').classList.remove('open');
+    return;
+  }
 
   document.getElementById('acceptConfirmModal').classList.remove('open');
 
-  // Grab the request before deleting it
-  const req = SOS.find(s => s.id === id);
   if (!req) return;
 
-  // Keep it for the fulfillment page
+  // Keep a copy for the fulfillment page
   currentFulfillment = req;
 
-  // Optional animation
+  // Animate the card off the board
   const card = document.querySelector(`.sos-card[data-sos-id="${id}"]`);
   if (card) card.classList.add('sos-leaving');
 
   setTimeout(async () => {
-    // Delete from Firestore
-    await deleteDoc(doc(db, "sos_posts", id));
+    try {
+      // Update the post — mark it accepted and record who accepted it.
+      // The original poster's listener (set up in onAuthStateChanged) will
+      // pick this up and show them the accepted banner with contact info.
+      await updateDoc(doc(db, 'sos_posts', id), {
+        status: 'accepted',
+        acceptorName:    userProfile?.fullName || userProfile?.nickname || 'A student',
+        acceptorContact: userProfile?.phoneNumber || '',
+        acceptorFb:      userProfile?.nickname || userProfile?.fullName || '',
+        acceptedAt: Date.now()
+      });
 
-    // Show fulfillment page
-    renderFulfillmentPage();
-    goToPage('pageFulfillment');
+      // Show the fulfillment page to the acceptor with the poster's contact info
+      renderFulfillmentPage();
+      goToPage('pageFulfillment');
+    } catch (err) {
+      console.error('Failed to accept SOS:', err);
+      showToast('Could not accept — please try again', 'error');
+    }
   }, 320);
+};
+
+/* ── Poster cancels their own open SOS post ──────────────── */
+window.cancelOwnSOS = async function (id) {
+  const req = SOS.find(s => s.id === id);
+  if (!req || req.userId !== currentUser?.uid) return;
+
+  const card = document.querySelector(`.sos-card[data-sos-id="${id}"]`);
+  if (card) card.classList.add('sos-leaving');
+
+  setTimeout(async () => {
+    try {
+      await deleteDoc(doc(db, 'sos_posts', id));
+      showToast('✓ Your SOS post was removed from the board', 'success');
+    } catch (err) {
+      console.error('Failed to cancel SOS:', err);
+      showToast('Could not remove — please try again', 'error');
+    }
+  }, 320);
+};
+
+/* ── Poster dismisses their accepted notification banner ──── */
+// Called once the poster has made contact with the helper.
+// Deletes the doc entirely — the fulfilled request is no longer needed.
+window.dismissAcceptedSOS = async function (id) {
+  try {
+    await deleteDoc(doc(db, 'sos_posts', id));
+    showToast('✓ Great! SOS closed.', 'success');
+  } catch (err) {
+    console.error('Failed to dismiss SOS:', err);
+    showToast('Could not close — please try again', 'error');
+  }
 };
 
 /* ── Fulfillment page ─────────────────────────────────────── */
@@ -3980,6 +4226,271 @@ function renderFulfillmentPage() {
     rewardRow.classList.add('hidden');
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   CAMPUS RADAR — canvas-based SOS board visualization
+   Buildings mapped from the AdZU satellite image.
+   rx/ry are normalized -1..1 radar coordinates.
+══════════════════════════════════════════════════════════ */
+const CAMPUS_BUILDINGS = [
+  { id:'lrc',        label:'LRC',               rx:-0.08, ry:-0.32 },
+  { id:'college',    label:'College Bldg',       rx: 0.10, ry: 0.04 },
+  { id:'bellarmine', label:'Bellarmine',          rx:-0.32, ry: 0.24 },
+  { id:'kostka',     label:'Kostka Bldg',        rx: 0.12, ry: 0.44 },
+  { id:'court',      label:'Covered Court',      rx: 0.44, ry: 0.20 },
+  { id:'jesuit',     label:'Jesuit Residence',   rx: 0.30, ry:-0.40 },
+  { id:'rosauro',    label:'Rosauro Bldg',       rx: 0.54, ry:-0.50 },
+  { id:'parking',    label:'Parking Lot',        rx: 0.46, ry:-0.64 },
+  { id:'canteen',    label:'Canteen',            rx: 0.04, ry: 0.24 },
+  { id:'other',      label:'Other',              rx: 0.00, ry: 0.00 },
+];
+
+function getBuildingLabel(id) {
+  return CAMPUS_BUILDINGS.find(b => b.id === id)?.label || id || 'Campus';
+}
+
+window.selectBuilding = function (btn) {
+  document.querySelectorAll('.building-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('sosBuilding').value = btn.dataset.id;
+};
+
+/* ── Radar state ──────────────────────────────────────────── */
+let radarActive  = false;
+let radarAngle   = 0;
+let radarRAF     = null;
+let radarPopupId = null; // SOS id currently shown in popup
+
+window.toggleRadarView = function () {
+  radarActive = !radarActive;
+  const btn   = document.getElementById('radarToggleBtn');
+  const wrap  = document.getElementById('radarWrap');
+  const board = document.getElementById('sosBoard');
+
+  btn.classList.toggle('radar-on', radarActive);
+  btn.textContent = radarActive ? '📋 List View' : '📡 Radar View';
+  wrap.classList.toggle('active', radarActive);
+  board.classList.toggle('hidden-for-radar', radarActive);
+  // parent frame
+  document.querySelector('.sos-board-frame').style.display = radarActive ? 'none' : '';
+
+  if (radarActive) {
+    startRadar();
+  } else {
+    stopRadar();
+    closeBlipPopup();
+  }
+};
+
+function startRadar() {
+  if (radarRAF) return;
+  const canvas = document.getElementById('radarCanvas');
+  if (!canvas) return;
+  canvas.addEventListener('click', onRadarClick);
+
+  function loop() {
+    radarAngle = (radarAngle + 0.012) % (Math.PI * 2);
+    drawRadar();
+    radarRAF = requestAnimationFrame(loop);
+  }
+  radarRAF = requestAnimationFrame(loop);
+}
+
+function stopRadar() {
+  if (radarRAF) { cancelAnimationFrame(radarRAF); radarRAF = null; }
+  const canvas = document.getElementById('radarCanvas');
+  if (canvas) canvas.removeEventListener('click', onRadarClick);
+}
+
+function drawRadar() {
+  const canvas = document.getElementById('radarCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const R = W * 0.46; // radar circle radius
+
+  // ── Background ──
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#050d05';
+  ctx.beginPath(); ctx.arc(cx, cy, R + 2, 0, Math.PI * 2); ctx.fill();
+
+  // ── Concentric rings ──
+  [0.25, 0.5, 0.75, 1].forEach(f => {
+    ctx.beginPath(); ctx.arc(cx, cy, R * f, 0, Math.PI * 2);
+    ctx.strokeStyle = f === 1 ? '#1a4a1a' : '#0e2a0e';
+    ctx.lineWidth = f === 1 ? 1.5 : 1;
+    ctx.stroke();
+  });
+
+  // ── Crosshairs ──
+  ctx.strokeStyle = '#0e2a0e'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - R * 0.71, cy - R * 0.71); ctx.lineTo(cx + R * 0.71, cy + R * 0.71); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + R * 0.71, cy - R * 0.71); ctx.lineTo(cx - R * 0.71, cy + R * 0.71); ctx.stroke();
+
+  // ── Sweep gradient ──
+  const sweep = ctx.createConicalGradient ? null : null; // fallback
+  // Use a filled arc approach for the sweep
+  const sweepLen = Math.PI * 0.55;
+  const grad = ctx.createLinearGradient(
+    cx + Math.cos(radarAngle) * R,
+    cy + Math.sin(radarAngle) * R,
+    cx, cy
+  );
+  grad.addColorStop(0, 'rgba(34,197,94,0.55)');
+  grad.addColorStop(1, 'rgba(34,197,94,0)');
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, R, radarAngle - sweepLen, radarAngle);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.restore();
+
+  // Sweep leading edge line
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(radarAngle) * R, cy + Math.sin(radarAngle) * R);
+  ctx.strokeStyle = 'rgba(34,197,94,0.9)';
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#22c55e';
+  ctx.shadowBlur = 6;
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Building labels ──
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  CAMPUS_BUILDINGS.filter(b => b.id !== 'other').forEach(b => {
+    const bx = cx + b.rx * R;
+    const by = cy + b.ry * R;
+    // Dot
+    ctx.beginPath(); ctx.arc(bx, by, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a4a1a'; ctx.fill();
+    // Label
+    ctx.fillStyle = '#2d6e2d';
+    ctx.fillText(b.label, bx, by - 10);
+  });
+
+  // ── SOS Blips ──
+  const now = Date.now();
+  const openSOS = SOS.filter(s => s.status === 'open');
+  openSOS.forEach(req => {
+    const bld = CAMPUS_BUILDINGS.find(b => b.id === req.buildingId) || CAMPUS_BUILDINGS.find(b => b.id === 'college');
+    const bx = cx + bld.rx * R;
+    const by = cy + bld.ry * R;
+
+    // Pulse rings
+    const pulse = ((now % 2000) / 2000);
+    [0, 0.4, 0.8].forEach(offset => {
+      const p = (pulse + offset) % 1;
+      const pr = 4 + p * 14;
+      const pa = (1 - p) * 0.5;
+      ctx.beginPath(); ctx.arc(bx, by, pr, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,100,50,${pa})`;
+      ctx.lineWidth = 1.5; ctx.stroke();
+    });
+
+    // Core dot
+    const isHighlighted = radarPopupId === req.id;
+    ctx.beginPath(); ctx.arc(bx, by, isHighlighted ? 7 : 5, 0, Math.PI * 2);
+    ctx.fillStyle = isHighlighted ? '#ff6432' : '#ff4500';
+    ctx.shadowColor = '#ff4500'; ctx.shadowBlur = isHighlighted ? 16 : 8;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Item label above blip
+    ctx.font = 'bold 9px Inter, sans-serif';
+    ctx.fillStyle = '#ffa280';
+    ctx.fillText(req.item.length > 14 ? req.item.slice(0,13)+'…' : req.item, bx, by + 16);
+  });
+
+  // ── Center dot (you) ──
+  ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#22c55e';
+  ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 10;
+  ctx.fill(); ctx.shadowBlur = 0;
+}
+
+function onRadarClick(e) {
+  const canvas = document.getElementById('radarCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top)  * scaleY;
+
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const R = W * 0.46;
+
+  const openSOS = SOS.filter(s => s.status === 'open');
+  let hit = null;
+  let minDist = 999;
+
+  openSOS.forEach(req => {
+    const bld = CAMPUS_BUILDINGS.find(b => b.id === req.buildingId) || CAMPUS_BUILDINGS.find(b => b.id === 'college');
+    const bx = cx + bld.rx * R;
+    const by = cy + bld.ry * R;
+    const dist = Math.hypot(mx - bx, my - by);
+    if (dist < 22 && dist < minDist) { minDist = dist; hit = req; }
+  });
+
+  if (hit) {
+    radarPopupId = hit.id;
+    showBlipPopup(hit);
+  } else {
+    radarPopupId = null;
+    closeBlipPopup();
+  }
+}
+
+function showBlipPopup(req) {
+  closeBlipPopup();
+  const wrap = document.getElementById('radarWrap');
+  const canvas = document.getElementById('radarCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const wrapRect = wrap.getBoundingClientRect();
+
+  const W = canvas.width, R = W * 0.46;
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const bld = CAMPUS_BUILDINGS.find(b => b.id === req.buildingId) || CAMPUS_BUILDINGS.find(b => b.id === 'college');
+  const bxNorm = (cx + bld.rx * R) / W; // 0..1
+  const byNorm = (cy + bld.ry * R) / W;
+
+  const pixelX = bxNorm * rect.width;
+  const pixelY = byNorm * rect.height;
+  const relX   = pixelX - (wrapRect.left - rect.left);
+  const relY   = pixelY - (wrapRect.top  - rect.top );
+
+  const isOwn = req.userId === currentUser?.uid;
+  const popup = document.createElement('div');
+  popup.className = 'radar-blip-popup';
+  popup.id = 'blipPopup';
+  popup.style.cssText = `left:${relX}px; top:${relY - 12}px; transform:translateX(-50%) translateY(-100%)`;
+  popup.innerHTML = `
+    <button class="bp-close" onclick="closeBlipPopup()">✕</button>
+    <div class="bp-item">${req.itemEmoji || '📌'} ${escapeHtml(req.item)}</div>
+    <div class="bp-row">👤 ${escapeHtml(req.name)}</div>
+    <div class="bp-row">📍 ${escapeHtml(req.location || getBuildingLabel(req.buildingId))}</div>
+    ${req.contact ? `<div class="bp-row">📞 ${escapeHtml(req.contact)}</div>` : ''}
+    <div class="bp-row">⏳ ${escapeHtml(req.duration)}</div>
+    ${!isOwn
+      ? `<button class="bp-accept" onclick="closeBlipPopup();acceptSOS('${req.id}')">🤝 Accept Request</button>`
+      : `<button class="bp-accept" style="background:#444;color:#aaa" onclick="closeBlipPopup();cancelOwnSOS('${req.id}')">✕ Cancel My Post</button>`
+    }`;
+  wrap.appendChild(popup);
+}
+
+window.closeBlipPopup = function () {
+  radarPopupId = null;
+  document.getElementById('blipPopup')?.remove();
+};
 
 window.backToBoard = function () {
   currentFulfillment = null;
