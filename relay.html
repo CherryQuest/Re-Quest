@@ -234,7 +234,7 @@
   /* ─── LOADING SCREEN (copied) ─────────────────────────── */
   .loading-screen { position: fixed; inset: 0; z-index: 9999; background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
   .loading-video-wrap { width: min(60vw, 340px); aspect-ratio: 16/9; }
-  .loading-video-wrap video { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: screen; display: block; }
+  .loading-video-wrap video { width: 100%; height: 100%; object-fit: contain; pointer-events: none; outline: none; border: none; display: block; }
   .loading-bar { width: min(60vw, 340px); height: 3px; background: rgba(255,255,255,.15); border-radius: 999px; overflow: hidden; }
   .loading-fill { height: 100%; width: 0%; background: var(--orange); border-radius: 999px; animation: load 1.8s ease forwards; }
   @keyframes load { to { width: 100%; } }
@@ -409,6 +409,13 @@
     .relay-body.show-thread .relay-list-pane { display: flex !important; }
     .relay-thread-back { display: none !important; }
   }
+
+    .loading-video-wrap video::-webkit-media-controls { display: none !important; }
+    .loading-video-wrap video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
+    .loading-video-wrap video::-webkit-media-controls-play-button { display: none !important; -webkit-appearance: none; }
+    .loading-video-wrap video::-webkit-media-controls-panel { display: none !important; }
+    .loading-video-wrap { pointer-events: none; user-select: none; }
+    
 </style>
 </head>
 <body>
@@ -416,7 +423,7 @@
 <!-- LOADING SCREEN -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-video-wrap">
-    <video autoplay muted playsinline loop>
+    <video autoplay muted playsinline loop preload="auto" disablepictureinpicture disableremoteplayback webkit-playsinline x5-playsinline>
       <source src="logo-animation.mp4" type="video/mp4" />
     </video>
   </div>

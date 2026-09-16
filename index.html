@@ -240,7 +240,7 @@
     }
     .loading-video-wrap video {
       width: 100%; height: 100%; object-fit: contain;
-      mix-blend-mode: screen; display: block;
+      pointer-events: none; outline: none; border: none; display: block;
     }
     .loading-bar {
       width: min(60vw, 340px); height: 3px; background: rgba(255,255,255,.15);
@@ -258,14 +258,21 @@
       .auth-form-wrap { padding: 40px 28px; }
       .form-grid-2 { grid-template-columns: 1fr 1fr; }
     }
-  </style>
+  
+    .loading-video-wrap video::-webkit-media-controls { display: none !important; }
+    .loading-video-wrap video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
+    .loading-video-wrap video::-webkit-media-controls-play-button { display: none !important; -webkit-appearance: none; }
+    .loading-video-wrap video::-webkit-media-controls-panel { display: none !important; }
+    .loading-video-wrap { pointer-events: none; user-select: none; }
+    
+</style>
 </head>
 <body>
 
 <!-- LOADING SCREEN -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-video-wrap">
-    <video autoplay muted playsinline loop>
+    <video autoplay muted playsinline loop preload="auto" disablepictureinpicture disableremoteplayback webkit-playsinline x5-playsinline>
       <source src="logo-animation.mp4" type="video/mp4" />
     </video>
   </div>

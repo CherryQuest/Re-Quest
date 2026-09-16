@@ -163,7 +163,7 @@
     }
     .loading-video-wrap video {
       width: 100%; height: 100%; object-fit: contain;
-      mix-blend-mode: screen; display: block;
+      pointer-events: none; outline: none; border: none; display: block;
     }
     .loading-tag { color: rgba(255,255,255,.55); font-size: 0.85rem; letter-spacing: .5px; text-transform: uppercase; }
     .loading-bar { width: min(60vw, 340px); height: 3px; background: rgba(255,255,255,.15); border-radius: 999px; overflow: hidden; }
@@ -376,14 +376,21 @@
       .order-drawer { max-width: 480px; left: 50%; transform: translateX(-50%) translateY(100%); }
       .order-drawer.open { transform: translateX(-50%) translateY(0); }
     }
-  </style>
+  
+    .loading-video-wrap video::-webkit-media-controls { display: none !important; }
+    .loading-video-wrap video::-webkit-media-controls-start-playback-button { display: none !important; -webkit-appearance: none; }
+    .loading-video-wrap video::-webkit-media-controls-play-button { display: none !important; -webkit-appearance: none; }
+    .loading-video-wrap video::-webkit-media-controls-panel { display: none !important; }
+    .loading-video-wrap { pointer-events: none; user-select: none; }
+    
+</style>
 </head>
 <body>
 
 <!-- LOADING SCREEN -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-video-wrap">
-    <video autoplay muted playsinline loop>
+    <video autoplay muted playsinline loop preload="auto" disablepictureinpicture disableremoteplayback webkit-playsinline x5-playsinline>
       <source src="logo-animation.mp4" type="video/mp4" />
     </video>
   </div>
