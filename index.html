@@ -351,7 +351,7 @@
         <div class="field-error" id="signupIdError"></div>
       </div>
       <div class="form-group">
-        <label class="form-label" for="signupEmail">Email Address</label>
+        <label class="form-label" for="signupEmail">AdZU Email Address <span style="color:var(--orange)">(@adzu.edu.ph)</span></label>
         <input type="email" class="form-input" placeholder="sh250XXX@adzu.edu.ph" id="signupEmail" autocomplete="email" />
         <div class="field-error" id="signupEmailError"></div>
       </div>
@@ -737,6 +737,10 @@ window.handleSignup = async function (event) {
 
   if (!email) { setFieldError('signupEmail', 'Email is required'); hasError = true; }
   else if (!isValidEmail(email)) { setFieldError('signupEmail', 'Enter a valid email address'); hasError = true; }
+  else if (!email.toLowerCase().endsWith('@adzu.edu.ph')) {
+    setFieldError('signupEmail', 'Only official @adzu.edu.ph accounts are permitted');
+    hasError = true;
+  }
 
   if (!phoneNumber) { setFieldError('signupPhone', 'Mobile number is required'); hasError = true; }
   else if (!isValidPhone(phoneNumber)) { setFieldError('signupPhone', 'Enter a valid mobile number'); hasError = true; }
@@ -816,8 +820,18 @@ window.googleSignIn = async function (event) {
 
   try {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ hd: 'adzu.edu.ph', prompt: 'select_account' });
 
     const result = await signInWithPopup(auth, provider);
+
+    // Verify Google email domain strictly
+    const gEmail = (result.user.email || '').toLowerCase();
+    if (!gEmail.endsWith('@adzu.edu.ph')) {
+      await signOut(auth);
+      authFlowInProgress = false;
+      showToast('Only official @adzu.edu.ph accounts can sign in', 'error');
+      return false;
+    }
 
     // CREATE/UPDATE USER PROFILE IN FIRESTORE
     // Only fill in role/createdAt the first time this account signs in —
@@ -926,5 +940,5 @@ if (isConfigured) {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c0c8fd682bfcaa',t:'MTc4OTU3MTI5MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c0e05b9de5aaa3',t:'MTc4OTU3MjI0OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
