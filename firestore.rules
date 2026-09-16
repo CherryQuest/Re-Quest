@@ -1,0 +1,169 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Vendor helpers ────────────────────────────────────
+    // NEW: stall-codename access for the vendor portal (vendor.html).
+    // The admin puts a code like "SY" on users/{uid}.vendorStore —
+    // these helpers let the rules below check it.
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    // The stall codename on this account (or null if it has none).
+    // The exists() guard keeps this safe for accounts whose
+    // users doc hasn't been created yet.
+    function vendorCode() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.vendorStore
+        : null;
+    }
+
+    // ── Users ──────────────────────────────────────────────
+    // CHANGED: self-edits can no longer set `vendorStore` either —
+    // otherwise any user could grant THEMSELVES vendor access to any
+    // stall. Only admins can set it (second rule below, unchanged).
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && !('role' in request.resource.data.diff(resource.data).affectedKeys())
+        && !('vendorStore' in request.resource.data.diff(resource.data).affectedKeys());
+      allow write: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ── Orders ─────────────────────────────────────────────
+    // UNCHANGED
+    match /orders/{orderId} {
+      allow create: if request.auth != null;
+      allow read:   if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null
+        && (resource.data.userId == request.auth.uid
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    // ── Delivery chat messages ──────────────────────────────
+    // UNCHANGED
+    match /orders/{orderId}/messages/{msgId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Stores (open/closed toggle + vendor profiles) ───────
+    // CHANGED: vendors can now update their OWN stall (open/closed
+    // flag + name/desc/photo) — but only when the stall's codename
+    // matches the code on their account, and the codename itself
+    // can never be changed by a vendor (admin-only, as before).
+    match /stores/{storeId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow update: if request.auth != null && vendorCode() != null
+        && resource.data.code == vendorCode()
+        && request.resource.data.code == resource.data.code;
+    }
+
+    // ── Vendor live menus ───────────────────────────────────
+    // NEW: menu_items powers the vendor portal (vendor.html) and the
+    // live menus in home.html. Reads need login, like everything
+    // else. Writes need the matching stall codename (or admin) — so
+    // stall SY can never touch stall AZ's menu.
+    match /menu_items/{itemId} {
+      allow read: if request.auth != null;
+      allow create: if (request.auth != null && vendorCode() != null
+        && request.resource.data.storeCode == vendorCode()) || isAdmin();
+      allow update: if (request.auth != null && vendorCode() != null
+        && resource.data.storeCode == vendorCode()
+        && request.resource.data.storeCode == vendorCode()) || isAdmin();
+      allow delete: if (request.auth != null && vendorCode() != null
+        && resource.data.storeCode == vendorCode()) || isAdmin();
+    }
+
+    // ── Runner applications ────────────────────────────────
+    // UNCHANGED
+    match /applications/{appId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null
+        && (resource.data.uid == request.auth.uid
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow update, delete: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ── Re:Lay conversations ───────────────────────────────
+    // CHANGED: split `read` into `get` + `list` so that `get` on a
+    // non-existent document (resource == null) no longer crashes the rule.
+    match /conversations/{convId} {
+      allow get: if request.auth != null
+        && (resource == null
+            || request.auth.uid in resource.data.participants);
+      allow list: if request.auth != null
+        && request.auth.uid in resource.data.participants;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && request.auth.uid in resource.data.participants;
+    }
+
+    // UNCHANGED — kept for any existing docs in this subcollection
+    match /conversations/{convId}/messages/{msgId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // NEW: relay.html stores messages in `directMessages`, not `messages`
+    match /conversations/{convId}/directMessages/{msgId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid in
+           get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+    }
+
+    // NEW: delivery chats created by Re:Lay / ensureDeliveryChatExists
+    match /deliveryChats/{chatId} {
+      allow get: if request.auth != null
+        && (resource == null
+            || request.auth.uid == resource.data.customerId
+            || request.auth.uid == resource.data.riderId);
+      allow list: if request.auth != null
+        && (request.auth.uid == resource.data.customerId
+            || request.auth.uid == resource.data.riderId);
+      allow create: if request.auth != null
+        && (request.auth.uid == request.resource.data.customerId
+            || request.auth.uid == request.resource.data.riderId);
+      allow update: if request.auth != null
+        && (request.auth.uid == resource.data.customerId
+            || request.auth.uid == resource.data.riderId);
+    }
+
+    // NEW: messages inside delivery chats
+    match /deliveryChats/{chatId}/deliveryMessages/{msgId} {
+      allow read, write: if request.auth != null
+        && (request.auth.uid ==
+              get(/databases/$(database)/documents/deliveryChats/$(chatId)).data.customerId
+         || request.auth.uid ==
+              get(/databases/$(database)/documents/deliveryChats/$(chatId)).data.riderId);
+    }
+
+    // ── SOS / Borrow board ─────────────────────────────────
+    // UNCHANGED
+    match /sos_posts/{postId} {
+      allow read:           if request.auth != null;
+      allow create:         if request.auth != null;
+      allow update, delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ── Re:Post — Freedom Wall ─────────────────────────────
+    // NEW: repost.html writes to this collection. Without this rule
+    // both onSnapshot (feed) and addDoc (posting) were silently denied,
+    // making the wall appear broken — posts never appeared and the
+    // "Post it" button silently failed with permission-denied.
+    match /repost_posts/{postId} {
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null
+        && (request.auth.uid == resource.data.uid
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+  }
+}

@@ -549,6 +549,7 @@
     <div class="runner-id">
       <span class="runner-badge" id="runnerRoleBadge">Runner</span>
       <span class="runner-name" id="runnerNameLabel">—</span>
+      <button class="btn btn-ghost btn-sm" id="alertsBtn" style="color:#fff" onclick="toggleOrderAlerts()">🔕 Alerts off</button>
       <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="handleLogout()">Log Out</button>
     </div>
   </nav>
@@ -625,6 +626,11 @@ let orders          = [];     // live cache of every order, from onSnapshot
 let ordersUnsub     = null;
 let activeFilter    = 'pending';
 let selectedOrderId = null;
+let knownOrderIds   = new Set(); // orders already seen — only truly-new ones trigger alerts
+let ordersFirstSnap = true;      // first snapshot is history, never alerts
+let alertsOn        = false;
+try { alertsOn = localStorage.getItem('requestRunnerAlerts') === 'on'; } catch (e) {}
+let alertAudioCtx   = null;      // created on user gesture (browser autoplay rules)
 
 /* ── Page navigation ───────────────────────────────────── */
 function goToPage(id) {
@@ -712,6 +718,7 @@ onAuthStateChanged(auth, async (user) => {
       if (runnerProfile.role === 'admin') { badge.textContent = '👑 Admin'; badge.style.background = '#fff3cd'; badge.style.color = '#92400e'; }
       goToPage('pageDashboard');
       subscribeOrders();
+      initOrderAlerts();
     } else {
       // Not a runner yet — but if they've already applied and are just
       // waiting on manual approval, show the "sent" screen again
@@ -819,12 +826,107 @@ function subscribeOrders() {
   const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(200));
   ordersUnsub = onSnapshot(q, (snap) => {
     orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    detectNewOrders();
     renderOrderFeed();
     if (selectedOrderId) renderOrderDetailDrawer();   // keep an open drawer in sync
   }, (err) => {
     console.error('Orders listener error:', err);
     showToast('Could not load live orders', 'error');
   });
+}
+
+/* ── Order alerts: sound + popup + vibration ────────────
+   Fires only for orders that arrive AFTER this page loaded.
+   Only unassigned pending orders alert — no noise for delivered
+   or already-taken ones. */
+function detectNewOrders() {
+  const fresh = [];
+  orders.forEach(o => {
+    if (!knownOrderIds.has(o.id)) {
+      knownOrderIds.add(o.id);
+      const needsRunner = (o.status || 'pending') === 'pending' && !o.riderId;
+      if (!ordersFirstSnap && needsRunner) fresh.push(o);
+    }
+  });
+  ordersFirstSnap = false;
+  fresh.forEach(alertNewOrder);
+}
+
+function alertNewOrder(o) {
+  if (!alertsOn) return;
+  playAlertDing();
+  try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const n = (o.items || []).reduce((s, i) => s + (Number(i.qty) || 1), 0);
+      const note = new Notification('🍔 New order needs a runner!', {
+        body: `${n} item${n === 1 ? '' : 's'} · ₱${Number(o.total) || 0} · ${o.location || 'see app'}`,
+        tag: o.id
+      });
+      note.onclick = () => { try { window.focus(); note.close(); } catch (e) {} };
+    }
+  } catch (e) {}
+}
+
+/* Two-tone ding via WebAudio — no audio file needed. */
+function playAlertDing() {
+  try {
+    if (!alertAudioCtx) alertAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (alertAudioCtx.state === 'suspended') alertAudioCtx.resume();
+    const t = alertAudioCtx.currentTime;
+    [880, 1174.66].forEach((freq, i) => {
+      const osc = alertAudioCtx.createOscillator();
+      const gain = alertAudioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, t + i * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.4, t + i * 0.18 + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.18 + 0.16);
+      osc.connect(gain).connect(alertAudioCtx.destination);
+      osc.start(t + i * 0.18);
+      osc.stop(t + i * 0.18 + 0.18);
+    });
+  } catch (e) { /* audio unavailable — popup/vibration still work */ }
+}
+
+window.toggleOrderAlerts = async function () {
+  if (!alertsOn) {
+    // Enabling needs a tap (browser rules) — this tap also unlocks audio.
+    try {
+      if ('Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    } catch (e) {}
+    try {
+      if (!alertAudioCtx) alertAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (alertAudioCtx.state === 'suspended') await alertAudioCtx.resume();
+    } catch (e) {}
+    alertsOn = true;
+    try { localStorage.setItem('requestRunnerAlerts', 'on'); } catch (e) {}
+    playAlertDing();
+    showToast('🔔 Order alerts on — you\u2019ll hear new orders', 'success');
+  } else {
+    alertsOn = false;
+    try { localStorage.setItem('requestRunnerAlerts', 'off'); } catch (e) {}
+    showToast('Alerts off', '');
+  }
+  paintAlertsBtn();
+};
+
+function paintAlertsBtn() {
+  const btn = document.getElementById('alertsBtn');
+  if (!btn) return;
+  btn.textContent = alertsOn ? '🔔 Alerts on' : '🔕 Alerts off';
+  btn.style.opacity = alertsOn ? '1' : '0.75';
+}
+
+function initOrderAlerts() {
+  // If they enabled alerts before (and the browser still allows),
+  // silently turn them back on for this session.
+  if (alertsOn && 'Notification' in window && Notification.permission === 'denied') {
+    alertsOn = false;
+  }
+  paintAlertsBtn();
 }
 
 window.setFilter = function (filter, el) {

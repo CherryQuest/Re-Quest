@@ -80,6 +80,9 @@ To revoke: delete the `vendorStore` field (or set it to `null`).
 
 ## Daily vendor workflow (what to tell stall owners)
 
+- **First time?** If the menu is empty, tap **📥 Import** to pull in the stall's
+  existing items — then edit or delete them like anything else. (Stalls with no
+  built-in menu yet just add items manually with + Add Item.)
 - **Sold out?** Tap `Mark sold out` on the item — students instantly see it
   greyed out with a badge and can't add it to cart.
 - **Restocked?** Tap `Mark available`.

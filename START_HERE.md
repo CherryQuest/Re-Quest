@@ -11,6 +11,8 @@
 | `seed-menus.html` | **TEMPORARY.** Run once as admin, then **delete it**. |
 | `firestore.rules` ⭐ | **Complete rules file — replaces your current rules.** Just paste the whole thing (step 2). |
 | `VENDOR_SETUP.md` | Long technical guide. Optional reading. |
+| `runner.html` ⭐ | **UPDATED.** Runner dashboard now has a 🔔 alerts toggle (ding + popup + vibrate on new orders). Replaces your current `runner.html`. |
+| `EMAIL_SETUP.md` | Runner-alert setup: sound alerts work already; Gmail emails need the 10-min EmailJS setup inside. |
 
 Everything else in this folder (`index.html`, `relay.html`, etc.) is just an untouched copy — ignore those.
 
@@ -66,9 +68,17 @@ To **revoke** access: delete the `vendorStore` field from their account.
 ## 🧑‍🍳 What to tell stall owners
 
 - Log into `vendor.html` with your **normal account** (same Gmail/password).
+- First time? Tap **📥 Import** to pull in your stall's existing menu — then edit prices, add photos, mark sold out, or delete whatever you no longer serve.
 - Sold out? Tap **Mark sold out** — students see it instantly.
 - Restocked? Tap **Mark available**. Start of day? One tap resets everything.
 - Closed today? **Close store** button. Prices/photos/description: edit anytime, live immediately.
+
+## 🔔 Runner order alerts (new)
+
+- **Sound + popup:** re-upload the new `runner.html`. Runners tap **🔔 Alerts off**
+  once → new orders ding, pop up, and vibrate while the page is open. No setup.
+- **Gmail emails:** follow `EMAIL_SETUP.md` (~10 min, free) so every food order
+  also emails all runners' Gmails at once.
 
 ## ❓ If something's wrong
 
