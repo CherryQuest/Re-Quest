@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Re:Quest — Seed Vendor Menus (admin, one-time)</title>
+<style>
+  :root {
+    --orange: #FF6B35; --orange-dark: #E55A2B;
+    --bg: #F5F1EB; --surface: #FFFFFF; --text: #1A1A1A; --muted: #6B7280;
+    --border: #E5E0D8; --radius: 16px; --green: #16A34A; --red: #DC2626;
+  }
+  [data-theme="dark"] {
+    --bg: #0F1115; --surface: #1A1D24; --text: #F3F4F6; --muted: #9CA3AF; --border: #2A2E37;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px; max-width: 560px; width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  }
+  h1 { font-size: 1.3rem; margin-bottom: 6px; }
+  p { color: var(--muted); font-size: 0.88rem; line-height: 1.55; margin-bottom: 12px; }
+  p b, label b { color: var(--text); }
+  .btn {
+    display: block; width: 100%; padding: 14px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+    color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 16px;
+  }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,107,53,0.35); }
+  #status {
+    margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 0.85rem;
+    display: none; line-height: 1.5;
+  }
+  #status.ok  { display: block; background: rgba(22,163,74,0.12); color: var(--green); border: 1px solid rgba(22,163,74,0.3); }
+  #status.err { display: block; background: rgba(220,38,38,0.10); color: var(--red);   border: 1px solid rgba(220,38,38,0.3); }
+  #logBox {
+    margin-top: 12px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; font-family: monospace;
+    font-size: 0.75rem; max-height: 220px; overflow-y: auto; white-space: pre-wrap;
+  }
+  .hidden { display: none !important; }
+  .force-row { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+  .force-row input { width: 16px; height: 16px; accent-color: var(--orange); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>🌱 Seed Vendor Menus</h1>
+    <p>One-time admin utility. Log in to the main Re:Quest app as an <b>admin</b>
+    first, then click the button. This copies the built-in menu into Firestore's
+    <b>menu_items</b> collection, stamps every item and every <b>stores/{id}</b>
+    doc with its stall codename, and skips the "Menu not yet available" placeholders.</p>
+    <p>Already seeded before the codename update? Use the <b>Backfill</b> button
+    instead — it stamps codes onto your existing data without duplicating anything.</p>
+    <label class="force-row">
+      <input type="checkbox" id="forceBox" />
+      Force re-seed even if <b>&nbsp;menu_items&nbsp;</b> already has data (writes duplicates!)
+    </label>
+    <button class="btn" id="seedBtn" onclick="runSeed()" disabled>🌱 Seed Menus to Firestore</button>
+    <button class="btn" id="backfillBtn" onclick="runBackfill()" disabled style="margin-top:10px;background:var(--surface);color:var(--text);border:1.5px solid var(--border);box-shadow:none">🔧 Backfill stall codes (only if you seeded before the codename update)</button>
+    <div id="status"></div>
+    <div id="logBox" class="hidden"></div>
+  </div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {
+  getFirestore, collection, doc, getDoc, getDocs, query, limit,
+  writeBatch, serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+/* Stall codenames — must match STALL_CODES in vendor.html and
+   STORE_CODES_BY_ID in home.html. */
+const CODE_BY_ID = {
+  1:'AZ', 2:'KK', 3:'SV', 4:'SY', 5:'KRT', 6:'EB', 7:'WC', 8:'AF',
+  9:'BB', 10:'CG', 11:'CR', 12:'DT', 13:'FT', 14:'HO', 15:'JC', 16:'LV',
+  17:'MT', 18:'MC', 19:'PR', 20:'RS', 21:'TK'
+};
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyB3ZfZNm8D2qUcbWFvv86ipCR23X5KkOsg",
+  authDomain:        "request-f183d.firebaseapp.com",
+  projectId:         "request-f183d",
+  storageBucket:     "request-f183d.firebasestorage.app",
+  messagingSenderId: "1062076150081",
+  appId:             "1:1062076150081:web:3d026b2aa37e96fee1a8fe8"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const seedBtn  = document.getElementById('seedBtn');
+const statusEl = document.getElementById('status');
+const logBox   = document.getElementById('logBox');
+
+function setStatus(msg, kind) {
+  statusEl.textContent = msg;
+  statusEl.className = kind || '';
+}
+function log(msg) {
+  logBox.classList.remove('hidden');
+  logBox.textContent += msg + '\n';
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+/* ── Menu data (injected from home.html at build time) ── */
+const MENU = [
+// ── 1. Auntie Zeny's ──────────────────────────────────────
+  {id:101, storeId:1, name:"Cheese Stick",               price:20,  desc:"Crispy cheese-filled snack stick",               emoji:"🧀"},
+  {id:102, storeId:1, name:"Dynamite",                   price:25,  desc:"Cheese-stuffed chili wrapped in lumpia",          emoji:"🌶️"},
+  {id:103, storeId:1, name:"Palamig (Choco/Buko/Coffee)",price:25,  desc:"Cold refreshment drink",                          emoji:"🥤"},
+  {id:104, storeId:1, name:"Fruit Soda",                 price:45,  desc:"Grapes, Blueberry, Strawberry, Green Apple, Four Seasons", emoji:"🍹"},
+  {id:105, storeId:1, name:"Coke in Cup (16oz)",         price:30,  desc:"Coca-Cola served in a cup",                       emoji:"🥤"},
+
+  // ── 2. KK Food Station ─────────────────────────────────────
+  {id:201, storeId:2, name:"Menu not yet available",     price:0,   desc:"Check back soon for updates",                    emoji:"📋"},
+
+  // ── 3. Snackville ──────────────────────────────────────────
+  {id:301, storeId:3, name:"Menu not yet available",     price:0,   desc:"Check back soon for updates",                    emoji:"📋"},
+
+  // ── 4. Syd's Milktea House ────────────────────────────────
+  {id:401, storeId:4, name:"Milktea (Small)",            price:28,  desc:"Cookies & Cream, Wintermelon, Choco, Caramel, Black Forest, Okinawa, Pandan, Matcha, Mango Cheesecake, Strawberry", emoji:"🧋"},
+  {id:402, storeId:4, name:"Milktea (Large)",            price:38,  desc:"Cookies & Cream, Wintermelon, Choco, Caramel, Black Forest, Okinawa, Pandan, Matcha, Mango Cheesecake, Strawberry", emoji:"🧋"},
+  {id:403, storeId:4, name:"Iced Coffee (Small)",        price:28,  desc:"Macchiato, Cappuccino, or Hazelnut",              emoji:"☕"},
+  {id:404, storeId:4, name:"Iced Coffee (Large)",        price:38,  desc:"Macchiato, Cappuccino, or Hazelnut",              emoji:"☕"},
+  {id:405, storeId:4, name:"Fruit Tea (Small)",          price:28,  desc:"Cucumber or Red Tea",                             emoji:"🍵"},
+  {id:406, storeId:4, name:"Fruit Tea (Large)",          price:38,  desc:"Cucumber or Red Tea",                             emoji:"🍵"},
+  {id:407, storeId:4, name:"Add-On: Pearl / Nata / Coffee Jelly", price:10, desc:"Pick one topping for your drink",        emoji:"🫧"},
+  {id:408, storeId:4, name:"Rice Topping Meal",          price:49,  desc:"Beef loaf, Hotdog, or Siomai with Rice",          emoji:"🍱"},
+  {id:409, storeId:4, name:"Fries Combo",                price:55,  desc:"Fries with Chicken, Burger, Hotdog, or Siomai",   emoji:"🍟"},
+  {id:410, storeId:4, name:"Drinks Combo",               price:55,  desc:"Burger, Siomai, Hotdog, or Fries with Drink",     emoji:"🥤"},
+  {id:411, storeId:4, name:"Pasta Combo",                price:75,  desc:"Carbonara or Spaghetti with Drink",               emoji:"🍝"},
+  {id:412, storeId:4, name:"Chicken (Solo)",             price:30,  desc:"Solo chicken piece",                              emoji:"🍗"},
+  {id:413, storeId:4, name:"Tuna Carbonara",             price:50,  desc:"Solo tuna carbonara pasta",                       emoji:"🍝"},
+  {id:414, storeId:4, name:"Spaghetti",                  price:50,  desc:"Solo spaghetti",                                  emoji:"🍝"},
+  {id:415, storeId:4, name:"Regular Burger",             price:30,  desc:"Solo burger",                                     emoji:"🍔"},
+  {id:416, storeId:4, name:"Hotdog Sandwich",            price:30,  desc:"Solo hotdog sandwich",                            emoji:"🌭"},
+  {id:417, storeId:4, name:"Siomai",                     price:25,  desc:"Solo siomai",                                     emoji:"🥟"},
+  {id:418, storeId:4, name:"Small Fries",                price:25,  desc:"Solo small fries",                                emoji:"🍟"},
+  {id:419, storeId:4, name:"Large Fries",                price:50,  desc:"Solo large fries",                                emoji:"🍟"},
+  {id:420, storeId:4, name:"Chicken Meal w/ Rice",       price:50,  desc:"Garlic Parmesan or Buffalo Chicken with Rice",    emoji:"🍗"},
+  {id:421, storeId:4, name:"Rice in a Cup",              price:15,  desc:"A cup of steamed rice",                           emoji:"🍚"},
+  {id:422, storeId:4, name:"Water",                      price:5,   desc:"Cup of water",                                    emoji:"💧"},
+
+  // ── 5. The KRT Milktea ─────────────────────────────────────
+  {id:501, storeId:5, name:"Milktea (Medium)",           price:80,  desc:"Cookies & Cream, Wintermelon, Dark Choco, White Rabbit, Brown Sugar, Salted Caramel, Black Forest, Okinawa, Matcha, Taro, Red Velvet, Mangolicious, Cheesecake, Strawberry", emoji:"🧋"},
+  {id:502, storeId:5, name:"Milktea (Large)",            price:100, desc:"Same flavors as medium — see stall",              emoji:"🧋"},
+  {id:503, storeId:5, name:"Milktea B1T1 (Medium)",      price:150, desc:"Buy 1 Take 1 milktea, medium",                   emoji:"🧋"},
+  {id:504, storeId:5, name:"Milktea B1T1 (Large)",       price:180, desc:"Buy 1 Take 1 milktea, large",                    emoji:"🧋"},
+  {id:505, storeId:5, name:"Fruit Tea (Medium)",         price:80,  desc:"Lychee, Mango, Strawberry, Blueberry, Green Apple, Passion Fruit", emoji:"🍵"},
+  {id:506, storeId:5, name:"Fruit Tea (Large)",          price:100, desc:"Same flavors as medium — see stall",              emoji:"🍵"},
+  {id:507, storeId:5, name:"Special Flavor Drink",       price:49,  desc:"Milky Strawberry, Matcha Berry, Milky Matcha, Iced Coffee Matcha, Iced Caramel Macchiato, KRT Bubble Tea", emoji:"✨"},
+  {id:508, storeId:5, name:"Special Flavor B1T1",        price:95,  desc:"Buy 1 Take 1 special flavor",                    emoji:"✨"},
+  {id:509, storeId:5, name:"Hot Drink",                  price:75,  desc:"Dark Chocolate or Caramel Macchiato",             emoji:"☕"},
+  {id:510, storeId:5, name:"Add-On: Pearl / Nata",       price:15,  desc:"Pearl or Nata De Coco",                           emoji:"🫧"},
+  {id:511, storeId:5, name:"Add-On: Cream Cheese / Crushed Oreo / Popping Boba", price:20, desc:"Premium drink topping",   emoji:"🫧"},
+  {id:512, storeId:5, name:"Fries (Small)",              price:35,  desc:"Crispy golden fries",                             emoji:"🍟"},
+  {id:513, storeId:5, name:"Fries (Medium)",             price:50,  desc:"Crispy golden fries",                             emoji:"🍟"},
+  {id:514, storeId:5, name:"Fries (Large)",              price:100, desc:"Crispy golden fries",                             emoji:"🍟"},
+  {id:515, storeId:5, name:"Burger — Plain Patty",       price:30,  desc:"Plain burger patty",                              emoji:"🍔"},
+  {id:516, storeId:5, name:"Burger — Egg Patty",         price:40,  desc:"Burger patty with egg",                           emoji:"🍔"},
+  {id:517, storeId:5, name:"Burger — Egg Cheese Patty",  price:50,  desc:"Burger patty with egg and cheese",                emoji:"🍔"},
+  {id:518, storeId:5, name:"Classic Lemon 16oz",         price:45,  desc:"Fresh lemon drink, 16oz",                         emoji:"🍋"},
+  {id:519, storeId:5, name:"Classic Lemon 22oz",         price:65,  desc:"Fresh lemon drink, 22oz",                         emoji:"🍋"},
+  {id:520, storeId:5, name:"Lemon w/ Yakult 16oz",       price:60,  desc:"Lemon drink with Yakult, 16oz",                   emoji:"🍋"},
+  {id:521, storeId:5, name:"Lemon w/ Yakult 22oz",       price:80,  desc:"Lemon drink with Yakult, 22oz",                   emoji:"🍋"},
+  {id:522, storeId:5, name:"Pick N' Pair (Small)",      price:50,  desc:"Chicken Asado, Cheese Burger, or Fries",          emoji:"🍱"},
+  {id:523, storeId:5, name:"Pick N' Pair (Large)",      price:75,  desc:"Chicken w/ Rice + Iced Tea, Coke, or Sprite",     emoji:"🍱"},
+
+  // ── 6. Easybite ────────────────────────────────────────────
+  {id:601, storeId:6, name:"Menu not yet available",     price:0,   desc:"Check back soon for updates",                    emoji:"📋"},
+
+  // ── 7. Wingcraft ───────────────────────────────────────────
+  {id:701, storeId:7, name:"Menu not yet available",     price:0,   desc:"Check back soon for updates",                    emoji:"📋"},
+
+  // ── 8. Alcuis Food ─────────────────────────────────────────
+  {id:801, storeId:8, name:"Siomai Shanghai Rice",       price:65,  desc:"Siomai with Shanghai rice (+₱15 with egg)",       emoji:"🥟"},
+  {id:802, storeId:8, name:"Tocino Shanghai Rice",       price:70,  desc:"Tocino with Shanghai rice (+₱15 with egg)",       emoji:"🍚"},
+  {id:803, storeId:8, name:"Longganisa Shanghai Rice",   price:70,  desc:"Longganisa with Shanghai rice (+₱15 with egg)",   emoji:"🌭"},
+  {id:804, storeId:8, name:"Beef Tapa Shanghai Rice",    price:70,  desc:"Beef tapa with Shanghai rice (+₱15 with egg)",    emoji:"🥩"},
+  {id:805, storeId:8, name:"Chicken Patil Shanghai Rice",price:70,  desc:"Chicken patil with Shanghai rice (+₱15 with egg)",emoji:"🍗"},
+  {id:806, storeId:8, name:"Fried Egg Sandwich",         price:40,  desc:"With cheese & veggies",                           emoji:"🥪"},
+  {id:807, storeId:8, name:"Triple Cheese Hotdog",       price:55,  desc:"Hotdog loaded with triple cheese",                emoji:"🌭"},
+  {id:808, storeId:8, name:"Beefy Burger",               price:55,  desc:"With cheese & veggies",                           emoji:"🍔"},
+  {id:809, storeId:8, name:"Pepero",                     price:65,  desc:"Chocolate-coated snack sticks",                   emoji:"🍫"},
+  {id:810, storeId:8, name:"Pik Nik",                    price:65,  desc:"Packaged snack",                                  emoji:"🥫"},
+  {id:811, storeId:8, name:"Gery",                       price:100, desc:"Packaged snack",                                  emoji:"🍪"},
+  {id:812, storeId:8, name:"Belgian Waffle",             price:50,  desc:"Classic Belgian waffle",                          emoji:"🧇"},
+  {id:813, storeId:8, name:"Red Iced Tea",               price:35,  desc:"Cold iced tea",                                   emoji:"🧊"},
+  {id:814, storeId:8, name:"Lemonade",                   price:35,  desc:"Fresh lemonade",                                  emoji:"🍋"},
+  {id:815, storeId:8, name:"Sprite",                     price:45,  desc:"Bottled Sprite",                                  emoji:"🥤"},
+  {id:816, storeId:8, name:"Hot Coffee",                 price:45,  desc:"Hot brewed coffee",                               emoji:"☕"},
+  {id:817, storeId:8, name:"Hot Choco",                  price:45,  desc:"Hot chocolate drink",                             emoji:"🍫"},
+
+  // ── 9. Bread and Beyond ────────────────────────────────────
+  {id:901, storeId:9, name:"Chikalang",                  price:20,  desc:"Sweet snack",                                     emoji:"🍬"},
+  {id:902, storeId:9, name:"Banana Cake",                price:25,  desc:"Slice of moist banana cake",                      emoji:"🍰"},
+  {id:903, storeId:9, name:"Cassava Cake",               price:25,  desc:"Traditional Filipino cassava cake",               emoji:"🍰"},
+  {id:904, storeId:9, name:"Pancake",                    price:25,  desc:"Fluffy pancake",                                  emoji:"🥞"},
+  {id:905, storeId:9, name:"Brazo de Mercedes",          price:35,  desc:"Classic Filipino meringue roll",                  emoji:"🎂"},
+  {id:906, storeId:9, name:"Brownies",                   price:35,  desc:"Rich chocolate brownie",                          emoji:"🍫"},
+  {id:907, storeId:9, name:"Egg Pie",                    price:35,  desc:"Classic Filipino egg pie",                        emoji:"🥧"},
+  {id:908, storeId:9, name:"Lumpia",                     price:20,  desc:"Crispy Filipino spring roll",                     emoji:"🌮"},
+  {id:909, storeId:9, name:"Chicken Siopao",             price:60,  desc:"Steamed bun filled with chicken",                 emoji:"🥙"},
+  {id:910, storeId:9, name:"Distilled Water",            price:15,  desc:"Bottled water",                                   emoji:"💧"},
+  {id:911, storeId:9, name:"Iced Tea",                   price:30,  desc:"Cold iced tea",                                   emoji:"🧊"},
+  {id:912, storeId:9, name:"Cucumber Drink",             price:35,  desc:"Refreshing cucumber drink",                       emoji:"🥒"},
+  {id:913, storeId:9, name:"Coke / Royal / Sprite",      price:40,  desc:"Bottled soft drink",                              emoji:"🥤"},
+
+  // ── 10. Chicks n' Gravy ───────────────────────────────────
+  {id:1001, storeId:10, name:"Kikiam (4 pcs)",           price:15,  desc:"Fried fish cake rolls",                           emoji:"🍡"},
+  {id:1002, storeId:10, name:"Tempura (3 pcs)",          price:20,  desc:"Fried tempura pieces",                            emoji:"🍤"},
+  {id:1003, storeId:10, name:"Cheesesticks",             price:25,  desc:"Crispy cheese sticks",                            emoji:"🧀"},
+  {id:1004, storeId:10, name:"Hotdog",                   price:25,  desc:"Grilled hotdog",                                  emoji:"🌭"},
+  {id:1005, storeId:10, name:"Kwek Kwek",                price:25,  desc:"Orange-battered quail eggs",                      emoji:"🥚"},
+  {id:1006, storeId:10, name:"Siomai (4 pcs)",           price:25,  desc:"Chili Cheese, Sweet Chili, Spicy Buffalo, or Garlic Mayo", emoji:"🥟"},
+  {id:1007, storeId:10, name:"Shake Shake Fries (Small)",price:50,  desc:"Overloaded Cheese, Sour Cream, or BBQ",           emoji:"🍟"},
+  {id:1008, storeId:10, name:"Shake Shake Fries (Big)",  price:100, desc:"Overloaded Cheese, Sour Cream, or BBQ",           emoji:"🍟"},
+  {id:1009, storeId:10, name:"Chicken Series w/ Rice",   price:60,  desc:"Creamy Cheese, Cheesy Hot, Garlic Mayo, Garlic Parmesan, Honey Butter, Hot Honey, Soy Garlic, Sweet Chili, Teriyaki, or Yangnyeom", emoji:"🍗"},
+  {id:1010, storeId:10, name:"Chicken Fillet & Unli Gravy",price:60,desc:"Chicken fillet with unlimited gravy",             emoji:"🍗"},
+  {id:1011, storeId:10, name:"Chicken Sisig with Rice",  price:99,  desc:"Sizzling chicken sisig with rice",                emoji:"🍗"},
+  {id:1012, storeId:10, name:"Macaroni Fries & Chicken", price:120, desc:"Macaroni fries with chicken",                    emoji:"🍟"},
+  {id:1013, storeId:10, name:"Mini Pancakes (Regular)",  price:50,  desc:"Hazelnut, Maple Syrup, or Peanut Butter",         emoji:"🥞"},
+  {id:1014, storeId:10, name:"Mini Pancakes (Special)",  price:60,  desc:"Banana Chocolate or Biscoff",                     emoji:"🥞"},
+  {id:1015, storeId:10, name:"Chicken Pancake",          price:99,  desc:"Savory chicken-filled pancake",                   emoji:"🥞"},
+  {id:1016, storeId:10, name:"Nestle Cornetto",          price:30,  desc:"Hazelnut Crunch, Cookies & Cream, Choco, or Vanilla", emoji:"🍦"},
+  {id:1017, storeId:10, name:"Apple Iced Tea",           price:20,  desc:"Apple-flavored iced tea",                         emoji:"🍎"},
+  {id:1018, storeId:10, name:"Chucky",                   price:35,  desc:"Refreshment drink",                               emoji:"🥤"},
+  {id:1019, storeId:10, name:"Fresh Milk",               price:50,  desc:"Cold fresh milk",                                 emoji:"🥛"},
+  {id:1020, storeId:10, name:"Drinks with Fries Combo",  price:75,  desc:"Drink paired with fries",                         emoji:"🥤"},
+
+  // ── 11. Creamery Rock ──────────────────────────────────────
+  {id:1101, storeId:11, name:"Cheese Stick",             price:5,   desc:"Per piece",                                       emoji:"🧀"},
+  {id:1102, storeId:11, name:"Dynamite",                 price:10,  desc:"Per piece — chili cheese lumpia",                 emoji:"🌶️"},
+  {id:1103, storeId:11, name:"Longganisa",               price:20,  desc:"Filipino sweet sausage",                          emoji:"🌭"},
+  {id:1104, storeId:11, name:"Chicken Skin",             price:25,  desc:"Crispy fried chicken skin",                       emoji:"🍗"},
+  {id:1105, storeId:11, name:"Tortang Talong",           price:30,  desc:"Eggplant omelette",                               emoji:"🍆"},
+  {id:1106, storeId:11, name:"BBQ with Rice",            price:110, desc:"Grilled BBQ with steamed rice",                   emoji:"🍢"},
+  {id:1107, storeId:11, name:"Macarons",                 price:6,   desc:"Sweet coconut macaron",                           emoji:"🍬"},
+  {id:1108, storeId:11, name:"Turon",                    price:10,  desc:"Per piece — fried banana spring roll",            emoji:"🍌"},
+  {id:1109, storeId:11, name:"Brownies",                 price:25,  desc:"Chocolate brownie",                               emoji:"🍫"},
+  {id:1110, storeId:11, name:"Matcha Revel Bar",         price:25,  desc:"Matcha-flavored oat revel bar",                   emoji:"🍵"},
+  {id:1111, storeId:11, name:"Ube Revel Bar",            price:25,  desc:"Ube-flavored oat revel bar",                      emoji:"🟣"},
+  {id:1112, storeId:11, name:"Graham Bar",               price:30,  desc:"Graham cracker dessert bar",                      emoji:"🍪"},
+  {id:1113, storeId:11, name:"Homemade Ice Cream",       price:35,  desc:"Activated Charcoal, Oreos & Cream, Matcha, Strawberry, Vanilla, Mango Graham", emoji:"🍦"},
+  {id:1114, storeId:11, name:"Moist Cake",               price:50,  desc:"Slice of soft moist cake",                        emoji:"🍰"},
+  {id:1115, storeId:11, name:"Sundae (Regular)",         price:50,  desc:"Oatmeal Cookie, Red Velvet Brownie, or Warm Brownie Sundae", emoji:"🍨"},
+  {id:1116, storeId:11, name:"Sundae with Toppings",     price:70,  desc:"Caramel Deluxe, Choco Deluxe, Oreo Caramel, Rocky Road, S'mores, Nutty Caramel", emoji:"🍨"},
+  {id:1117, storeId:11, name:"Double Decker Brownie Sundae",price:85,desc:"Double warm brownie sundae",                     emoji:"🍨"},
+  {id:1118, storeId:11, name:"Signature Iced Coffee",    price:60,  desc:"House-blend iced coffee",                         emoji:"☕"},
+  {id:1119, storeId:11, name:"Caramel Macchiato (Hot/Iced)",price:95,desc:"Caramel macchiato — specify hot or iced",        emoji:"☕"},
+  {id:1120, storeId:11, name:"Spanish Latte (Hot/Iced)", price:95,  desc:"Spanish latte — specify hot or iced",             emoji:"☕"},
+  {id:1121, storeId:11, name:"Dirty Matcha (Hot/Iced)",  price:105, desc:"Matcha with espresso — specify hot or iced",      emoji:"🍵"},
+  {id:1122, storeId:11, name:"Coke Float",               price:75,  desc:"Iced Coke with vanilla ice cream float",          emoji:"🥤"},
+  {id:1123, storeId:11, name:"Lemon Yakult",             price:75,  desc:"Lemonade with Yakult",                            emoji:"🍋"},
+  {id:1124, storeId:11, name:"Strawberry Lemonade",      price:80,  desc:"Fresh strawberry lemonade",                       emoji:"🍓"},
+  {id:1125, storeId:11, name:"Slushie (Iced)",           price:85,  desc:"Cold fruit slushie",                              emoji:"🧊"},
+  {id:1126, storeId:11, name:"Iced Choco Float",         price:85,  desc:"Iced chocolate with float",                       emoji:"🍫"},
+  {id:1127, storeId:11, name:"Matcha Latte (Iced)",      price:130, desc:"Cold matcha latte",                               emoji:"🍵"},
+  {id:1128, storeId:11, name:"Strawberry Matcha (Iced)", price:145, desc:"Cold strawberry matcha",                          emoji:"🍓"},
+  {id:1129, storeId:11, name:"Yakult",                   price:15,  desc:"Bottled Yakult probiotic drink",                  emoji:"🥛"},
+  {id:1130, storeId:11, name:"Coke / Coke Zero / Royal / Sprite",price:40,desc:"Bottled soft drink",                        emoji:"🥤"},
+
+  // ── 12. Dew's Tea House Takoyaki ──────────────────────────
+  {id:1201, storeId:12, name:"Banana Cue",               price:10,  desc:"Deep-fried caramelized banana",                   emoji:"🍌"},
+  {id:1202, storeId:12, name:"Chikalang",                price:10,  desc:"Sweet snack",                                     emoji:"🍬"},
+  {id:1203, storeId:12, name:"Turon",                    price:10,  desc:"Fried banana spring roll",                        emoji:"🍌"},
+  {id:1204, storeId:12, name:"Cheesestick (5 pcs)",      price:50,  desc:"Crispy cheese sticks",                            emoji:"🧀"},
+  {id:1205, storeId:12, name:"Tuna Sandwich",            price:50,  desc:"Tuna salad sandwich",                             emoji:"🥪"},
+  {id:1206, storeId:12, name:"Nachos",                   price:80,  desc:"Crispy nachos with toppings",                     emoji:"🧆"},
+  {id:1207, storeId:12, name:"Arroz Caldo",              price:30,  desc:"Filipino rice porridge",                          emoji:"🥣"},
+  {id:1208, storeId:12, name:"Egg and Fried Rice",       price:40,  desc:"Fried rice with egg",                             emoji:"🍳"},
+  {id:1209, storeId:12, name:"Siomai Fried Rice",        price:50,  desc:"Fried rice with siomai",                          emoji:"🥟"},
+  {id:1210, storeId:12, name:"Takoyaki — Ordinary (6 pcs)",price:55,desc:"Classic takoyaki balls",                          emoji:"🐙"},
+  {id:1211, storeId:12, name:"Takoyaki — Special",       price:65,  desc:"Special loaded takoyaki",                         emoji:"🐙"},
+  {id:1212, storeId:12, name:"Knicker Bocker",           price:60,  desc:"Classic Filipino icy dessert",                    emoji:"🍧"},
+  {id:1213, storeId:12, name:"Mineral Water",            price:10,  desc:"Bottled mineral water",                           emoji:"💧"},
+  {id:1214, storeId:12, name:"Coke",                     price:40,  desc:"Bottled Coca-Cola",                               emoji:"🥤"},
+
+  // ── 13. Food Trip ──────────────────────────────────────────
+  {id:1301, storeId:13, name:"Peanut",                   price:10,  desc:"Snack peanuts",                                   emoji:"🥜"},
+  {id:1302, storeId:13, name:"Turon",                    price:10,  desc:"Fried banana spring roll",                        emoji:"🍌"},
+  {id:1303, storeId:13, name:"Pancit Canton (No Rice)",  price:20,  desc:"Stir-fried noodles, no rice",                     emoji:"🍜"},
+  {id:1304, storeId:13, name:"Langka (No Rice)",         price:25,  desc:"Jackfruit viand, no rice",                        emoji:"🍈"},
+  {id:1305, storeId:13, name:"Kaldereta (No Rice)",      price:45,  desc:"Beef kaldereta, no rice",                         emoji:"🍖"},
+  {id:1306, storeId:13, name:"Pancit Canton with Rice",  price:50,  desc:"Noodles with steamed rice",                       emoji:"🍜"},
+  {id:1307, storeId:13, name:"Sarciado with Rice",       price:50,  desc:"Fish sarciado with rice",                         emoji:"🐟"},
+  {id:1308, storeId:13, name:"Special Meal Combo",       price:50,  desc:"With rice — ask stall for today's viand",        emoji:"🍱"},
+  {id:1309, storeId:13, name:"Adobo Chicken with Rice",  price:65,  desc:"Classic Filipino chicken adobo with rice",        emoji:"🍗"},
+  {id:1310, storeId:13, name:"Chicken Halang-Halang",    price:65,  desc:"Spicy coconut chicken with rice",                 emoji:"🍗"},
+  {id:1311, storeId:13, name:"Estofado with Rice",       price:65,  desc:"Sweet pork estofado with rice",                   emoji:"🍖"},
+  {id:1312, storeId:13, name:"Kaldereta with Rice",      price:65,  desc:"Beef kaldereta with rice",                        emoji:"🍖"},
+  {id:1313, storeId:13, name:"String Beans with Rice",   price:65,  desc:"Sautéed string beans with rice",                  emoji:"🫛"},
+  {id:1314, storeId:13, name:"Dinuguan with Rice",       price:75,  desc:"Pork blood stew with rice",                       emoji:"🍲"},
+  {id:1315, storeId:13, name:"Pork Sisig with Rice",     price:75,  desc:"Sizzling pork sisig with rice",                   emoji:"🥩"},
+  {id:1316, storeId:13, name:"Sachet Coffee",            price:15,  desc:"Jim's, Kopiko, Milo, Energen & more variants",   emoji:"☕"},
+  {id:1317, storeId:13, name:"Coffee with Patimpla",     price:25,  desc:"Coffee with local sweetener",                     emoji:"☕"},
+  {id:1318, storeId:13, name:"Cup of Water",             price:15,  desc:"Cup of drinking water",                           emoji:"💧"},
+  {id:1319, storeId:13, name:"Ice Cream in a Cone",      price:20,  desc:"Ube, Strawberry, Vanilla, Choco, or Mango",       emoji:"🍦"},
+  {id:1320, storeId:13, name:"Twin Pops",                price:27,  desc:"Classic ice pop",                                 emoji:"🧊"},
+  {id:1321, storeId:13, name:"Nestle Cornetto",          price:30,  desc:"Ube Cheesecake or Double Choco Vanilla",          emoji:"🍦"},
+
+  // ── 14. Healthy Options ────────────────────────────────────
+  {id:1401, storeId:14, name:"Hotdog on a Stick",        price:20,  desc:"Grilled hotdog on stick",                         emoji:"🌭"},
+  {id:1402, storeId:14, name:"Hotdog with Bun",          price:30,  desc:"Hotdog in a bun",                                 emoji:"🌭"},
+  {id:1403, storeId:14, name:"Hotdog with Egg & Rice",   price:60,  desc:"Hotdog, fried egg, and rice",                     emoji:"🍳"},
+  {id:1404, storeId:14, name:"Egg with Rice",            price:60,  desc:"Fried egg with rice",                             emoji:"🍳"},
+  {id:1405, storeId:14, name:"Mangga (Mango)",           price:20,  desc:"Fresh ripe mango",                                emoji:"🥭"},
+  {id:1406, storeId:14, name:"Bottled Water (Medium)",   price:15,  desc:"Medium bottled water",                            emoji:"💧"},
+  {id:1407, storeId:14, name:"Bottled Water (Large)",    price:20,  desc:"Large bottled water",                             emoji:"💧"},
+  {id:1408, storeId:14, name:"Iced Tea (Medium)",        price:25,  desc:"Cold iced tea, medium",                           emoji:"🧊"},
+  {id:1409, storeId:14, name:"Four Seasons (Medium)",    price:25,  desc:"Four seasons juice, medium",                      emoji:"🍹"},
+  {id:1410, storeId:14, name:"Iced Tea (Large)",         price:30,  desc:"Cold iced tea, large",                            emoji:"🧊"},
+  {id:1411, storeId:14, name:"Four Seasons (Large)",     price:30,  desc:"Four seasons juice, large",                       emoji:"🍹"},
+  {id:1412, storeId:14, name:"Fruit Shake 12oz",         price:35,  desc:"Mango, Avocado, or Guyabano",                     emoji:"🥤"},
+  {id:1413, storeId:14, name:"Fruit Shake 16oz",         price:55,  desc:"Mango, Avocado, or Guyabano",                     emoji:"🥤"},
+  {id:1414, storeId:14, name:"Fruit Shake 22oz",         price:70,  desc:"Mango, Avocado, or Guyabano",                     emoji:"🥤"},
+
+  // ── 15. Jacky Chow ─────────────────────────────────────────
+  {id:1501, storeId:15, name:"Siomai Solo (4 pcs)",      price:54,  desc:"Classic Chicken, Crabstick, Japanese, Sharksfin, or Shrimp Chicken", emoji:"🥟"},
+  {id:1502, storeId:15, name:"Siomai with Rice (4 pcs)", price:65,  desc:"Classic Chicken, Crabstick, Japanese, Sharksfin, or Shrimp Chicken", emoji:"🥟"},
+  {id:1503, storeId:15, name:"Ngoyong Roll (4 pcs)",     price:69,  desc:"Crispy fried rolls with filling",                 emoji:"🌮"},
+  {id:1504, storeId:15, name:"Fried Rice w/ Siomai & Egg (1pc)", price:69, desc:"Fried rice with 1 chicken siomai and egg", emoji:"🍳"},
+  {id:1505, storeId:15, name:"Fried Rice w/ Siomai & Egg (2pc)", price:84, desc:"Fried rice with 2 chicken siomai and egg", emoji:"🍳"},
+  {id:1506, storeId:15, name:"Special Noodle Soup",      price:76,  desc:"Beef broth with siomai and egg",                  emoji:"🍜"},
+  {id:1507, storeId:15, name:"Dutch Mill",               price:30,  desc:"Bottled yogurt drink",                            emoji:"🥛"},
+  {id:1508, storeId:15, name:"Coke Zero / Sprite",       price:40,  desc:"Bottled soft drink",                              emoji:"🥤"},
+  {id:1509, storeId:15, name:"Kleenfant Wipes",          price:20,  desc:"Wet wipes",                                       emoji:"🧻"},
+
+  // ── 16. La Vivienda ────────────────────────────────────────
+  {id:1601, storeId:16, name:"Chicken Nuggets w/ Shawarma Rice",price:60,desc:"Chicken nuggets on shawarma rice",            emoji:"🍗"},
+  {id:1602, storeId:16, name:"Lumpia w/ Shawarma Rice",  price:60,  desc:"Lumpia on shawarma rice",                         emoji:"🌮"},
+  {id:1603, storeId:16, name:"Siomai w/ Shawarma Rice",  price:60,  desc:"Siomai on shawarma rice",                         emoji:"🥟"},
+  {id:1604, storeId:16, name:"Beef Shawarma Rice",       price:65,  desc:"Beef shawarma on seasoned rice",                  emoji:"🥩"},
+  {id:1605, storeId:16, name:"Beef Shawarma Rice + Egg & Drink",price:100,desc:"Beef shawarma rice with egg and drink",      emoji:"🥩"},
+  {id:1606, storeId:16, name:"Vegetarian Shawarma Wrap", price:65,  desc:"Veggie-filled shawarma wrap",                     emoji:"🌯"},
+  {id:1607, storeId:16, name:"Regular Shawarma Wrap",    price:70,  desc:"Classic shawarma wrap",                           emoji:"🌯"},
+  {id:1608, storeId:16, name:"All-Meat Shawarma Wrap",   price:75,  desc:"Loaded all-meat shawarma wrap",                   emoji:"🌯"},
+  {id:1609, storeId:16, name:"French Shawarma Wrap",     price:80,  desc:"French-style shawarma wrap",                      emoji:"🌯"},
+  {id:1610, storeId:16, name:"Khobar Shawarma Wrap",     price:90,  desc:"Khobar-style shawarma wrap",                      emoji:"🌯"},
+  {id:1611, storeId:16, name:"Newcastle Shawarma w/ Juice",price:100,desc:"Newcastle shawarma with juice",                   emoji:"🌯"},
+  {id:1612, storeId:16, name:"Cheesy Quesadillas (2 pcs)",price:50, desc:"Two cheesy quesadilla pieces",                    emoji:"🧀"},
+  {id:1613, storeId:16, name:"Cheesy Sandwich",          price:60,  desc:"Grilled cheesy sandwich",                         emoji:"🥪"},
+  {id:1614, storeId:16, name:"Cucumber Juice",           price:25,  desc:"Fresh cucumber juice",                            emoji:"🥒"},
+  {id:1615, storeId:16, name:"Iced Coffee",              price:40,  desc:"Cold iced coffee",                                emoji:"☕"},
+  {id:1616, storeId:16, name:"Coke / Coke Zero / Royal / Sprite",price:60,desc:"Bottled soft drink",                        emoji:"🥤"},
+  {id:1617, storeId:16, name:"Strawberry Keychain",      price:45,  desc:"Cute strawberry keychain merchandise",            emoji:"🍓"},
+
+  // ── 17. Mang Tinapay ───────────────────────────────────────
+  {id:1701, storeId:17, name:"Pandesal",                 price:5,   desc:"Per piece — soft Filipino bread roll",            emoji:"🥖"},
+  {id:1702, storeId:17, name:"Onion Hopia",              price:10,  desc:"Flaky pastry with onion filling",                 emoji:"🥮"},
+  {id:1703, storeId:17, name:"Mungo Hopia",              price:12,  desc:"Flaky pastry with mung bean filling",             emoji:"🥮"},
+  {id:1704, storeId:17, name:"Milky Donut",              price:15,  desc:"Soft milky donut",                                emoji:"🍩"},
+  {id:1705, storeId:17, name:"Violet Cream Loaf",        price:28,  desc:"Sliced cream loaf bread",                         emoji:"🍞"},
+  {id:1706, storeId:17, name:"Puto",                     price:30,  desc:"Steamed Filipino rice cake",                      emoji:"🧁"},
+  {id:1707, storeId:17, name:"Custard Cake (Slice)",     price:35,  desc:"Slice of soft custard cake",                      emoji:"🍰"},
+  {id:1708, storeId:17, name:"Egg Pie",                  price:35,  desc:"Classic Filipino egg pie",                        emoji:"🥧"},
+  {id:1709, storeId:17, name:"Burger (Buy 1 Take 1)",    price:39,  desc:"B1T1 burger deal",                                emoji:"🍔"},
+  {id:1710, storeId:17, name:"Chicken Siopao",           price:45,  desc:"Steamed bun with chicken filling",                emoji:"🥙"},
+  {id:1711, storeId:17, name:"Arroz Caldo",              price:48,  desc:"Warm Filipino rice porridge",                     emoji:"🥣"},
+  {id:1712, storeId:17, name:"Whole Custard Cake",       price:400, desc:"Whole custard cake — great for sharing!",         emoji:"🎂"},
+  {id:1713, storeId:17, name:"Minute Maid",              price:15,  desc:"Bottled juice drink",                             emoji:"🍊"},
+  {id:1714, storeId:17, name:"Coffee (Sachet)",          price:25,  desc:"Nescafe / Kopiko Black, Latte, Brown, Creamy White, Original, White", emoji:"☕"},
+  {id:1715, storeId:17, name:"Nutri Boost",              price:35,  desc:"Chocolate milk drink",                            emoji:"🍫"},
+  {id:1716, storeId:17, name:"Del Monte",                price:45,  desc:"Del Monte juice drink",                           emoji:"🍹"},
+  {id:1717, storeId:17, name:"Soda (Coke / Coke Lemon / Sprite)",price:55,desc:"Bottled soft drink",                        emoji:"🥤"},
+  {id:1718, storeId:17, name:"Candy",                    price:5,   desc:"Assorted candy",                                  emoji:"🍬"},
+  {id:1719, storeId:17, name:"Small Tissue",             price:15,  desc:"Small tissue pack",                               emoji:"🧻"},
+  {id:1720, storeId:17, name:"Big Tissue",               price:20,  desc:"Large tissue pack",                               emoji:"🧻"},
+
+  // ── 18. Matcha Cafe ────────────────────────────────────────
+  {id:1801, storeId:18, name:"Coffee Ice Cream (Scoop)", price:20,  desc:"Scooped coffee ice cream",                        emoji:"🍦"},
+  {id:1802, storeId:18, name:"Chocolate Ice Cream (Scoop)",price:30,desc:"Scooped chocolate ice cream",                     emoji:"🍫"},
+  {id:1803, storeId:18, name:"Cookies & Cream / Vanilla / Choco Ice Cream",price:30,desc:"Scooped ice cream",               emoji:"🍦"},
+  {id:1804, storeId:18, name:"Disc Black Choco Ice Cream",price:35, desc:"Black chocolate disc ice cream",                  emoji:"🍫"},
+  {id:1805, storeId:18, name:"Wonder Waffle",            price:35,  desc:"Waffle with ice cream",                           emoji:"🧇"},
+  {id:1806, storeId:18, name:"Coke / Royal / Sprite",   price:40,  desc:"Bottled soft drink",                              emoji:"🥤"},
+  {id:1807, storeId:18, name:"Chicky Burger",            price:179, desc:"Crispy chicken burger",                           emoji:"🍔"},
+  {id:1808, storeId:18, name:"Chicky Bites with Rice",   price:249, desc:"Crispy chicken bites with rice",                  emoji:"🍗"},
+  {id:1809, storeId:18, name:"Chicken Bites with Fries", price:269, desc:"Crispy chicken bites with fries",                 emoji:"🍗"},
+  {id:1810, storeId:18, name:"Premium Ice Cream Tub (16oz)",price:195,desc:"Biscofflicious, Bebby Baby, Caramel Babe, Choco Lovey, Dark Mocha Toblerone, Espresso Vanilla, Matcha Mate, Matcha Strawberry, Milo Burst, Velour Coffee Crumble", emoji:"🍨"},
+  {id:1811, storeId:18, name:"Premium Ice Cream Tub (22oz)",price:220,desc:"Bebby Baby, Biscofflicious, Caramel Babe, Choco Lovey, Dark Mocha Toblerone, Espresso Vanilla, Milo Burst, Velour Coffee Crumble (₱225 Matcha Strawberry, ₱230 Matcha Mate)", emoji:"🍨"},
+  {id:1812, storeId:18, name:"Original Chick Chix",      price:150, desc:"Crispy chicken chunks & fries in creamy cheese sauce", emoji:"🍗"},
+  {id:1813, storeId:18, name:"Spicy Chick Chix",         price:160, desc:"Spicy chicken chunks & fries in creamy cheese sauce", emoji:"🌶️"},
+
+  // ── 19. Papito's Restaurant ───────────────────────────────
+  {id:1901, storeId:19, name:"Gulay (Base)",             price:45,  desc:"Pechay w/ Tofu, Chopsuey, Ampalaya w/ Egg, or Monggo Kusido", emoji:"🥦"},
+  {id:1902, storeId:19, name:"Gulay with Rice",          price:75,  desc:"Vegetable viand with steamed rice",                emoji:"🥦"},
+  {id:1903, storeId:19, name:"Meat / Fish (Base)",       price:60,  desc:"Ground Beef, Beef Steak, Beef Kulma, Kilawin Fish, Fish Adobo, or Chicken", emoji:"🍖"},
+  {id:1904, storeId:19, name:"Take-out Meal",            price:90,  desc:"Meal with ₱15 container included",                emoji:"📦"},
+  {id:1905, storeId:19, name:"Kani Salad",               price:100, desc:"Japanese crab stick salad",                       emoji:"🥗"},
+  {id:1906, storeId:19, name:"Canned Soda (Coke / Sprite)",price:45,desc:"Canned soft drink",                               emoji:"🥤"},
+
+  // ── 20. Rosemin's Snack House ─────────────────────────────
+  {id:2001, storeId:20, name:"Lumpia",                   price:10,  desc:"Per piece — crispy spring roll",                  emoji:"🌮"},
+  {id:2002, storeId:20, name:"Maruyang Strips (7 pcs, No Sugar)",price:10,desc:"Fried maruya strips",                       emoji:"🍌"},
+  {id:2003, storeId:20, name:"Maruyang (3 pcs)",         price:20,  desc:"Fried banana fritters",                           emoji:"🍌"},
+  {id:2004, storeId:20, name:"Chicken Strips / Skin (11 pcs)",price:50,desc:"Crispy chicken strips or skin",                emoji:"🍗"},
+  {id:2005, storeId:20, name:"Fried Egg",                price:15,  desc:"Plain fried egg",                                 emoji:"🍳"},
+  {id:2006, storeId:20, name:"Mixed Veggies / Pancit Miki / Spicy Talong / Tortel / Labong Gata",price:35,desc:"Choice of vegetable viand (no rice)", emoji:"🥦"},
+  {id:2007, storeId:20, name:"Buffalo Chicken (1 pc)",   price:50,  desc:"Spicy buffalo chicken",                           emoji:"🍗"},
+  {id:2008, storeId:20, name:"Bicol Express Chicken / Fillet / Katsu / Kaldereta / Atay",price:50,desc:"Choice of meat viand (no rice)", emoji:"🍖"},
+  {id:2009, storeId:20, name:"Atay with Egg",            price:65,  desc:"Chicken liver with egg",                          emoji:"🍳"},
+  {id:2010, storeId:20, name:"Fish (with Free Salad)",   price:80,  desc:"Fried fish with complimentary salad",             emoji:"🐟"},
+  {id:2011, storeId:20, name:"Beef Kulma / Beef Steak",  price:85,  desc:"Premium beef viand (no rice)",                    emoji:"🥩"},
+  {id:2012, storeId:20, name:"Veggie/Miki Rice Meal",    price:60,  desc:"Vegetable or pancit viand dine-in with rice",     emoji:"🍱"},
+  {id:2013, storeId:20, name:"Standard Meat Rice Meal",  price:75,  desc:"Chicken/Kaldereta/Atay etc. dine-in with rice",   emoji:"🍱"},
+  {id:2014, storeId:20, name:"Fish Rice Meal",           price:105, desc:"Fish dine-in with rice and free salad",           emoji:"🐟"},
+  {id:2015, storeId:20, name:"Premium Beef Rice Meal",   price:110, desc:"Beef Kulma or Steak dine-in with rice",           emoji:"🥩"},
+  {id:2016, storeId:20, name:"Takeout Veggie/Miki Meal", price:65,  desc:"Takeout with rice and container",                 emoji:"📦"},
+  {id:2017, storeId:20, name:"Takeout Standard Meat Meal",price:80, desc:"Takeout with rice and container",                 emoji:"📦"},
+  {id:2018, storeId:20, name:"Takeout Fish Meal",        price:110, desc:"Takeout fish with rice, salad & container",       emoji:"📦"},
+  {id:2019, storeId:20, name:"Takeout Premium Beef Meal",price:115, desc:"Takeout beef with rice and container",            emoji:"📦"},
+  {id:2020, storeId:20, name:"Takeout Container",        price:5,   desc:"Add-on container for takeout",                   emoji:"📦"},
+  {id:2021, storeId:20, name:"Rice (Add-on)",            price:25,  desc:"Extra steamed rice",                              emoji:"🍚"},
+  {id:2022, storeId:20, name:"Coke / Coke Zero / Sprite / Vitamilk",price:40,desc:"Bottled drink",                          emoji:"🥤"},
+
+  // ── 21. Turks ──────────────────────────────────────────────
+  {id:2101, storeId:21, name:"Pita Wrap — Chicken",      price:100, desc:"Full pita wrap with chicken filling",             emoji:"🌯"},
+  {id:2102, storeId:21, name:"Pita Wrap — Beef",         price:105, desc:"Full pita wrap with beef filling",                emoji:"🌯"},
+  {id:2103, storeId:21, name:"Small Wrap — Chicken",     price:80,  desc:"Small pita wrap with chicken",                   emoji:"🌯"},
+  {id:2104, storeId:21, name:"Small Wrap — Beef",        price:85,  desc:"Small pita wrap with beef",                      emoji:"🌯"},
+  {id:2105, storeId:21, name:"Rice Meal — Chicken",      price:150, desc:"Chicken with shawarma-seasoned rice",             emoji:"🍚"},
+  {id:2106, storeId:21, name:"Rice Meal — Beef",         price:155, desc:"Beef with shawarma-seasoned rice",                emoji:"🍚"},
+  {id:2107, storeId:21, name:"Rice Bowl — Chicken",      price:105, desc:"Chicken rice bowl",                               emoji:"🥣"},
+  {id:2108, storeId:21, name:"Rice Bowl — Beef",         price:110, desc:"Beef rice bowl",                                  emoji:"🥣"},
+  {id:2109, storeId:21, name:"Combo A — Chicken (Small Pita + Rice Bowl)",price:175,desc:"Small pita wrap + rice bowl",     emoji:"🍱"},
+  {id:2110, storeId:21, name:"Combo A — Beef (Small Pita + Rice Bowl)",price:185,desc:"Small pita wrap + rice bowl",        emoji:"🍱"},
+  {id:2111, storeId:21, name:"Combo B — Chicken (Regular + Small Pita)",price:170,desc:"Regular pita + small wrap",         emoji:"🍱"},
+  {id:2112, storeId:21, name:"Combo B — Beef (Regular + Small Pita)",price:180,desc:"Regular pita + small wrap",            emoji:"🍱"},
+  {id:2113, storeId:21, name:"Add-On: Cheddar Cheese",   price:15,  desc:"Extra cheddar cheese",                            emoji:"🧀"},
+  {id:2114, storeId:21, name:"Add-On: Extra Rice",       price:35,  desc:"Extra side of rice",                              emoji:"🍚"},
+];
+
+/* Only a signed-in admin can seed — enforced again by Firestore rules. */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    setStatus('Not signed in. Log in to the Re:Quest app as an admin first, then reload this page.', 'err');
+    return;
+  }
+  try {
+    const uref = await getDoc(doc(db, 'users', user.uid));
+    if (!uref.exists() || uref.data().role !== 'admin') {
+      setStatus('This account is not an admin. Seeding is disabled.', 'err');
+      return;
+    }
+    setStatus(`Signed in as admin (${uref.data().name || user.email}). Ready to seed ${MENU.length} entries.`, 'ok');
+    seedBtn.disabled = false;
+    document.getElementById('backfillBtn').disabled = false;
+  } catch (err) {
+    console.error(err);
+    setStatus('Could not verify admin access: ' + (err.message || err), 'err');
+  }
+});
+
+/* Stamp stall codes onto data that was seeded before the codename
+   system existed. Safe to run any time — only touches items whose
+   code is missing or wrong. Never creates duplicates. */
+window.runBackfill = async function () {
+  const btn = document.getElementById('backfillBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Backfilling…';
+  log('Backfilling stall codes on existing menu items…');
+
+  try {
+    const snap = await getDocs(collection(db, 'menu_items'));
+    let fixed = 0;
+    let batch = writeBatch(db);
+    let ops = 0;
+    for (const d of snap.docs) {
+      const m = d.data();
+      const want = CODE_BY_ID[m.storeId];
+      if (want && m.storeCode !== want) {
+        batch.update(d.ref, { storeCode: want, updatedAt: serverTimestamp() });
+        ops++; fixed++;
+        if (ops >= 400) { await batch.commit(); batch = writeBatch(db); ops = 0; }
+      }
+    }
+    if (ops > 0) await batch.commit();
+    log(`Menu items fixed: ${fixed}/${snap.size}`);
+
+    const codeBatch = writeBatch(db);
+    Object.entries(CODE_BY_ID).forEach(([id, code]) => {
+      codeBatch.set(doc(db, 'stores', String(id)), { code }, { merge: true });
+    });
+    await codeBatch.commit();
+    log('Store codenames written ✓');
+
+    setStatus(`Backfill done — ${fixed} item(s) fixed. Vendors can now manage their menus.`, 'ok');
+    btn.textContent = '✓ Backfilled';
+  } catch (err) {
+    console.error(err);
+    log('FAILED: ' + (err.message || err));
+    setStatus('Backfill failed: ' + (err.message || err), 'err');
+    btn.disabled = false;
+    btn.textContent = '🔧 Backfill stall codes (only if you seeded before the codename update)';
+  }
+};
+
+window.runSeed = async function () {
+  const force = document.getElementById('forceBox').checked;
+  seedBtn.disabled = true;
+  seedBtn.textContent = '⏳ Seeding…';
+  logBox.textContent = '';
+  logBox.classList.remove('hidden');
+
+  try {
+    if (!force) {
+      const existing = await getDocs(query(collection(db, 'menu_items'), limit(1)));
+      if (!existing.empty) {
+        log('ABORTED: menu_items is not empty. Tick "force" if you really want to re-seed.');
+        setStatus('Aborted — collection already has data. Nothing was written.', 'err');
+        seedBtn.disabled = false;
+        seedBtn.textContent = '🌱 Seed Menus to Firestore';
+        return;
+      }
+    }
+
+    // Skip the "Menu not yet available" placeholder entries — those stalls
+    // simply keep showing the built-in placeholder until a vendor adds items.
+    const real = MENU.filter(m => !(m.price === 0 && /not yet available/i.test(m.name || '')));
+    log(`Seeding ${real.length} items (skipped ${MENU.length - real.length} placeholders)…`);
+
+    const CHUNK = 400; // Firestore batch limit is 500
+    let done = 0;
+    for (let i = 0; i < real.length; i += CHUNK) {
+      const batch = writeBatch(db);
+      const slice = real.slice(i, i + CHUNK);
+      slice.forEach(m => {
+        const ref = doc(collection(db, 'menu_items'));
+        batch.set(ref, {
+          storeId: m.storeId,
+          storeCode: CODE_BY_ID[m.storeId] || null,
+          name: m.name,
+          price: Number(m.price) || 0,
+          desc: m.desc || '',
+          emoji: m.emoji || '🍽️',
+          photoURL: null,
+          available: true,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      });
+      await batch.commit();
+      done += slice.length;
+      log(`…${done}/${real.length} written`);
+    }
+
+    // Stamp each stores/{id} doc with its codename (merge = safe to re-run).
+    // Vendor writes to stores/{id} are only allowed when this matches.
+    const codeBatch = writeBatch(db);
+    Object.entries(CODE_BY_ID).forEach(([id, code]) => {
+      codeBatch.set(doc(db, 'stores', String(id)), { code }, { merge: true });
+    });
+    await codeBatch.commit();
+    log('Store codenames written ✓');
+
+    log('DONE ✓ All menus are now live in Firestore.');
+    setStatus(`Success! ${done} items seeded. Vendors will now see (and can manage) their real menus. You can delete this file.`, 'ok');
+    seedBtn.textContent = '✓ Seeded';
+  } catch (err) {
+    console.error(err);
+    log('FAILED: ' + (err.message || err));
+    setStatus('Seeding failed: ' + (err.message || err), 'err');
+    seedBtn.disabled = false;
+    seedBtn.textContent = '🌱 Seed Menus to Firestore';
+  }
+};
+</script>
+</body>
+</html>

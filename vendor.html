@@ -1,0 +1,2023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    /* Applies a saved dark-mode preference before anything paints.
+       Shared across every Re:Quest page via the same localStorage key
+       (the toggle itself lives in home.html's profile panel). */
+    (function () {
+      try {
+        if (localStorage.getItem('requestTheme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Re:Quest — Vendor Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── TOKENS (same as home.html) ──────────────────────── */
+    :root {
+      --orange:      #FC4C02;
+      --orange-dark: #d93e00;
+      --orange-light:#fff2ed;
+      --bg:          #F3F4F6;
+      --surface:     #FFFFFF;
+      --text:        #111827;
+      --muted:       #6B7280;
+      --border:      #E5E7EB;
+      --success:     #10B981;
+      --danger:      #EF4444;
+      --radius-sm:   8px;
+      --radius:      14px;
+      --radius-lg:   20px;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow:      0 4px 16px rgba(0,0,0,.10);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,.13);
+    }
+    [data-theme="dark"] {
+      --orange-light:#2b1810;
+      --bg:          #0F1115;
+      --surface:     #1A1D24;
+      --text:        #F3F4F6;
+      --muted:       #9CA3AF;
+      --border:      #2A2E37;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.4);
+      --shadow:      0 4px 16px rgba(0,0,0,.5);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,.6);
+    }
+
+    /* ─── RESET (scoped) ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; overflow-x: hidden; }
+    body, h1, h2, h3, h4, p, div, span, a, button, input, select, textarea, form, label { margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    img { max-width: 100%; display: block; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+    input, select, textarea { font-family: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── UTILITIES ───────────────────────────────────────── */
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .w-full { width: 100%; }
+    .text-center { text-align: center; }
+    .text-sm { font-size: 0.875rem; }
+    .text-xs { font-size: 0.75rem; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+    .text-muted { color: var(--muted); }
+    .text-orange { color: var(--orange); }
+    .text-danger { color: var(--danger); }
+    .mt-1 { margin-top: 4px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-3 { margin-top: 12px; }
+    .mt-4 { margin-top: 16px; }
+
+    /* ─── PAGE SYSTEM ─────────────────────────────────────── */
+    .page { display: none; min-height: 100vh; flex-direction: column; }
+    .page.active { display: flex; }
+    .page-body { flex: 1; overflow-y: auto; padding-bottom: 110px; }
+
+    /* ─── BUTTONS ─────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 14px 24px; border-radius: var(--radius);
+      font-size: 0.95rem; font-weight: 600; transition: all .18s ease;
+      line-height: 1; white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--orange); color: #fff;
+      box-shadow: 0 4px 14px rgba(252,76,2,.35);
+    }
+    .btn-primary:hover { background: var(--orange-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(252,76,2,.45); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: var(--surface); color: var(--text);
+      border: 1.5px solid var(--border); box-shadow: var(--shadow-sm);
+    }
+    .btn-secondary:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
+    .btn-ghost { color: var(--muted); padding: 10px 16px; border-radius: var(--radius-sm); }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+    .btn-danger {
+      background: #fee2e2; color: #991b1b; border: 1.5px solid #fecaca;
+      font-weight: 600; font-size: 0.9rem;
+    }
+    .btn-danger:hover { background: #991b1b; color: #fff; }
+    .btn-icon {
+      width: 42px; height: 42px; padding: 0; border-radius: 50%;
+      background: var(--surface); border: 1.5px solid var(--border);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; box-shadow: var(--shadow-sm); flex-shrink: 0;
+    }
+    .btn-icon:hover { border-color: var(--orange); color: var(--orange); }
+    .btn-lg { padding: 18px 32px; font-size: 1.05rem; border-radius: var(--radius-lg); }
+    .btn-sm { padding: 9px 16px; font-size: 0.82rem; border-radius: var(--radius-sm); }
+
+    /* ─── FORM ELEMENTS ───────────────────────────────────── */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 0.82rem; font-weight: 600; color: var(--text); letter-spacing: .3px; }
+    .form-input {
+      padding: 13px 16px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 0.95rem;
+      background: var(--surface); color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
+      width: 100%;
+    }
+    .form-input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(252,76,2,.12); }
+    .form-input.error { border-color: var(--danger); }
+    .form-input::placeholder { color: #9CA3AF; }
+    .form-textarea {
+      padding: 13px 16px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 0.95rem;
+      background: var(--surface); color: var(--text);
+      resize: vertical; min-height: 80px; width: 100%;
+    }
+    .form-textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(252,76,2,.12); }
+    .field-error { font-size: 0.78rem; color: var(--danger); font-weight: 500; min-height: 1px; }
+
+    /* ─── BADGES ──────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; padding: 4px 10px;
+      border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: .3px; text-transform: uppercase;
+    }
+    .badge-green  { background: #d1fae5; color: #065f46; }
+    .badge-gray   { background: var(--bg); color: var(--muted); }
+    .badge-yellow { background: #fef3c7; color: #92400e; }
+    .badge-red    { background: #fee2e2; color: #991b1b; }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
+
+    /* ─── TOPNAV ──────────────────────────────────────────── */
+    .topnav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 14px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+    }
+    .topnav-logo {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 1.3rem; letter-spacing: -0.5px;
+      display: flex; align-items: center; gap: 4px;
+      white-space: nowrap;
+    }
+    .topnav-logo span.re { color: var(--orange); }
+    .topnav-logo span.quest { color: var(--text); }
+    .topnav-logo span.colon { color: var(--muted); }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), #ff8c42);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       AUTH PAGE (mirrors index.html)
+    ══════════════════════════════════════════════════════════ */
+    .auth-page { background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; }
+    .auth-hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      padding: 40px 28px 48px; position: relative; overflow: hidden;
+    }
+    .auth-hero::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 240px; height: 240px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(252,76,2,.4) 0%, transparent 70%);
+    }
+    .auth-logo {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 2.2rem; color: #fff; letter-spacing: -1px;
+      position: relative; z-index: 1; margin-bottom: 8px;
+    }
+    .auth-logo span { color: var(--orange); }
+    .auth-hero-sub {
+      color: rgba(255,255,255,.65); font-size: 0.9rem; font-weight: 400;
+      position: relative; z-index: 1; line-height: 1.5;
+    }
+    .auth-hero-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+      padding: 6px 12px; border-radius: 999px; margin-bottom: 16px;
+      font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,.8);
+      letter-spacing: .5px; text-transform: uppercase;
+      position: relative; z-index: 1;
+    }
+    .auth-hero-tag span { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
+    .auth-form-wrap { flex: 1; padding: 28px 20px 40px; max-width: 440px; margin: 0 auto; width: 100%; }
+    .auth-form { display: flex; flex-direction: column; gap: 16px; }
+    .auth-note {
+      background: var(--orange-light); border: 1px solid rgba(252,76,2,.25);
+      border-radius: var(--radius-sm); padding: 12px 14px;
+      font-size: 0.8rem; color: var(--orange-dark); font-weight: 500; line-height: 1.5;
+    }
+    [data-theme="dark"] .auth-note { color: #fdba74; }
+    .back-link {
+      display: block; text-align: center; margin-top: 20px;
+      font-size: 0.85rem; font-weight: 600; color: var(--muted);
+    }
+    .back-link:hover { color: var(--orange); }
+
+    /* ══════════════════════════════════════════════════════════
+       PENDING / REQUEST-ACCESS PAGE
+    ══════════════════════════════════════════════════════════ */
+    .pending-shell {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 24px 20px; background: linear-gradient(135deg, #1a1a2e 0%, #1f2d45 100%);
+    }
+    .pending-card {
+      width: 100%; max-width: 440px; background: var(--surface);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+      padding: 32px 24px; text-align: center;
+    }
+    .pending-icon { font-size: 3rem; margin-bottom: 12px; }
+    .pending-title {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 1.25rem; margin-bottom: 8px;
+    }
+    .pending-msg { font-size: 0.88rem; color: var(--muted); line-height: 1.6; margin-bottom: 18px; }
+    .request-waiting-box {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 16px;
+      font-size: 0.84rem; line-height: 1.6; text-align: left;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       DASHBOARD
+    ══════════════════════════════════════════════════════════ */
+    .vendor-hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #1f2d45 100%);
+      padding: 24px 20px 26px; position: relative; overflow: hidden;
+    }
+    .vendor-hero::before {
+      content: ''; position: absolute; right: -30px; top: -30px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(252,76,2,.5) 0%, transparent 70%);
+    }
+    .vendor-hero-inner { position: relative; z-index: 1; display: flex; gap: 14px; align-items: center; }
+    .vendor-store-photo {
+      width: 64px; height: 64px; border-radius: var(--radius); flex-shrink: 0;
+      background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; overflow: hidden;
+    }
+    .vendor-store-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .vendor-store-name {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 1.3rem; color: #fff; line-height: 1.2; margin-bottom: 2px;
+    }
+    .vendor-store-desc {
+      color: rgba(255,255,255,.6); font-size: 0.8rem; line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .vendor-hero-actions {
+      position: relative; z-index: 1;
+      display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;
+    }
+    .hero-btn {
+      flex: 1; min-width: 140px; padding: 12px 16px; border-radius: var(--radius);
+      font-size: 0.85rem; font-weight: 700; transition: all .18s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .hero-btn.open { background: rgba(16,185,129,.18); color: #6ee7b7; border: 1.5px solid rgba(16,185,129,.5); }
+    .hero-btn.open:hover { background: rgba(16,185,129,.3); }
+    .hero-btn.closed { background: rgba(239,68,68,.18); color: #fca5a5; border: 1.5px solid rgba(239,68,68,.5); }
+    .hero-btn.closed:hover { background: rgba(239,68,68,.3); }
+    .hero-btn.edit { background: rgba(255,255,255,.1); color: #fff; border: 1.5px solid rgba(255,255,255,.25); }
+    .hero-btn.edit:hover { background: rgba(255,255,255,.18); }
+    .hero-btn:disabled { opacity: .55; cursor: wait; }
+
+    /* Stats strip */
+    .stats-strip {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      padding: 16px 20px 0;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 8px; text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-num { font-size: 1.3rem; font-weight: 800; }
+    .stat-num.green { color: var(--success); }
+    .stat-num.red { color: var(--danger); }
+    .stat-num.orange { color: var(--orange); }
+    .stat-label { font-size: 0.7rem; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+    /* Toolbar */
+    .vendor-toolbar { padding: 16px 20px 0; }
+    .search-input-wrap { position: relative; margin-bottom: 12px; }
+    .search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font-size: 1rem; pointer-events: none;
+    }
+    .search-input {
+      width: 100%; padding: 12px 14px 12px 42px;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 0.9rem; background: var(--surface); color: var(--text);
+      transition: all .15s;
+    }
+    .search-input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(252,76,2,.1); }
+    .chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+    .chip-row::-webkit-scrollbar { display: none; }
+    .cat-chip {
+      flex-shrink: 0; padding: 7px 16px; border-radius: 999px;
+      border: 1.5px solid var(--border); font-size: 0.8rem; font-weight: 600;
+      background: var(--surface); color: var(--muted); transition: all .15s;
+    }
+    .cat-chip.active, .cat-chip:hover {
+      background: var(--orange); color: #fff; border-color: var(--orange);
+    }
+    .bulk-row { display: flex; gap: 8px; margin-top: 12px; }
+    .bulk-btn {
+      flex: 1; padding: 10px; border-radius: var(--radius-sm);
+      border: 1.5px dashed var(--border); font-size: 0.78rem; font-weight: 700;
+      color: var(--muted); transition: all .15s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .bulk-btn:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
+
+    /* Section header */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 20px 12px;
+    }
+    .section-title { font-size: 1rem; font-weight: 700; }
+
+    /* Item cards (same look as home.html menu cards, plus controls) */
+    .menu-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 14px; padding: 0 20px;
+    }
+    .menu-card {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border); overflow: hidden;
+      box-shadow: var(--shadow-sm); transition: all .2s;
+      display: flex; flex-direction: column;
+    }
+    .menu-img {
+      height: 110px; display: flex; align-items: center; justify-content: center;
+      font-size: 2.6rem; background: var(--bg); position: relative; overflow: hidden;
+    }
+    .menu-img img { width: 100%; height: 100%; object-fit: cover; }
+    .menu-img-badge { position: absolute; top: 8px; right: 8px; }
+    .menu-card.sold-out { opacity: .85; }
+    .menu-card.sold-out .menu-img { filter: grayscale(.55); }
+    .menu-body { padding: 12px 14px; display: flex; flex-direction: column; flex: 1; }
+    .menu-name { font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; line-height: 1.3; }
+    .menu-desc { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .menu-price { font-size: 0.92rem; font-weight: 800; color: var(--orange); margin-bottom: 10px; }
+    .vendor-card-actions { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+    .mini-btn {
+      width: 100%; padding: 8px 10px; border-radius: var(--radius-sm);
+      font-size: 0.76rem; font-weight: 700; transition: all .15s;
+      border: 1.5px solid var(--border); background: var(--surface); color: var(--text);
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .mini-btn.avail-on { border-color: rgba(16,185,129,.4); color: var(--success); }
+    .mini-btn.avail-on:hover { background: #d1fae5; }
+    .mini-btn.avail-off { border-color: rgba(239,68,68,.4); color: var(--danger); }
+    .mini-btn.avail-off:hover { background: #fee2e2; }
+    .mini-btn.edit:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); }
+    .mini-btn.del { color: var(--muted); }
+    .mini-btn.del:hover { border-color: var(--danger); color: var(--danger); background: #fee2e2; }
+    .mini-btn.del.confirming { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+    .items-empty { text-align: center; padding: 50px 20px; }
+    .items-empty-icon { font-size: 2.8rem; margin-bottom: 12px; }
+    .items-empty-title { font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
+    .items-empty-sub { font-size: 0.85rem; color: var(--muted); max-width: 280px; margin: 0 auto 18px; line-height: 1.5; }
+    .import-card { background: var(--surface); border: 1.5px dashed var(--orange); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; text-align: center; }
+    .import-card-title { font-weight: 800; font-size: 0.95rem; margin-bottom: 6px; }
+    .import-card-sub { color: var(--muted); font-size: 0.82rem; line-height: 1.5; margin-bottom: 12px; }
+
+    /* FAB */
+    .vendor-fab {
+      position: fixed; bottom: 24px; right: 20px; z-index: 150;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), #ff8c42);
+      color: #fff; font-size: 1.7rem; font-weight: 700; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 18px rgba(252,76,2,.45);
+      transition: transform .15s;
+    }
+    .vendor-fab:hover { transform: scale(1.06); }
+
+    /* ─── MODALS ──────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 300; display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+      position: relative;
+      background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto;
+      padding: 24px 20px 28px;
+      transform: translateY(40px); transition: transform .3s cubic-bezier(.16,1,.3,1);
+      box-shadow: 0 -8px 40px rgba(0,0,0,.2);
+      -webkit-overflow-scrolling: touch;
+    }
+    .modal-overlay.open .modal-box { transform: translateY(0); }
+    .modal-handle {
+      width: 40px; height: 4px; border-radius: 2px;
+      background: var(--border); margin: 0 auto 20px;
+    }
+    .modal-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; }
+    .modal-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 18px; }
+
+    /* Photo picker */
+    .photo-picker {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 18px 14px; text-align: center; cursor: pointer;
+      transition: all .2s; background: var(--bg);
+    }
+    .photo-picker:hover { border-color: var(--orange); background: var(--orange-light); }
+    .photo-preview-wrap { position: relative; border-radius: var(--radius); overflow: hidden; }
+    .photo-preview-wrap img { width: 100%; height: 160px; object-fit: cover; }
+    .photo-remove {
+      position: absolute; top: 8px; right: 8px;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(0,0,0,.6); color: #fff; font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Availability segmented control */
+    .avail-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .avail-opt {
+      padding: 11px; border-radius: var(--radius-sm); text-align: center;
+      border: 1.5px solid var(--border); font-size: 0.84rem; font-weight: 700;
+      color: var(--muted); transition: all .15s;
+    }
+    .avail-opt.sel-green { background: #d1fae5; border-color: var(--success); color: #065f46; }
+    .avail-opt.sel-red { background: #fee2e2; border-color: var(--danger); color: #991b1b; }
+
+    /* ─── TOAST ───────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: #111827; color: #fff; padding: 12px 20px;
+      border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
+      z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap;
+      display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg);
+      max-width: 92vw; overflow: hidden; text-overflow: ellipsis;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #064e3b; }
+    .toast.error { background: #7f1d1d; }
+
+    /* ─── LOADING SCREEN ──────────────────────────────────── */
+    .loading-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #1a1a2e; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+    }
+    .loading-video-wrap { width: min(60vw, 340px); aspect-ratio: 16/9; }
+    .loading-video-wrap video {
+      width: 100%; height: 100%; object-fit: contain;
+      mix-blend-mode: screen; display: block;
+    }
+    .loading-bar {
+      width: min(60vw, 340px); height: 3px; background: rgba(255,255,255,.15);
+      border-radius: 999px; overflow: hidden;
+    }
+    .loading-fill {
+      height: 100%; width: 0%; background: var(--orange);
+      border-radius: 999px; animation: load 1.8s ease forwards;
+    }
+    @keyframes load { to { width: 100%; } }
+    .loading-sub { color: rgba(255,255,255,.4); font-size: 0.8rem; }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────── */
+    @media (min-width: 600px) {
+      .auth-form-wrap { padding: 40px 28px; }
+      .menu-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (min-width: 900px) {
+      .page-body { max-width: 860px; margin: 0 auto; width: 100%; }
+      .topnav { max-width: 860px; margin: 0 auto; left: 0; right: 0; }
+      .menu-grid { grid-template-columns: repeat(4, 1fr); }
+      .vendor-fab { right: calc(50% - 410px); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-video-wrap">
+    <video autoplay muted playsinline loop>
+      <source src="logo-animation.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+  <div class="loading-sub">Vendor Portal</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: VENDOR LOGIN (same Re:Quest account)
+═══════════════════════════════════════════ -->
+<div class="page active" id="pageAuth">
+  <div class="auth-page">
+    <div class="auth-hero">
+      <div class="auth-hero-tag"><span></span>For stall owners &amp; staff</div>
+      <div class="auth-logo">Re<span>:</span>Quest <span style="font-size:1.1rem;letter-spacing:0">Vendor</span></div>
+      <div class="auth-hero-sub">Manage your stall's menu, prices, photos, and availability — updates go live to students instantly.</div>
+    </div>
+    <div class="auth-form-wrap">
+      <form id="vendorLoginForm" class="auth-form" onsubmit="return handleVendorLogin(event)" novalidate>
+        <div class="auth-note">
+          🔑 Log in with your <b>existing Re:Quest account</b> — the same email and password you use in the student app. No second account needed.
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Email</label>
+          <input type="email" class="form-input" placeholder="you@example.com" id="loginEmail" autocomplete="email" />
+          <div class="field-error" id="loginEmailError"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginPass">Password</label>
+          <input type="password" class="form-input" placeholder="Enter your password" id="loginPass" autocomplete="current-password" />
+          <div class="field-error" id="loginPassError"></div>
+        </div>
+        <button class="btn btn-primary w-full btn-lg" id="loginSubmitBtn" type="submit">Log In</button>
+        <div class="text-center text-sm text-muted">
+          No Re:Quest account yet?
+          <a href="index.html" style="color:var(--orange);font-weight:700">Sign up in the main app first →</a>
+        </div>
+      </form>
+
+      <a class="back-link" href="home.html">← Back to Re:Quest</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: WAITING ROOM / PENDING
+     Shown to logged-in users whose account has no stall
+     codename yet. States are rendered by renderPending().
+═══════════════════════════════════════════ -->
+<div class="page" id="pagePending">
+  <div class="pending-shell">
+    <div class="pending-card">
+      <div class="pending-icon" id="pendingIcon">⏳</div>
+      <div class="pending-title" id="pendingTitle">Vendor Access Required</div>
+      <div class="pending-msg" id="pendingMsg">Loading…</div>
+      <div id="pendingDynamic" style="text-align:left"></div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
+        <button class="btn btn-primary w-full hidden" id="pendingCheckBtn" onclick="checkApprovalStatus()">🔄 Check Status</button>
+        <button class="btn btn-ghost btn-sm" onclick="handleLogout()">Log out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: VENDOR DASHBOARD
+═══════════════════════════════════════════ -->
+<div class="page" id="pageDashboard">
+  <nav class="topnav">
+    <div class="topnav-logo">
+      <span class="re">Re</span><span class="colon">:</span><span class="quest">Quest</span>
+      <span class="badge badge-yellow" style="margin-left:6px">Vendor</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-sm font-semibold hidden" id="vendorTopName" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px"></span>
+      <div class="avatar" id="vendorAvatar">?</div>
+      <button class="btn btn-ghost btn-sm" onclick="handleLogout()">Log out</button>
+    </div>
+  </nav>
+
+  <div class="page-body">
+    <!-- Store hero -->
+    <div class="vendor-hero">
+      <div class="vendor-hero-inner">
+        <div class="vendor-store-photo" id="storeHeroPhoto">🏬</div>
+        <div style="flex:1;min-width:0">
+          <div class="vendor-store-name" id="storeHeroName">My Store</div>
+          <div class="vendor-store-desc" id="storeHeroDesc">Loading…</div>
+          <div class="mt-2"><span class="badge badge-green" id="storeStatusPill">● Open</span></div>
+        </div>
+      </div>
+      <div class="vendor-hero-actions">
+        <button class="hero-btn open" id="toggleOpenBtn" onclick="toggleStoreOpen()">🔒 Close store</button>
+        <button class="hero-btn edit" onclick="openStoreModal()">✏️ Edit store</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-strip">
+      <div class="stat-card">
+        <div class="stat-num orange" id="statTotal">0</div>
+        <div class="stat-label">Total items</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num green" id="statAvail">0</div>
+        <div class="stat-label">Available</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num red" id="statSoldout">0</div>
+        <div class="stat-label">Sold out</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="vendor-toolbar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Search your menu…" oninput="filterVendorItems(this.value)" id="itemSearch" />
+      </div>
+      <div class="chip-row" id="itemFilterChips">
+        <button class="cat-chip active" data-filter="all" onclick="setItemFilter('all', this)">📋 All</button>
+        <button class="cat-chip" data-filter="available" onclick="setItemFilter('available', this)">✅ Available</button>
+        <button class="cat-chip" data-filter="soldout" onclick="setItemFilter('soldout', this)">⛔ Sold out</button>
+      </div>
+      <div class="bulk-row">
+        <button class="bulk-btn" onclick="markAllAvailable()">☀️ Start of day — all available</button>
+        <button class="bulk-btn" onclick="markAllSoldOut()">🌙 End of day — all sold out</button>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div class="section-header">
+      <div class="section-title">🍱 My Menu <span class="text-xs text-muted" id="menuLiveNote" style="font-weight:600">· 🔴 live to customers</span></div>
+    </div>
+    <div class="menu-grid" id="itemsGrid"></div>
+    <div class="items-empty hidden" id="itemsEmpty">
+      <div class="items-empty-icon">🍽️</div>
+      <div class="items-empty-title">No items here yet</div>
+      <div class="items-empty-sub">Add your first menu item — it appears in the student app the moment you save it.</div>
+      <div id="importBox"></div>
+      <button class="btn btn-primary" onclick="openItemModal()">+ Add Item</button>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="vendor-fab" onclick="openItemModal()" title="Add item">+</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: EDIT STORE
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="storeModal" onclick="closeStoreModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✏️ Edit Store</div>
+    <div class="modal-sub">This is what students see on your stall card.</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label class="form-label">Store Photo</label>
+        <div id="storePhotoPickerWrap">
+          <div class="photo-picker" id="storePhotoPicker" onclick="document.getElementById('storePhotoInput').click()">
+            <div style="font-size:1.8rem;margin-bottom:4px">📷</div>
+            <div class="text-sm font-semibold">Tap to upload a photo</div>
+            <div class="text-xs text-muted">Storefront, logo, or best-seller</div>
+          </div>
+          <div class="photo-preview-wrap hidden" id="storePhotoPreviewWrap">
+            <img id="storePhotoPreview" alt="Store photo" />
+            <button class="photo-remove" onclick="removeStorePhoto()" type="button">✕</button>
+          </div>
+        </div>
+        <input type="file" accept="image/*" id="storePhotoInput" class="hidden" onchange="handleStorePhoto(event)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="sName">Store Name</label>
+        <input type="text" class="form-input" id="sName" placeholder="e.g. Syd's Milktea House" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="sEmoji">Store Icon (emoji)</label>
+        <input type="text" class="form-input" id="sEmoji" placeholder="🧋" maxlength="8" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="sDesc">Short Description</label>
+        <textarea class="form-textarea" id="sDesc" placeholder="e.g. Milktea, iced coffee & full meals" style="min-height:70px"></textarea>
+      </div>
+      <button class="btn btn-primary w-full btn-lg" id="saveStoreBtn" onclick="saveStore()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODAL: ADD / EDIT ITEM
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="itemModal" onclick="closeItemModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="itemModalTitle">➕ Add Item</div>
+    <div class="modal-sub" id="itemModalSub">New items go live to students instantly.</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label class="form-label">Item Photo <span class="text-muted" style="font-weight:400">(optional)</span></label>
+        <div class="photo-picker" id="itemPhotoPicker" onclick="document.getElementById('itemPhotoInput').click()">
+          <div style="font-size:1.8rem;margin-bottom:4px">📷</div>
+          <div class="text-sm font-semibold">Tap to upload a photo</div>
+          <div class="text-xs text-muted">Helps students recognize the item</div>
+        </div>
+        <div class="photo-preview-wrap hidden" id="itemPhotoPreviewWrap">
+          <img id="itemPhotoPreview" alt="Item photo" />
+          <button class="photo-remove" onclick="removeItemPhoto()" type="button">✕</button>
+        </div>
+        <input type="file" accept="image/*" id="itemPhotoInput" class="hidden" onchange="handleItemPhoto(event)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="iName">Item Name</label>
+        <input type="text" class="form-input" id="iName" placeholder="e.g. Chicken Adobo Meal" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label" for="iPrice">Price (₱)</label>
+          <input type="number" class="form-input" id="iPrice" placeholder="65" min="0" step="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="iEmoji">Icon (emoji)</label>
+          <input type="text" class="form-input" id="iEmoji" placeholder="🍗" maxlength="8" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="iDesc">Description</label>
+        <textarea class="form-textarea" id="iDesc" placeholder="e.g. With rice + free soup" style="min-height:70px"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Availability</label>
+        <div class="avail-seg">
+          <button class="avail-opt sel-green" id="availYes" onclick="setModalAvail(true)" type="button">✅ Available</button>
+          <button class="avail-opt" id="availNo" onclick="setModalAvail(false)" type="button">⛔ Sold out</button>
+        </div>
+      </div>
+      <button class="btn btn-primary w-full btn-lg" id="saveItemBtn" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT — Firebase v9 Modular SDK (same project)
+══════════════════════════════════════════════════════════ -->
+<script type="module">
+
+/* ── Firebase Imports ──────────────────────────────────── */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  addDoc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  onSnapshot,
+  serverTimestamp,
+  writeBatch
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ── Firebase Config — same project used across Re:Quest ── */
+const firebaseConfig = {
+  apiKey:            "AIzaSyB3ZfZNm8D2qUcbWFvv86ipCR23X5KkOsg",
+  authDomain:        "request-f183d.firebaseapp.com",
+  projectId:         "request-f183d",
+  storageBucket:     "request-f183d.firebasestorage.app",
+  messagingSenderId: "189332484631",
+  appId:             "G-J1K0VM2XGF"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ── State ─────────────────────────────────────────────── */
+let currentUser   = null;
+let vendorUid     = null;
+let vendorProfile = null;   // the user's normal users/{uid} doc
+let storeId       = null;   // numeric store id resolved from the codename
+let storeCode     = null;   // stall codename from users/{uid}.vendorStore
+let storeData     = {};     // stores/{storeId} doc (closed flag + profile overrides)
+let itemsCache    = [];     // live menu_items for this store
+let itemFilter    = 'all';
+let itemSearch    = '';
+let currentPageId = 'pageAuth';
+let importInProgress = false; // guards the one-tap menu import against double-taps
+
+let authFlowInProgress = false;
+let routing            = false;
+
+let userSelfUnsub = null;
+let storeUnsub    = null;
+let itemsUnsub    = null;
+
+// Item modal draft state
+let editingItemId   = null;
+let itemPhotoDraft  = undefined; // undefined = unchanged, null = removed, dataURL = new
+let modalAvail      = true;
+
+// Store modal draft state
+let storePhotoDraft = undefined; // same semantics as itemPhotoDraft
+
+/* ── Stall codenames → store ids ───────────────────────────
+   The admin grants vendor access by setting users/{uid}.vendorStore
+   to one of these codes (e.g. "SY"). Must match STORE_CODES_BY_ID
+   in home.html and CODE_BY_ID in seed-menus.html. */
+const STALL_CODES = {
+  AZ: 1, KK: 2, SV: 3, SY: 4, KRT: 5, EB: 6, WC: 7, AF: 8,
+  BB: 9, CG: 10, CR: 11, DT: 12, FT: 13, HO: 14, JC: 15, LV: 16,
+  MT: 17, MC: 18, PR: 19, RS: 20, TK: 21
+};
+
+/* ── Minimal store directory (fallback names when the Firestore
+   stores/{id} doc has no vendor-set profile yet). Must match the
+   ids in home.html's STORES array. ───────────────────────── */
+const STORES_MIN = {
+  1:"Auntie Zeny's", 2:"KK Food Station", 3:"Snackville",
+  4:"Syd's Milktea House", 5:"The KRT Milktea", 6:"Easybite",
+  7:"Wingcraft", 8:"Alcuis Food", 9:"Bread and Beyond",
+  10:"Chicks n' Gravy", 11:"Creamery Rock",
+  12:"Dew's Tea House Takoyaki", 13:"Food Trip", 14:"Healthy Options",
+  15:"Jacky Chow", 16:"La Vivienda", 17:"Mang Tinapay",
+  18:"Matcha Cafe", 19:"Papito's Restaurant",
+  20:"Rosemin's Snack House", 21:"Turks"
+};
+const STORES_EMOJI = {
+  1:"🍹", 2:"🍱", 3:"🍟", 4:"🧋", 5:"🧋", 6:"🍔", 7:"🍗",
+  8:"🍳", 9:"🍰", 10:"🍗", 11:"🍦", 12:"🐙", 13:"🍲", 14:"🥗",
+  15:"🥟", 16:"🌯", 17:"🥐", 18:"🍦", 19:"🍽️", 20:"🥘", 21:"🌯"
+};
+
+/* ── Built-in student menu (same data as home.html) ─────────
+   Powers the one-tap "import my stall's menu": the vendor copies
+   their stall's existing items into Firestore, then edits them
+   like any live item (prices, photos, availability, delete). */
+const MENU = [
+// ── 1. Auntie Zeny's ──────────────────────────────────────
+  {id:101, storeId:1, name:"Cheese Stick",               price:20,  desc:"Crispy cheese-filled snack stick",               emoji:"🧀"},
+  {id:102, storeId:1, name:"Dynamite",                   price:25,  desc:"Cheese-stuffed chili wrapped in lumpia",          emoji:"🌶️"},
+  {id:103, storeId:1, name:"Palamig (Choco/Buko/Coffee)",price:25,  desc:"Cold refreshment drink",                          emoji:"🥤"},
+  {id:104, storeId:1, name:"Fruit Soda",                 price:45,  desc:"Grapes, Blueberry, Strawberry, Green Apple, Four Seasons", emoji:"🍹"},
+  {id:105, storeId:1, name:"Coke in Cup (16oz)",         price:30,  desc:"Coca-Cola served in a cup",                       emoji:"🥤"},
+
+  // ── 2. KK Food Station ─────────────────────────────────────
+  {id:201, storeId:2, name:"Menu not yet available",     price:0,   desc:"Check back soon for updates",                    emoji:"📋"},
+
+  // ── 3. Snackville ──────────────────────────────────────────
+  {id:301, storeId:3, name:"Menu not yet available",     price:0,   desc:"Check back soon for updates",                    emoji:"📋"},
+
+  // ── 4. Syd's Milktea House ────────────────────────────────
+  {id:401, storeId:4, name:"Milktea (Small)",            price:28,  desc:"Cookies & Cream, Wintermelon, Choco, Caramel, Black Forest, Okinawa, Pandan, Matcha, Mango Cheesecake, Strawberry", emoji:"🧋"},
+  {id:402, storeId:4, name:"Milktea (Large)",            price:38,  desc:"Cookies & Cream, Wintermelon, Choco, Caramel, Black Forest, Okinawa, Pandan, Matcha, Mango Cheesecake, Strawberry", emoji:"🧋"},
+  {id:403, storeId:4, name:"Iced Coffee (Small)",        price:28,  desc:"Macchiato, Cappuccino, or Hazelnut",              emoji:"☕"},
+  {id:404, storeId:4, name:"Iced Coffee (Large)",        price:38,  desc:"Macchiato, Cappuccino, or Hazelnut",              emoji:"☕"},
+  {id:405, storeId:4, name:"Fruit Tea (Small)",          price:28,  desc:"Cucumber or Red Tea",                             emoji:"🍵"},
+  {id:406, storeId:4, name:"Fruit Tea (Large)",          price:38,  desc:"Cucumber or Red Tea",                             emoji:"🍵"},
+  {id:407, storeId:4, name:"Add-On: Pearl / Nata / Coffee Jelly", price:10, desc:"Pick one topping for your drink",        emoji:"🫧"},
+  {id:408, storeId:4, name:"Rice Topping Meal",          price:49,  desc:"Beef loaf, Hotdog, or Siomai with Rice",          emoji:"🍱"},
+  {id:409, storeId:4, name:"Fries Combo",                price:55,  desc:"Fries with Chicken, Burger, Hotdog, or Siomai",   emoji:"🍟"},
+  {id:410, storeId:4, name:"Drinks Combo",               price:55,  desc:"Burger, Siomai, Hotdog, or Fries with Drink",     emoji:"🥤"},
+  {id:411, storeId:4, name:"Pasta Combo",                price:75,  desc:"Carbonara or Spaghetti with Drink",               emoji:"🍝"},
+  {id:412, storeId:4, name:"Chicken (Solo)",             price:30,  desc:"Solo chicken piece",                              emoji:"🍗"},
+  {id:413, storeId:4, name:"Tuna Carbonara",             price:50,  desc:"Solo tuna carbonara pasta",                       emoji:"🍝"},
+  {id:414, storeId:4, name:"Spaghetti",                  price:50,  desc:"Solo spaghetti",                                  emoji:"🍝"},
+  {id:415, storeId:4, name:"Regular Burger",             price:30,  desc:"Solo burger",                                     emoji:"🍔"},
+  {id:416, storeId:4, name:"Hotdog Sandwich",            price:30,  desc:"Solo hotdog sandwich",                            emoji:"🌭"},
+  {id:417, storeId:4, name:"Siomai",                     price:25,  desc:"Solo siomai",                                     emoji:"🥟"},
+  {id:418, storeId:4, name:"Small Fries",                price:25,  desc:"Solo small fries",                                emoji:"🍟"},
+  {id:419, storeId:4, name:"Large Fries",                price:50,  desc:"Solo large fries",                                emoji:"🍟"},
+  {id:420, storeId:4, name:"Chicken Meal w/ Rice",       price:50,  desc:"Garlic Parmesan or Buffalo Chicken with Rice",    emoji:"🍗"},
+  {id:421, storeId:4, name:"Rice in a Cup",              price:15,  desc:"A cup of steamed rice",                           emoji:"🍚"},
+  {id:422, storeId:4, name:"Water",                      price:5,   desc:"Cup of water",                                    emoji:"💧"},
+
+  // ── 5. The KRT Milktea ─────────────────────────────────────
+  {id:501, storeId:5, name:"Milktea (Medium)",           price:80,  desc:"Cookies & Cream, Wintermelon, Dark Choco, White Rabbit, Brown Sugar, Salted Caramel, Black Forest, Okinawa, Matcha, Taro, Red Velvet, Mangolicious, Cheesecake, Strawberry", emoji:"🧋"},
+  {id:502, storeId:5, name:"Milktea (Large)",            price:100, desc:"Same flavors as medium — see stall",              emoji:"🧋"},
+  {id:503, storeId:5, name:"Milktea B1T1 (Medium)",      price:150, desc:"Buy 1 Take 1 milktea, medium",                   emoji:"🧋"},
+  {id:504, storeId:5, name:"Milktea B1T1 (Large)",       price:180, desc:"Buy 1 Take 1 milktea, large",                    emoji:"🧋"},
+  {id:505, storeId:5, name:"Fruit Tea (Medium)",         price:80,  desc:"Lychee, Mango, Strawberry, Blueberry, Green Apple, Passion Fruit", emoji:"🍵"},
+  {id:506, storeId:5, name:"Fruit Tea (Large)",          price:100, desc:"Same flavors as medium — see stall",              emoji:"🍵"},
+  {id:507, storeId:5, name:"Special Flavor Drink",       price:49,  desc:"Milky Strawberry, Matcha Berry, Milky Matcha, Iced Coffee Matcha, Iced Caramel Macchiato, KRT Bubble Tea", emoji:"✨"},
+  {id:508, storeId:5, name:"Special Flavor B1T1",        price:95,  desc:"Buy 1 Take 1 special flavor",                    emoji:"✨"},
+  {id:509, storeId:5, name:"Hot Drink",                  price:75,  desc:"Dark Chocolate or Caramel Macchiato",             emoji:"☕"},
+  {id:510, storeId:5, name:"Add-On: Pearl / Nata",       price:15,  desc:"Pearl or Nata De Coco",                           emoji:"🫧"},
+  {id:511, storeId:5, name:"Add-On: Cream Cheese / Crushed Oreo / Popping Boba", price:20, desc:"Premium drink topping",   emoji:"🫧"},
+  {id:512, storeId:5, name:"Fries (Small)",              price:35,  desc:"Crispy golden fries",                             emoji:"🍟"},
+  {id:513, storeId:5, name:"Fries (Medium)",             price:50,  desc:"Crispy golden fries",                             emoji:"🍟"},
+  {id:514, storeId:5, name:"Fries (Large)",              price:100, desc:"Crispy golden fries",                             emoji:"🍟"},
+  {id:515, storeId:5, name:"Burger — Plain Patty",       price:30,  desc:"Plain burger patty",                              emoji:"🍔"},
+  {id:516, storeId:5, name:"Burger — Egg Patty",         price:40,  desc:"Burger patty with egg",                           emoji:"🍔"},
+  {id:517, storeId:5, name:"Burger — Egg Cheese Patty",  price:50,  desc:"Burger patty with egg and cheese",                emoji:"🍔"},
+  {id:518, storeId:5, name:"Classic Lemon 16oz",         price:45,  desc:"Fresh lemon drink, 16oz",                         emoji:"🍋"},
+  {id:519, storeId:5, name:"Classic Lemon 22oz",         price:65,  desc:"Fresh lemon drink, 22oz",                         emoji:"🍋"},
+  {id:520, storeId:5, name:"Lemon w/ Yakult 16oz",       price:60,  desc:"Lemon drink with Yakult, 16oz",                   emoji:"🍋"},
+  {id:521, storeId:5, name:"Lemon w/ Yakult 22oz",       price:80,  desc:"Lemon drink with Yakult, 22oz",                   emoji:"🍋"},
+  {id:522, storeId:5, name:"Pick N' Pair (Small)",      price:50,  desc:"Chicken Asado, Cheese Burger, or Fries",          emoji:"🍱"},
+  {id:523, storeId:5, name:"Pick N' Pair (Large)",      price:75,  desc:"Chicken w/ Rice + Iced Tea, Coke, or Sprite",     emoji:"🍱"},
+
+  // ── 6. Easybite ────────────────────────────────────────────
+  {id:601, storeId:6, name:"Menu not yet available",     price:0,   desc:"Check back soon for updates",                    emoji:"📋"},
+
+  // ── 7. Wingcraft ───────────────────────────────────────────
+  {id:701, storeId:7, name:"Menu not yet available",     price:0,   desc:"Check back soon for updates",                    emoji:"📋"},
+
+  // ── 8. Alcuis Food ─────────────────────────────────────────
+  {id:801, storeId:8, name:"Siomai Shanghai Rice",       price:65,  desc:"Siomai with Shanghai rice (+₱15 with egg)",       emoji:"🥟"},
+  {id:802, storeId:8, name:"Tocino Shanghai Rice",       price:70,  desc:"Tocino with Shanghai rice (+₱15 with egg)",       emoji:"🍚"},
+  {id:803, storeId:8, name:"Longganisa Shanghai Rice",   price:70,  desc:"Longganisa with Shanghai rice (+₱15 with egg)",   emoji:"🌭"},
+  {id:804, storeId:8, name:"Beef Tapa Shanghai Rice",    price:70,  desc:"Beef tapa with Shanghai rice (+₱15 with egg)",    emoji:"🥩"},
+  {id:805, storeId:8, name:"Chicken Patil Shanghai Rice",price:70,  desc:"Chicken patil with Shanghai rice (+₱15 with egg)",emoji:"🍗"},
+  {id:806, storeId:8, name:"Fried Egg Sandwich",         price:40,  desc:"With cheese & veggies",                           emoji:"🥪"},
+  {id:807, storeId:8, name:"Triple Cheese Hotdog",       price:55,  desc:"Hotdog loaded with triple cheese",                emoji:"🌭"},
+  {id:808, storeId:8, name:"Beefy Burger",               price:55,  desc:"With cheese & veggies",                           emoji:"🍔"},
+  {id:809, storeId:8, name:"Pepero",                     price:65,  desc:"Chocolate-coated snack sticks",                   emoji:"🍫"},
+  {id:810, storeId:8, name:"Pik Nik",                    price:65,  desc:"Packaged snack",                                  emoji:"🥫"},
+  {id:811, storeId:8, name:"Gery",                       price:100, desc:"Packaged snack",                                  emoji:"🍪"},
+  {id:812, storeId:8, name:"Belgian Waffle",             price:50,  desc:"Classic Belgian waffle",                          emoji:"🧇"},
+  {id:813, storeId:8, name:"Red Iced Tea",               price:35,  desc:"Cold iced tea",                                   emoji:"🧊"},
+  {id:814, storeId:8, name:"Lemonade",                   price:35,  desc:"Fresh lemonade",                                  emoji:"🍋"},
+  {id:815, storeId:8, name:"Sprite",                     price:45,  desc:"Bottled Sprite",                                  emoji:"🥤"},
+  {id:816, storeId:8, name:"Hot Coffee",                 price:45,  desc:"Hot brewed coffee",                               emoji:"☕"},
+  {id:817, storeId:8, name:"Hot Choco",                  price:45,  desc:"Hot chocolate drink",                             emoji:"🍫"},
+
+  // ── 9. Bread and Beyond ────────────────────────────────────
+  {id:901, storeId:9, name:"Chikalang",                  price:20,  desc:"Sweet snack",                                     emoji:"🍬"},
+  {id:902, storeId:9, name:"Banana Cake",                price:25,  desc:"Slice of moist banana cake",                      emoji:"🍰"},
+  {id:903, storeId:9, name:"Cassava Cake",               price:25,  desc:"Traditional Filipino cassava cake",               emoji:"🍰"},
+  {id:904, storeId:9, name:"Pancake",                    price:25,  desc:"Fluffy pancake",                                  emoji:"🥞"},
+  {id:905, storeId:9, name:"Brazo de Mercedes",          price:35,  desc:"Classic Filipino meringue roll",                  emoji:"🎂"},
+  {id:906, storeId:9, name:"Brownies",                   price:35,  desc:"Rich chocolate brownie",                          emoji:"🍫"},
+  {id:907, storeId:9, name:"Egg Pie",                    price:35,  desc:"Classic Filipino egg pie",                        emoji:"🥧"},
+  {id:908, storeId:9, name:"Lumpia",                     price:20,  desc:"Crispy Filipino spring roll",                     emoji:"🌮"},
+  {id:909, storeId:9, name:"Chicken Siopao",             price:60,  desc:"Steamed bun filled with chicken",                 emoji:"🥙"},
+  {id:910, storeId:9, name:"Distilled Water",            price:15,  desc:"Bottled water",                                   emoji:"💧"},
+  {id:911, storeId:9, name:"Iced Tea",                   price:30,  desc:"Cold iced tea",                                   emoji:"🧊"},
+  {id:912, storeId:9, name:"Cucumber Drink",             price:35,  desc:"Refreshing cucumber drink",                       emoji:"🥒"},
+  {id:913, storeId:9, name:"Coke / Royal / Sprite",      price:40,  desc:"Bottled soft drink",                              emoji:"🥤"},
+
+  // ── 10. Chicks n' Gravy ───────────────────────────────────
+  {id:1001, storeId:10, name:"Kikiam (4 pcs)",           price:15,  desc:"Fried fish cake rolls",                           emoji:"🍡"},
+  {id:1002, storeId:10, name:"Tempura (3 pcs)",          price:20,  desc:"Fried tempura pieces",                            emoji:"🍤"},
+  {id:1003, storeId:10, name:"Cheesesticks",             price:25,  desc:"Crispy cheese sticks",                            emoji:"🧀"},
+  {id:1004, storeId:10, name:"Hotdog",                   price:25,  desc:"Grilled hotdog",                                  emoji:"🌭"},
+  {id:1005, storeId:10, name:"Kwek Kwek",                price:25,  desc:"Orange-battered quail eggs",                      emoji:"🥚"},
+  {id:1006, storeId:10, name:"Siomai (4 pcs)",           price:25,  desc:"Chili Cheese, Sweet Chili, Spicy Buffalo, or Garlic Mayo", emoji:"🥟"},
+  {id:1007, storeId:10, name:"Shake Shake Fries (Small)",price:50,  desc:"Overloaded Cheese, Sour Cream, or BBQ",           emoji:"🍟"},
+  {id:1008, storeId:10, name:"Shake Shake Fries (Big)",  price:100, desc:"Overloaded Cheese, Sour Cream, or BBQ",           emoji:"🍟"},
+  {id:1009, storeId:10, name:"Chicken Series w/ Rice",   price:60,  desc:"Creamy Cheese, Cheesy Hot, Garlic Mayo, Garlic Parmesan, Honey Butter, Hot Honey, Soy Garlic, Sweet Chili, Teriyaki, or Yangnyeom", emoji:"🍗"},
+  {id:1010, storeId:10, name:"Chicken Fillet & Unli Gravy",price:60,desc:"Chicken fillet with unlimited gravy",             emoji:"🍗"},
+  {id:1011, storeId:10, name:"Chicken Sisig with Rice",  price:99,  desc:"Sizzling chicken sisig with rice",                emoji:"🍗"},
+  {id:1012, storeId:10, name:"Macaroni Fries & Chicken", price:120, desc:"Macaroni fries with chicken",                    emoji:"🍟"},
+  {id:1013, storeId:10, name:"Mini Pancakes (Regular)",  price:50,  desc:"Hazelnut, Maple Syrup, or Peanut Butter",         emoji:"🥞"},
+  {id:1014, storeId:10, name:"Mini Pancakes (Special)",  price:60,  desc:"Banana Chocolate or Biscoff",                     emoji:"🥞"},
+  {id:1015, storeId:10, name:"Chicken Pancake",          price:99,  desc:"Savory chicken-filled pancake",                   emoji:"🥞"},
+  {id:1016, storeId:10, name:"Nestle Cornetto",          price:30,  desc:"Hazelnut Crunch, Cookies & Cream, Choco, or Vanilla", emoji:"🍦"},
+  {id:1017, storeId:10, name:"Apple Iced Tea",           price:20,  desc:"Apple-flavored iced tea",                         emoji:"🍎"},
+  {id:1018, storeId:10, name:"Chucky",                   price:35,  desc:"Refreshment drink",                               emoji:"🥤"},
+  {id:1019, storeId:10, name:"Fresh Milk",               price:50,  desc:"Cold fresh milk",                                 emoji:"🥛"},
+  {id:1020, storeId:10, name:"Drinks with Fries Combo",  price:75,  desc:"Drink paired with fries",                         emoji:"🥤"},
+
+  // ── 11. Creamery Rock ──────────────────────────────────────
+  {id:1101, storeId:11, name:"Cheese Stick",             price:5,   desc:"Per piece",                                       emoji:"🧀"},
+  {id:1102, storeId:11, name:"Dynamite",                 price:10,  desc:"Per piece — chili cheese lumpia",                 emoji:"🌶️"},
+  {id:1103, storeId:11, name:"Longganisa",               price:20,  desc:"Filipino sweet sausage",                          emoji:"🌭"},
+  {id:1104, storeId:11, name:"Chicken Skin",             price:25,  desc:"Crispy fried chicken skin",                       emoji:"🍗"},
+  {id:1105, storeId:11, name:"Tortang Talong",           price:30,  desc:"Eggplant omelette",                               emoji:"🍆"},
+  {id:1106, storeId:11, name:"BBQ with Rice",            price:110, desc:"Grilled BBQ with steamed rice",                   emoji:"🍢"},
+  {id:1107, storeId:11, name:"Macarons",                 price:6,   desc:"Sweet coconut macaron",                           emoji:"🍬"},
+  {id:1108, storeId:11, name:"Turon",                    price:10,  desc:"Per piece — fried banana spring roll",            emoji:"🍌"},
+  {id:1109, storeId:11, name:"Brownies",                 price:25,  desc:"Chocolate brownie",                               emoji:"🍫"},
+  {id:1110, storeId:11, name:"Matcha Revel Bar",         price:25,  desc:"Matcha-flavored oat revel bar",                   emoji:"🍵"},
+  {id:1111, storeId:11, name:"Ube Revel Bar",            price:25,  desc:"Ube-flavored oat revel bar",                      emoji:"🟣"},
+  {id:1112, storeId:11, name:"Graham Bar",               price:30,  desc:"Graham cracker dessert bar",                      emoji:"🍪"},
+  {id:1113, storeId:11, name:"Homemade Ice Cream",       price:35,  desc:"Activated Charcoal, Oreos & Cream, Matcha, Strawberry, Vanilla, Mango Graham", emoji:"🍦"},
+  {id:1114, storeId:11, name:"Moist Cake",               price:50,  desc:"Slice of soft moist cake",                        emoji:"🍰"},
+  {id:1115, storeId:11, name:"Sundae (Regular)",         price:50,  desc:"Oatmeal Cookie, Red Velvet Brownie, or Warm Brownie Sundae", emoji:"🍨"},
+  {id:1116, storeId:11, name:"Sundae with Toppings",     price:70,  desc:"Caramel Deluxe, Choco Deluxe, Oreo Caramel, Rocky Road, S'mores, Nutty Caramel", emoji:"🍨"},
+  {id:1117, storeId:11, name:"Double Decker Brownie Sundae",price:85,desc:"Double warm brownie sundae",                     emoji:"🍨"},
+  {id:1118, storeId:11, name:"Signature Iced Coffee",    price:60,  desc:"House-blend iced coffee",                         emoji:"☕"},
+  {id:1119, storeId:11, name:"Caramel Macchiato (Hot/Iced)",price:95,desc:"Caramel macchiato — specify hot or iced",        emoji:"☕"},
+  {id:1120, storeId:11, name:"Spanish Latte (Hot/Iced)", price:95,  desc:"Spanish latte — specify hot or iced",             emoji:"☕"},
+  {id:1121, storeId:11, name:"Dirty Matcha (Hot/Iced)",  price:105, desc:"Matcha with espresso — specify hot or iced",      emoji:"🍵"},
+  {id:1122, storeId:11, name:"Coke Float",               price:75,  desc:"Iced Coke with vanilla ice cream float",          emoji:"🥤"},
+  {id:1123, storeId:11, name:"Lemon Yakult",             price:75,  desc:"Lemonade with Yakult",                            emoji:"🍋"},
+  {id:1124, storeId:11, name:"Strawberry Lemonade",      price:80,  desc:"Fresh strawberry lemonade",                       emoji:"🍓"},
+  {id:1125, storeId:11, name:"Slushie (Iced)",           price:85,  desc:"Cold fruit slushie",                              emoji:"🧊"},
+  {id:1126, storeId:11, name:"Iced Choco Float",         price:85,  desc:"Iced chocolate with float",                       emoji:"🍫"},
+  {id:1127, storeId:11, name:"Matcha Latte (Iced)",      price:130, desc:"Cold matcha latte",                               emoji:"🍵"},
+  {id:1128, storeId:11, name:"Strawberry Matcha (Iced)", price:145, desc:"Cold strawberry matcha",                          emoji:"🍓"},
+  {id:1129, storeId:11, name:"Yakult",                   price:15,  desc:"Bottled Yakult probiotic drink",                  emoji:"🥛"},
+  {id:1130, storeId:11, name:"Coke / Coke Zero / Royal / Sprite",price:40,desc:"Bottled soft drink",                        emoji:"🥤"},
+
+  // ── 12. Dew's Tea House Takoyaki ──────────────────────────
+  {id:1201, storeId:12, name:"Banana Cue",               price:10,  desc:"Deep-fried caramelized banana",                   emoji:"🍌"},
+  {id:1202, storeId:12, name:"Chikalang",                price:10,  desc:"Sweet snack",                                     emoji:"🍬"},
+  {id:1203, storeId:12, name:"Turon",                    price:10,  desc:"Fried banana spring roll",                        emoji:"🍌"},
+  {id:1204, storeId:12, name:"Cheesestick (5 pcs)",      price:50,  desc:"Crispy cheese sticks",                            emoji:"🧀"},
+  {id:1205, storeId:12, name:"Tuna Sandwich",            price:50,  desc:"Tuna salad sandwich",                             emoji:"🥪"},
+  {id:1206, storeId:12, name:"Nachos",                   price:80,  desc:"Crispy nachos with toppings",                     emoji:"🧆"},
+  {id:1207, storeId:12, name:"Arroz Caldo",              price:30,  desc:"Filipino rice porridge",                          emoji:"🥣"},
+  {id:1208, storeId:12, name:"Egg and Fried Rice",       price:40,  desc:"Fried rice with egg",                             emoji:"🍳"},
+  {id:1209, storeId:12, name:"Siomai Fried Rice",        price:50,  desc:"Fried rice with siomai",                          emoji:"🥟"},
+  {id:1210, storeId:12, name:"Takoyaki — Ordinary (6 pcs)",price:55,desc:"Classic takoyaki balls",                          emoji:"🐙"},
+  {id:1211, storeId:12, name:"Takoyaki — Special",       price:65,  desc:"Special loaded takoyaki",                         emoji:"🐙"},
+  {id:1212, storeId:12, name:"Knicker Bocker",           price:60,  desc:"Classic Filipino icy dessert",                    emoji:"🍧"},
+  {id:1213, storeId:12, name:"Mineral Water",            price:10,  desc:"Bottled mineral water",                           emoji:"💧"},
+  {id:1214, storeId:12, name:"Coke",                     price:40,  desc:"Bottled Coca-Cola",                               emoji:"🥤"},
+
+  // ── 13. Food Trip ──────────────────────────────────────────
+  {id:1301, storeId:13, name:"Peanut",                   price:10,  desc:"Snack peanuts",                                   emoji:"🥜"},
+  {id:1302, storeId:13, name:"Turon",                    price:10,  desc:"Fried banana spring roll",                        emoji:"🍌"},
+  {id:1303, storeId:13, name:"Pancit Canton (No Rice)",  price:20,  desc:"Stir-fried noodles, no rice",                     emoji:"🍜"},
+  {id:1304, storeId:13, name:"Langka (No Rice)",         price:25,  desc:"Jackfruit viand, no rice",                        emoji:"🍈"},
+  {id:1305, storeId:13, name:"Kaldereta (No Rice)",      price:45,  desc:"Beef kaldereta, no rice",                         emoji:"🍖"},
+  {id:1306, storeId:13, name:"Pancit Canton with Rice",  price:50,  desc:"Noodles with steamed rice",                       emoji:"🍜"},
+  {id:1307, storeId:13, name:"Sarciado with Rice",       price:50,  desc:"Fish sarciado with rice",                         emoji:"🐟"},
+  {id:1308, storeId:13, name:"Special Meal Combo",       price:50,  desc:"With rice — ask stall for today's viand",        emoji:"🍱"},
+  {id:1309, storeId:13, name:"Adobo Chicken with Rice",  price:65,  desc:"Classic Filipino chicken adobo with rice",        emoji:"🍗"},
+  {id:1310, storeId:13, name:"Chicken Halang-Halang",    price:65,  desc:"Spicy coconut chicken with rice",                 emoji:"🍗"},
+  {id:1311, storeId:13, name:"Estofado with Rice",       price:65,  desc:"Sweet pork estofado with rice",                   emoji:"🍖"},
+  {id:1312, storeId:13, name:"Kaldereta with Rice",      price:65,  desc:"Beef kaldereta with rice",                        emoji:"🍖"},
+  {id:1313, storeId:13, name:"String Beans with Rice",   price:65,  desc:"Sautéed string beans with rice",                  emoji:"🫛"},
+  {id:1314, storeId:13, name:"Dinuguan with Rice",       price:75,  desc:"Pork blood stew with rice",                       emoji:"🍲"},
+  {id:1315, storeId:13, name:"Pork Sisig with Rice",     price:75,  desc:"Sizzling pork sisig with rice",                   emoji:"🥩"},
+  {id:1316, storeId:13, name:"Sachet Coffee",            price:15,  desc:"Jim's, Kopiko, Milo, Energen & more variants",   emoji:"☕"},
+  {id:1317, storeId:13, name:"Coffee with Patimpla",     price:25,  desc:"Coffee with local sweetener",                     emoji:"☕"},
+  {id:1318, storeId:13, name:"Cup of Water",             price:15,  desc:"Cup of drinking water",                           emoji:"💧"},
+  {id:1319, storeId:13, name:"Ice Cream in a Cone",      price:20,  desc:"Ube, Strawberry, Vanilla, Choco, or Mango",       emoji:"🍦"},
+  {id:1320, storeId:13, name:"Twin Pops",                price:27,  desc:"Classic ice pop",                                 emoji:"🧊"},
+  {id:1321, storeId:13, name:"Nestle Cornetto",          price:30,  desc:"Ube Cheesecake or Double Choco Vanilla",          emoji:"🍦"},
+
+  // ── 14. Healthy Options ────────────────────────────────────
+  {id:1401, storeId:14, name:"Hotdog on a Stick",        price:20,  desc:"Grilled hotdog on stick",                         emoji:"🌭"},
+  {id:1402, storeId:14, name:"Hotdog with Bun",          price:30,  desc:"Hotdog in a bun",                                 emoji:"🌭"},
+  {id:1403, storeId:14, name:"Hotdog with Egg & Rice",   price:60,  desc:"Hotdog, fried egg, and rice",                     emoji:"🍳"},
+  {id:1404, storeId:14, name:"Egg with Rice",            price:60,  desc:"Fried egg with rice",                             emoji:"🍳"},
+  {id:1405, storeId:14, name:"Mangga (Mango)",           price:20,  desc:"Fresh ripe mango",                                emoji:"🥭"},
+  {id:1406, storeId:14, name:"Bottled Water (Medium)",   price:15,  desc:"Medium bottled water",                            emoji:"💧"},
+  {id:1407, storeId:14, name:"Bottled Water (Large)",    price:20,  desc:"Large bottled water",                             emoji:"💧"},
+  {id:1408, storeId:14, name:"Iced Tea (Medium)",        price:25,  desc:"Cold iced tea, medium",                           emoji:"🧊"},
+  {id:1409, storeId:14, name:"Four Seasons (Medium)",    price:25,  desc:"Four seasons juice, medium",                      emoji:"🍹"},
+  {id:1410, storeId:14, name:"Iced Tea (Large)",         price:30,  desc:"Cold iced tea, large",                            emoji:"🧊"},
+  {id:1411, storeId:14, name:"Four Seasons (Large)",     price:30,  desc:"Four seasons juice, large",                       emoji:"🍹"},
+  {id:1412, storeId:14, name:"Fruit Shake 12oz",         price:35,  desc:"Mango, Avocado, or Guyabano",                     emoji:"🥤"},
+  {id:1413, storeId:14, name:"Fruit Shake 16oz",         price:55,  desc:"Mango, Avocado, or Guyabano",                     emoji:"🥤"},
+  {id:1414, storeId:14, name:"Fruit Shake 22oz",         price:70,  desc:"Mango, Avocado, or Guyabano",                     emoji:"🥤"},
+
+  // ── 15. Jacky Chow ─────────────────────────────────────────
+  {id:1501, storeId:15, name:"Siomai Solo (4 pcs)",      price:54,  desc:"Classic Chicken, Crabstick, Japanese, Sharksfin, or Shrimp Chicken", emoji:"🥟"},
+  {id:1502, storeId:15, name:"Siomai with Rice (4 pcs)", price:65,  desc:"Classic Chicken, Crabstick, Japanese, Sharksfin, or Shrimp Chicken", emoji:"🥟"},
+  {id:1503, storeId:15, name:"Ngoyong Roll (4 pcs)",     price:69,  desc:"Crispy fried rolls with filling",                 emoji:"🌮"},
+  {id:1504, storeId:15, name:"Fried Rice w/ Siomai & Egg (1pc)", price:69, desc:"Fried rice with 1 chicken siomai and egg", emoji:"🍳"},
+  {id:1505, storeId:15, name:"Fried Rice w/ Siomai & Egg (2pc)", price:84, desc:"Fried rice with 2 chicken siomai and egg", emoji:"🍳"},
+  {id:1506, storeId:15, name:"Special Noodle Soup",      price:76,  desc:"Beef broth with siomai and egg",                  emoji:"🍜"},
+  {id:1507, storeId:15, name:"Dutch Mill",               price:30,  desc:"Bottled yogurt drink",                            emoji:"🥛"},
+  {id:1508, storeId:15, name:"Coke Zero / Sprite",       price:40,  desc:"Bottled soft drink",                              emoji:"🥤"},
+  {id:1509, storeId:15, name:"Kleenfant Wipes",          price:20,  desc:"Wet wipes",                                       emoji:"🧻"},
+
+  // ── 16. La Vivienda ────────────────────────────────────────
+  {id:1601, storeId:16, name:"Chicken Nuggets w/ Shawarma Rice",price:60,desc:"Chicken nuggets on shawarma rice",            emoji:"🍗"},
+  {id:1602, storeId:16, name:"Lumpia w/ Shawarma Rice",  price:60,  desc:"Lumpia on shawarma rice",                         emoji:"🌮"},
+  {id:1603, storeId:16, name:"Siomai w/ Shawarma Rice",  price:60,  desc:"Siomai on shawarma rice",                         emoji:"🥟"},
+  {id:1604, storeId:16, name:"Beef Shawarma Rice",       price:65,  desc:"Beef shawarma on seasoned rice",                  emoji:"🥩"},
+  {id:1605, storeId:16, name:"Beef Shawarma Rice + Egg & Drink",price:100,desc:"Beef shawarma rice with egg and drink",      emoji:"🥩"},
+  {id:1606, storeId:16, name:"Vegetarian Shawarma Wrap", price:65,  desc:"Veggie-filled shawarma wrap",                     emoji:"🌯"},
+  {id:1607, storeId:16, name:"Regular Shawarma Wrap",    price:70,  desc:"Classic shawarma wrap",                           emoji:"🌯"},
+  {id:1608, storeId:16, name:"All-Meat Shawarma Wrap",   price:75,  desc:"Loaded all-meat shawarma wrap",                   emoji:"🌯"},
+  {id:1609, storeId:16, name:"French Shawarma Wrap",     price:80,  desc:"French-style shawarma wrap",                      emoji:"🌯"},
+  {id:1610, storeId:16, name:"Khobar Shawarma Wrap",     price:90,  desc:"Khobar-style shawarma wrap",                      emoji:"🌯"},
+  {id:1611, storeId:16, name:"Newcastle Shawarma w/ Juice",price:100,desc:"Newcastle shawarma with juice",                   emoji:"🌯"},
+  {id:1612, storeId:16, name:"Cheesy Quesadillas (2 pcs)",price:50, desc:"Two cheesy quesadilla pieces",                    emoji:"🧀"},
+  {id:1613, storeId:16, name:"Cheesy Sandwich",          price:60,  desc:"Grilled cheesy sandwich",                         emoji:"🥪"},
+  {id:1614, storeId:16, name:"Cucumber Juice",           price:25,  desc:"Fresh cucumber juice",                            emoji:"🥒"},
+  {id:1615, storeId:16, name:"Iced Coffee",              price:40,  desc:"Cold iced coffee",                                emoji:"☕"},
+  {id:1616, storeId:16, name:"Coke / Coke Zero / Royal / Sprite",price:60,desc:"Bottled soft drink",                        emoji:"🥤"},
+  {id:1617, storeId:16, name:"Strawberry Keychain",      price:45,  desc:"Cute strawberry keychain merchandise",            emoji:"🍓"},
+
+  // ── 17. Mang Tinapay ───────────────────────────────────────
+  {id:1701, storeId:17, name:"Pandesal",                 price:5,   desc:"Per piece — soft Filipino bread roll",            emoji:"🥖"},
+  {id:1702, storeId:17, name:"Onion Hopia",              price:10,  desc:"Flaky pastry with onion filling",                 emoji:"🥮"},
+  {id:1703, storeId:17, name:"Mungo Hopia",              price:12,  desc:"Flaky pastry with mung bean filling",             emoji:"🥮"},
+  {id:1704, storeId:17, name:"Milky Donut",              price:15,  desc:"Soft milky donut",                                emoji:"🍩"},
+  {id:1705, storeId:17, name:"Violet Cream Loaf",        price:28,  desc:"Sliced cream loaf bread",                         emoji:"🍞"},
+  {id:1706, storeId:17, name:"Puto",                     price:30,  desc:"Steamed Filipino rice cake",                      emoji:"🧁"},
+  {id:1707, storeId:17, name:"Custard Cake (Slice)",     price:35,  desc:"Slice of soft custard cake",                      emoji:"🍰"},
+  {id:1708, storeId:17, name:"Egg Pie",                  price:35,  desc:"Classic Filipino egg pie",                        emoji:"🥧"},
+  {id:1709, storeId:17, name:"Burger (Buy 1 Take 1)",    price:39,  desc:"B1T1 burger deal",                                emoji:"🍔"},
+  {id:1710, storeId:17, name:"Chicken Siopao",           price:45,  desc:"Steamed bun with chicken filling",                emoji:"🥙"},
+  {id:1711, storeId:17, name:"Arroz Caldo",              price:48,  desc:"Warm Filipino rice porridge",                     emoji:"🥣"},
+  {id:1712, storeId:17, name:"Whole Custard Cake",       price:400, desc:"Whole custard cake — great for sharing!",         emoji:"🎂"},
+  {id:1713, storeId:17, name:"Minute Maid",              price:15,  desc:"Bottled juice drink",                             emoji:"🍊"},
+  {id:1714, storeId:17, name:"Coffee (Sachet)",          price:25,  desc:"Nescafe / Kopiko Black, Latte, Brown, Creamy White, Original, White", emoji:"☕"},
+  {id:1715, storeId:17, name:"Nutri Boost",              price:35,  desc:"Chocolate milk drink",                            emoji:"🍫"},
+  {id:1716, storeId:17, name:"Del Monte",                price:45,  desc:"Del Monte juice drink",                           emoji:"🍹"},
+  {id:1717, storeId:17, name:"Soda (Coke / Coke Lemon / Sprite)",price:55,desc:"Bottled soft drink",                        emoji:"🥤"},
+  {id:1718, storeId:17, name:"Candy",                    price:5,   desc:"Assorted candy",                                  emoji:"🍬"},
+  {id:1719, storeId:17, name:"Small Tissue",             price:15,  desc:"Small tissue pack",                               emoji:"🧻"},
+  {id:1720, storeId:17, name:"Big Tissue",               price:20,  desc:"Large tissue pack",                               emoji:"🧻"},
+
+  // ── 18. Matcha Cafe ────────────────────────────────────────
+  {id:1801, storeId:18, name:"Coffee Ice Cream (Scoop)", price:20,  desc:"Scooped coffee ice cream",                        emoji:"🍦"},
+  {id:1802, storeId:18, name:"Chocolate Ice Cream (Scoop)",price:30,desc:"Scooped chocolate ice cream",                     emoji:"🍫"},
+  {id:1803, storeId:18, name:"Cookies & Cream / Vanilla / Choco Ice Cream",price:30,desc:"Scooped ice cream",               emoji:"🍦"},
+  {id:1804, storeId:18, name:"Disc Black Choco Ice Cream",price:35, desc:"Black chocolate disc ice cream",                  emoji:"🍫"},
+  {id:1805, storeId:18, name:"Wonder Waffle",            price:35,  desc:"Waffle with ice cream",                           emoji:"🧇"},
+  {id:1806, storeId:18, name:"Coke / Royal / Sprite",   price:40,  desc:"Bottled soft drink",                              emoji:"🥤"},
+  {id:1807, storeId:18, name:"Chicky Burger",            price:179, desc:"Crispy chicken burger",                           emoji:"🍔"},
+  {id:1808, storeId:18, name:"Chicky Bites with Rice",   price:249, desc:"Crispy chicken bites with rice",                  emoji:"🍗"},
+  {id:1809, storeId:18, name:"Chicken Bites with Fries", price:269, desc:"Crispy chicken bites with fries",                 emoji:"🍗"},
+  {id:1810, storeId:18, name:"Premium Ice Cream Tub (16oz)",price:195,desc:"Biscofflicious, Bebby Baby, Caramel Babe, Choco Lovey, Dark Mocha Toblerone, Espresso Vanilla, Matcha Mate, Matcha Strawberry, Milo Burst, Velour Coffee Crumble", emoji:"🍨"},
+  {id:1811, storeId:18, name:"Premium Ice Cream Tub (22oz)",price:220,desc:"Bebby Baby, Biscofflicious, Caramel Babe, Choco Lovey, Dark Mocha Toblerone, Espresso Vanilla, Milo Burst, Velour Coffee Crumble (₱225 Matcha Strawberry, ₱230 Matcha Mate)", emoji:"🍨"},
+  {id:1812, storeId:18, name:"Original Chick Chix",      price:150, desc:"Crispy chicken chunks & fries in creamy cheese sauce", emoji:"🍗"},
+  {id:1813, storeId:18, name:"Spicy Chick Chix",         price:160, desc:"Spicy chicken chunks & fries in creamy cheese sauce", emoji:"🌶️"},
+
+  // ── 19. Papito's Restaurant ───────────────────────────────
+  {id:1901, storeId:19, name:"Gulay (Base)",             price:45,  desc:"Pechay w/ Tofu, Chopsuey, Ampalaya w/ Egg, or Monggo Kusido", emoji:"🥦"},
+  {id:1902, storeId:19, name:"Gulay with Rice",          price:75,  desc:"Vegetable viand with steamed rice",                emoji:"🥦"},
+  {id:1903, storeId:19, name:"Meat / Fish (Base)",       price:60,  desc:"Ground Beef, Beef Steak, Beef Kulma, Kilawin Fish, Fish Adobo, or Chicken", emoji:"🍖"},
+  {id:1904, storeId:19, name:"Take-out Meal",            price:90,  desc:"Meal with ₱15 container included",                emoji:"📦"},
+  {id:1905, storeId:19, name:"Kani Salad",               price:100, desc:"Japanese crab stick salad",                       emoji:"🥗"},
+  {id:1906, storeId:19, name:"Canned Soda (Coke / Sprite)",price:45,desc:"Canned soft drink",                               emoji:"🥤"},
+
+  // ── 20. Rosemin's Snack House ─────────────────────────────
+  {id:2001, storeId:20, name:"Lumpia",                   price:10,  desc:"Per piece — crispy spring roll",                  emoji:"🌮"},
+  {id:2002, storeId:20, name:"Maruyang Strips (7 pcs, No Sugar)",price:10,desc:"Fried maruya strips",                       emoji:"🍌"},
+  {id:2003, storeId:20, name:"Maruyang (3 pcs)",         price:20,  desc:"Fried banana fritters",                           emoji:"🍌"},
+  {id:2004, storeId:20, name:"Chicken Strips / Skin (11 pcs)",price:50,desc:"Crispy chicken strips or skin",                emoji:"🍗"},
+  {id:2005, storeId:20, name:"Fried Egg",                price:15,  desc:"Plain fried egg",                                 emoji:"🍳"},
+  {id:2006, storeId:20, name:"Mixed Veggies / Pancit Miki / Spicy Talong / Tortel / Labong Gata",price:35,desc:"Choice of vegetable viand (no rice)", emoji:"🥦"},
+  {id:2007, storeId:20, name:"Buffalo Chicken (1 pc)",   price:50,  desc:"Spicy buffalo chicken",                           emoji:"🍗"},
+  {id:2008, storeId:20, name:"Bicol Express Chicken / Fillet / Katsu / Kaldereta / Atay",price:50,desc:"Choice of meat viand (no rice)", emoji:"🍖"},
+  {id:2009, storeId:20, name:"Atay with Egg",            price:65,  desc:"Chicken liver with egg",                          emoji:"🍳"},
+  {id:2010, storeId:20, name:"Fish (with Free Salad)",   price:80,  desc:"Fried fish with complimentary salad",             emoji:"🐟"},
+  {id:2011, storeId:20, name:"Beef Kulma / Beef Steak",  price:85,  desc:"Premium beef viand (no rice)",                    emoji:"🥩"},
+  {id:2012, storeId:20, name:"Veggie/Miki Rice Meal",    price:60,  desc:"Vegetable or pancit viand dine-in with rice",     emoji:"🍱"},
+  {id:2013, storeId:20, name:"Standard Meat Rice Meal",  price:75,  desc:"Chicken/Kaldereta/Atay etc. dine-in with rice",   emoji:"🍱"},
+  {id:2014, storeId:20, name:"Fish Rice Meal",           price:105, desc:"Fish dine-in with rice and free salad",           emoji:"🐟"},
+  {id:2015, storeId:20, name:"Premium Beef Rice Meal",   price:110, desc:"Beef Kulma or Steak dine-in with rice",           emoji:"🥩"},
+  {id:2016, storeId:20, name:"Takeout Veggie/Miki Meal", price:65,  desc:"Takeout with rice and container",                 emoji:"📦"},
+  {id:2017, storeId:20, name:"Takeout Standard Meat Meal",price:80, desc:"Takeout with rice and container",                 emoji:"📦"},
+  {id:2018, storeId:20, name:"Takeout Fish Meal",        price:110, desc:"Takeout fish with rice, salad & container",       emoji:"📦"},
+  {id:2019, storeId:20, name:"Takeout Premium Beef Meal",price:115, desc:"Takeout beef with rice and container",            emoji:"📦"},
+  {id:2020, storeId:20, name:"Takeout Container",        price:5,   desc:"Add-on container for takeout",                   emoji:"📦"},
+  {id:2021, storeId:20, name:"Rice (Add-on)",            price:25,  desc:"Extra steamed rice",                              emoji:"🍚"},
+  {id:2022, storeId:20, name:"Coke / Coke Zero / Sprite / Vitamilk",price:40,desc:"Bottled drink",                          emoji:"🥤"},
+
+  // ── 21. Turks ──────────────────────────────────────────────
+  {id:2101, storeId:21, name:"Pita Wrap — Chicken",      price:100, desc:"Full pita wrap with chicken filling",             emoji:"🌯"},
+  {id:2102, storeId:21, name:"Pita Wrap — Beef",         price:105, desc:"Full pita wrap with beef filling",                emoji:"🌯"},
+  {id:2103, storeId:21, name:"Small Wrap — Chicken",     price:80,  desc:"Small pita wrap with chicken",                   emoji:"🌯"},
+  {id:2104, storeId:21, name:"Small Wrap — Beef",        price:85,  desc:"Small pita wrap with beef",                      emoji:"🌯"},
+  {id:2105, storeId:21, name:"Rice Meal — Chicken",      price:150, desc:"Chicken with shawarma-seasoned rice",             emoji:"🍚"},
+  {id:2106, storeId:21, name:"Rice Meal — Beef",         price:155, desc:"Beef with shawarma-seasoned rice",                emoji:"🍚"},
+  {id:2107, storeId:21, name:"Rice Bowl — Chicken",      price:105, desc:"Chicken rice bowl",                               emoji:"🥣"},
+  {id:2108, storeId:21, name:"Rice Bowl — Beef",         price:110, desc:"Beef rice bowl",                                  emoji:"🥣"},
+  {id:2109, storeId:21, name:"Combo A — Chicken (Small Pita + Rice Bowl)",price:175,desc:"Small pita wrap + rice bowl",     emoji:"🍱"},
+  {id:2110, storeId:21, name:"Combo A — Beef (Small Pita + Rice Bowl)",price:185,desc:"Small pita wrap + rice bowl",        emoji:"🍱"},
+  {id:2111, storeId:21, name:"Combo B — Chicken (Regular + Small Pita)",price:170,desc:"Regular pita + small wrap",         emoji:"🍱"},
+  {id:2112, storeId:21, name:"Combo B — Beef (Regular + Small Pita)",price:180,desc:"Regular pita + small wrap",            emoji:"🍱"},
+  {id:2113, storeId:21, name:"Add-On: Cheddar Cheese",   price:15,  desc:"Extra cheddar cheese",                            emoji:"🧀"},
+  {id:2114, storeId:21, name:"Add-On: Extra Rice",       price:35,  desc:"Extra side of rice",                              emoji:"🍚"},
+];
+
+/* ── Small helpers ─────────────────────────────────────── */
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function initials(name) {
+  return (name || '?').trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase();
+}
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+function displayName() {
+  return vendorProfile?.nickname || vendorProfile?.fullName || currentUser?.email || 'Vendor';
+}
+function friendlyAuthError(error) {
+  const code = error?.code || '';
+  switch (code) {
+    case 'auth/invalid-email':      return 'Enter a valid email address.';
+    case 'auth/user-not-found':     return 'No Re:Quest account found with this email.';
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential': return 'Incorrect email or password.';
+    case 'auth/too-many-requests':  return 'Too many attempts. Wait a moment and try again.';
+    case 'auth/network-request-failed': return 'Network error. Check your connection and try again.';
+    default: return error?.message || 'Something went wrong. Please try again.';
+  }
+}
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function showPage(id) {
+  currentPageId = id;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+let loadingHidden = false;
+function hideLoading() {
+  if (loadingHidden) return;
+  loadingHidden = true;
+  const ls = document.getElementById('loadingScreen');
+  ls.style.opacity = '0';
+  ls.style.transition = 'opacity .4s';
+  setTimeout(() => ls.style.display = 'none', 400);
+}
+function clearErrors() {
+  document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+  document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
+}
+function setFieldError(inputId, message) {
+  const input = document.getElementById(inputId);
+  const errorEl = document.getElementById(inputId + 'Error');
+  if (input) input.classList.add('error');
+  if (errorEl) errorEl.textContent = message;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH — log in with the SAME Re:Quest account
+   There are no separate vendor accounts. Vendors sign in with
+   the email + password they already use in the student app,
+   and access is granted by the admin setting a stall codename
+   on their normal users/{uid} doc:  vendorStore: "SY"
+══════════════════════════════════════════════════════════ */
+window.handleVendorLogin = async function (event) {
+  event.preventDefault();
+  clearErrors();
+
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  let hasError = false;
+
+  if (!email) { setFieldError('loginEmail', 'Email is required'); hasError = true; }
+  else if (!isValidEmail(email)) { setFieldError('loginEmail', 'Enter a valid email address'); hasError = true; }
+  if (!pass) { setFieldError('loginPass', 'Password is required'); hasError = true; }
+  if (hasError) return false;
+
+  const btn = document.getElementById('loginSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Logging in…';
+  authFlowInProgress = true;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    authFlowInProgress = false;
+    routeUser(auth.currentUser);
+  } catch (error) {
+    authFlowInProgress = false;
+    btn.disabled = false;
+    btn.textContent = 'Log In';
+    const message = friendlyAuthError(error);
+    if (error.code === 'auth/user-not-found') setFieldError('loginEmail', message);
+    else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') setFieldError('loginPass', message);
+    showToast(message, 'error');
+  }
+  return false;
+};
+
+window.handleLogout = async function () {
+  try {
+    teardownSubs();
+    currentUser = null;
+    vendorUid = null; vendorProfile = null;
+    storeId = null; storeCode = null;
+    await signOut(auth);
+    showPage('pageAuth');
+  } catch (err) {
+    showToast('Error signing out. Try again.', 'error');
+  }
+};
+
+/* ── Routing: login → request-access → dashboard ─────────── */
+function teardownSubs() {
+  if (userSelfUnsub) { userSelfUnsub(); userSelfUnsub = null; }
+  if (storeUnsub)    { storeUnsub();    storeUnsub = null; }
+  if (itemsUnsub)    { itemsUnsub();    itemsUnsub = null; }
+}
+
+function resolveStall(profile) {
+  const code = String(profile?.vendorStore || '').trim().toUpperCase();
+  const id = STALL_CODES[code];
+  return { code, id: id || null };
+}
+
+async function routeUser(user) {
+  if (routing) return;
+  routing = true;
+  try {
+    if (!user) {
+      teardownSubs();
+      currentUser = null;
+      vendorUid = null; vendorProfile = null;
+      storeId = null; storeCode = null;
+      showPage('pageAuth');
+      return;
+    }
+    currentUser = user;
+
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists()) {
+      // Logged in but never signed up in the main app — nothing to
+      // attach a stall codename to.
+      try { await signOut(auth); } catch (e) {}
+      teardownSubs();
+      showPage('pageAuth');
+      showToast('No Re:Quest profile found — sign up in the main app first', 'error');
+      return;
+    }
+
+    vendorUid = user.uid;
+    vendorProfile = snap.data();
+
+    const { code, id } = resolveStall(vendorProfile);
+    if (code && id) {
+      storeCode = code;
+      storeId = id;
+      enterDashboard();
+      return;
+    }
+
+    // No (valid) stall codename → waiting-for-permission page.
+    renderPending(code);
+    showPage('pagePending');
+    subscribeUserSelf(); // auto-unlock the moment an admin grants a code
+  } catch (err) {
+    console.error('Routing failed:', err);
+    showToast('Could not load your account', 'error');
+    showPage('pageAuth');
+  } finally {
+    routing = false;
+    hideLoading();
+  }
+}
+
+onAuthStateChanged(auth, (user) => {
+  if (!authFlowInProgress) routeUser(user);
+});
+
+/* ═══════════════════════════════════════════════════════════
+   WAITING ROOM — for accounts with no stall codename yet
+══════════════════════════════════════════════════════════ */
+function renderPending(badCode) {
+  const icon  = document.getElementById('pendingIcon');
+  const title = document.getElementById('pendingTitle');
+  const msg   = document.getElementById('pendingMsg');
+  const dyn   = document.getElementById('pendingDynamic');
+  const check = document.getElementById('pendingCheckBtn');
+
+  if (badCode) {
+    // Admin set a code, but it doesn't match any stall — tell the
+    // vendor exactly that instead of a generic message.
+    icon.textContent = '⚠️';
+    title.textContent = 'Stall Code Not Recognized';
+    msg.textContent = `Your account has the code "${badCode}", which doesn\u2019t match any stall. Please ask the Re:Quest admin to double-check the codename.`;
+  } else {
+    icon.textContent = '⏳';
+    title.textContent = 'Waiting for Permission';
+    msg.textContent = 'Your account isn\u2019t linked to a stall yet. Once the Re:Quest team grants your stall access, this page will unlock automatically \u2014 no need to refresh.';
+  }
+
+  check.classList.remove('hidden');
+  const email = currentUser?.email || vendorProfile?.email || '';
+  dyn.innerHTML = `
+      <div class="request-waiting-box">
+        Signed in as<br><b>${escapeHtml(email || '\u2014')}</b>
+      </div>`;
+}
+
+
+window.checkApprovalStatus = async function () {
+  if (!auth.currentUser) return;
+  showToast('Checking…');
+  try {
+    const snap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+    if (snap.exists()) {
+      vendorProfile = snap.data();
+      const { code, id } = resolveStall(vendorProfile);
+      if (code && id) {
+        storeCode = code;
+        storeId = id;
+        showToast('✓ Access granted! Welcome aboard 🎉', 'success');
+        enterDashboard();
+        return;
+      }
+      renderPending(code);
+      showToast(code ? 'Code not recognized — ask admin to check it' : 'Still pending — check back soon');
+    }
+  } catch (err) {
+    showToast('Could not check status — try again', 'error');
+  }
+};
+
+// While sitting on the pending page, watch the user's own doc so an
+// admin granting a stall codename unlocks the dashboard instantly.
+function subscribeUserSelf() {
+  if (userSelfUnsub || !vendorUid) return;
+  userSelfUnsub = onSnapshot(doc(db, 'users', vendorUid), (snap) => {
+    if (!snap.exists()) return;
+    vendorProfile = snap.data();
+    if (currentPageId === 'pagePending') {
+      const { code, id } = resolveStall(vendorProfile);
+      if (code && id) {
+        storeCode = code;
+        storeId = id;
+        showToast('✓ Access granted! Welcome aboard 🎉', 'success');
+        enterDashboard();
+      } else {
+        renderPending(code);
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════════ */
+function enterDashboard() {
+  const name = displayName();
+  document.getElementById('vendorAvatar').textContent = initials(name);
+  const topName = document.getElementById('vendorTopName');
+  topName.textContent = name;
+  topName.classList.remove('hidden');
+
+  subscribeStore();
+  subscribeItems();
+  showPage('pageDashboard');
+}
+
+function subscribeStore() {
+  if (storeUnsub) storeUnsub();
+  storeUnsub = onSnapshot(doc(db, 'stores', String(storeId)), (snap) => {
+    storeData = snap.exists() ? snap.data() : {};
+    renderStoreHeader();
+  }, (err) => console.warn('Store listener error:', err));
+}
+
+function subscribeItems() {
+  if (itemsUnsub) itemsUnsub();
+  // No orderBy here on purpose — a where() + orderBy() combo would need
+  // a composite Firestore index. Sorting is done client-side instead.
+  itemsUnsub = onSnapshot(
+    query(collection(db, 'menu_items'), where('storeId', '==', storeId)),
+    (snap) => {
+      itemsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      itemsCache.sort((a, b) =>
+        ((b.available !== false) - (a.available !== false)) ||
+        (a.name || '').localeCompare(b.name || '')
+      );
+      renderItems();
+    },
+    (err) => {
+      console.error('Items listener error:', err);
+      showToast('Could not load your menu', 'error');
+    }
+  );
+}
+
+/* ── Store header ──────────────────────────────────────── */
+function storeDisplay() {
+  return {
+    name:     storeData.name     || STORES_MIN[storeId]  || 'My Store',
+    emoji:    storeData.emoji    || STORES_EMOJI[storeId] || '🏬',
+    desc:     storeData.desc     || 'ADZU Cafeteria',
+    photoURL: storeData.photoURL || null,
+    closed:   storeData.closed === true
+  };
+}
+
+function renderStoreHeader() {
+  const s = storeDisplay();
+  const photoEl = document.getElementById('storeHeroPhoto');
+  photoEl.innerHTML = s.photoURL
+    ? `<img src="${s.photoURL}" alt="" />`
+    : escapeHtml(s.emoji);
+  document.getElementById('storeHeroName').textContent = s.name;
+  document.getElementById('storeHeroDesc').textContent = s.desc;
+
+  const pill = document.getElementById('storeStatusPill');
+  const btn  = document.getElementById('toggleOpenBtn');
+  if (s.closed) {
+    pill.className = 'badge badge-red';
+    pill.textContent = '● Closed';
+    btn.className = 'hero-btn closed';
+    btn.innerHTML = '✅ Reopen store';
+  } else {
+    pill.className = 'badge badge-green';
+    pill.textContent = '● Open';
+    btn.className = 'hero-btn open';
+    btn.innerHTML = '🔒 Close store';
+  }
+}
+
+window.toggleStoreOpen = async function () {
+  const btn = document.getElementById('toggleOpenBtn');
+  const nowClosed = storeData.closed === true;
+  btn.disabled = true;
+  try {
+    // Same doc + fields the admin toggle in home.html uses, so both
+    // stay perfectly in sync across every device.
+    await updateDoc(doc(db, 'stores', String(storeId)), {
+      closed:   !nowClosed,
+      closedBy: displayName(),
+      closedAt: serverTimestamp()
+    });
+    showToast(nowClosed ? '✓ Store is now open' : '🔒 Store closed', nowClosed ? 'success' : '');
+  } catch (err) {
+    console.error('Toggle store failed:', err);
+    showToast('Could not update store status', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+/* ── Items list ────────────────────────────────────────── */
+window.setItemFilter = function (filter, btnEl) {
+  itemFilter = filter;
+  document.querySelectorAll('#itemFilterChips .cat-chip').forEach(c => c.classList.remove('active'));
+  btnEl.classList.add('active');
+  renderItems();
+};
+
+window.filterVendorItems = function (q) {
+  itemSearch = q;
+  renderItems();
+};
+
+function renderItems() {
+  const grid  = document.getElementById('itemsGrid');
+  const empty = document.getElementById('itemsEmpty');
+  if (!grid || !empty) return;
+
+  const total   = itemsCache.length;
+  const availN  = itemsCache.filter(i => i.available !== false).length;
+  const soldN   = total - availN;
+  document.getElementById('statTotal').textContent   = total;
+  document.getElementById('statAvail').textContent   = availN;
+  document.getElementById('statSoldout').textContent = soldN;
+
+  let list = itemsCache;
+  if (itemFilter === 'available') list = list.filter(i => i.available !== false);
+  if (itemFilter === 'soldout')   list = list.filter(i => i.available === false);
+  if (itemSearch.trim()) {
+    const q = itemSearch.trim().toLowerCase();
+    list = list.filter(i => (i.name || '').toLowerCase().includes(q) ||
+                            (i.desc || '').toLowerCase().includes(q));
+  }
+
+  if (list.length === 0) {
+    grid.innerHTML = '';
+    empty.classList.remove('hidden');
+    renderImportBox();
+    return;
+  }
+  empty.classList.add('hidden');
+  document.getElementById('importBox').innerHTML = '';
+
+  grid.innerHTML = list.map(item => {
+    const available = item.available !== false;
+    return `
+    <div class="menu-card ${available ? '' : 'sold-out'}">
+      <div class="menu-img">
+        ${item.photoURL
+          ? `<img src="${item.photoURL}" alt="${escapeHtml(item.name)}" loading="lazy" />`
+          : `<span>${escapeHtml(item.emoji || '🍽️')}</span>`}
+        ${available ? '' : `<div class="menu-img-badge"><span class="badge badge-red">Sold out</span></div>`}
+      </div>
+      <div class="menu-body">
+        <div class="menu-name">${escapeHtml(item.name)}</div>
+        ${item.desc ? `<div class="menu-desc">${escapeHtml(item.desc)}</div>` : ''}
+        <div class="menu-price">₱${Number(item.price) || 0}</div>
+        <div class="vendor-card-actions">
+          <button class="mini-btn ${available ? 'avail-on' : 'avail-off'}" onclick="toggleAvail('${item.id}')">
+            ${available ? '⏸️ Mark sold out' : '✅ Mark available'}
+          </button>
+          <button class="mini-btn edit" onclick="openItemModal('${item.id}')">✏️ Edit</button>
+          <button class="mini-btn del" onclick="deleteItem('${item.id}', this)">🗑️ Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── One-tap menu import ─────────────────────────
+   Stalls already have a menu on the student side (home.html's built-in
+   MENU). When a vendor's stall has no live items yet, offer to copy
+   those existing items into Firestore — from then on they're normal
+   live items: editable, deletable, with sold-out toggles. */
+function stallHardcodedItems() {
+  if (!storeId) return [];
+  // Same placeholder skip as seed-menus.html: stalls whose built-in
+  // menu is just "not yet available" have nothing to import.
+  return MENU.filter(m => m.storeId === storeId
+    && !(m.price === 0 && /not yet available/i.test(m.name || '')));
+}
+
+function renderImportBox() {
+  const box = document.getElementById('importBox');
+  if (!box) return;
+  // Only when the stall TRULY has no live items — never when a
+  // filter/search is just hiding everything.
+  if (itemsCache.length > 0) { box.innerHTML = ''; return; }
+  const existing = stallHardcodedItems();
+  if (existing.length === 0) { box.innerHTML = ''; return; }
+  const s = existing.length === 1 ? '' : 's';
+  box.innerHTML = `
+    <div class="import-card">
+      <div class="import-card-title">📥 This stall already has ${existing.length} item${s} on the student menu</div>
+      <div class="import-card-sub">Import them here to start editing prices, photos, and availability — or delete what you no longer serve.</div>
+      <button class="btn btn-primary w-full" id="importBtn" onclick="importStallMenu()">📥 Import ${existing.length} item${s}</button>
+    </div>`;
+}
+
+window.importStallMenu = async function () {
+  const existing = stallHardcodedItems();
+  if (!storeId || !storeCode || importInProgress) return;
+  if (itemsCache.length > 0 || existing.length === 0) return; // never duplicate
+  importInProgress = true;
+  const btn = document.getElementById('importBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Importing…'; }
+  try {
+    const batch = writeBatch(db);
+    existing.forEach(m => {
+      batch.set(doc(collection(db, 'menu_items')), {
+        storeId,
+        storeCode, // stall codename — rules verify the vendor owns this stall
+        name: m.name,
+        price: Number(m.price) || 0,
+        desc: m.desc || '',
+        emoji: m.emoji || '🍽️',
+        photoURL: null,
+        available: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    });
+    await batch.commit();
+    showToast(`✓ Imported ${existing.length} items — now you can edit them`, 'success');
+    // The live listener re-renders the list automatically.
+  } catch (err) {
+    console.error('Import failed:', err);
+    showToast('Import failed — try again', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = `📥 Import ${existing.length} items`; }
+  } finally {
+    importInProgress = false;
+  }
+};
+
+window.toggleAvail = async function (itemId) {
+  const item = itemsCache.find(i => i.id === itemId);
+  if (!item) return;
+  const next = !(item.available !== false);
+  try {
+    await updateDoc(doc(db, 'menu_items', itemId), {
+      available: next,
+      updatedAt: serverTimestamp()
+    });
+    showToast(next ? '✓ Back on the menu' : '⛔ Marked as sold out', next ? 'success' : '');
+  } catch (err) {
+    console.error('Toggle availability failed:', err);
+    showToast('Could not update — try again', 'error');
+  }
+};
+
+// Two-click confirmation: first click arms it, second click within 3s fires.
+window.deleteItem = async function (itemId, btn) {
+  if (btn.classList.contains('confirming')) {
+    clearTimeout(btn._revertTimer);
+    btn.textContent = '…';
+    btn.disabled = true;
+    try {
+      await deleteDoc(doc(db, 'menu_items', itemId));
+      showToast('🗑️ Item deleted', 'success');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      showToast('Could not delete — try again', 'error');
+      btn.disabled = false;
+      btn.classList.remove('confirming');
+      btn.textContent = btn.dataset.wasLabel || '🗑️ Delete';
+    }
+  } else {
+    const wasLabel = btn.textContent;
+    btn.dataset.wasLabel = wasLabel;
+    btn.classList.add('confirming');
+    btn.textContent = 'Tap again to confirm';
+    btn._revertTimer = setTimeout(() => {
+      btn.classList.remove('confirming');
+      btn.textContent = wasLabel;
+    }, 3000);
+  }
+};
+
+async function bulkSetAvailable(value, label) {
+  const targets = itemsCache.filter(i => (i.available !== false) !== value);
+  if (targets.length === 0) {
+    showToast('Already up to date — nothing to change');
+    return;
+  }
+  if (!confirm(`${label} ${targets.length} item(s)?`)) return;
+  try {
+    const batch = writeBatch(db);
+    targets.forEach(i => batch.update(doc(db, 'menu_items', i.id), {
+      available: value,
+      updatedAt: serverTimestamp()
+    }));
+    await batch.commit();
+    showToast(`✓ ${targets.length} item(s) updated`, 'success');
+  } catch (err) {
+    console.error('Bulk update failed:', err);
+    showToast('Could not update items — try again', 'error');
+  }
+}
+window.markAllAvailable = function () { bulkSetAvailable(true, 'Mark available:'); };
+window.markAllSoldOut   = function () { bulkSetAvailable(false, 'Mark sold out:'); };
+
+/* ═══════════════════════════════════════════════════════════
+   ITEM MODAL — add / edit
+══════════════════════════════════════════════════════════ */
+window.openItemModal = function (itemId = null) {
+  editingItemId  = itemId;
+  itemPhotoDraft = undefined;
+
+  const item = itemId ? itemsCache.find(i => i.id === itemId) : null;
+  document.getElementById('itemModalTitle').textContent = item ? '✏️ Edit Item' : '➕ Add Item';
+  document.getElementById('itemModalSub').textContent = item
+    ? 'Changes go live to students instantly.'
+    : 'New items go live to students instantly.';
+  document.getElementById('iName').value  = item?.name || '';
+  document.getElementById('iPrice').value = item ? (Number(item.price) || 0) : '';
+  document.getElementById('iEmoji').value = item?.emoji || '';
+  document.getElementById('iDesc').value  = item?.desc || '';
+  document.getElementById('saveItemBtn').textContent = item ? 'Save Changes' : 'Add Item';
+
+  setModalAvail(item ? item.available !== false : true);
+  renderItemPhotoPreview(item?.photoURL || null);
+
+  document.getElementById('itemModal').classList.add('open');
+};
+
+window.closeItemModal = function (e) {
+  if (!e || e.target === document.getElementById('itemModal')) {
+    document.getElementById('itemModal').classList.remove('open');
+  }
+};
+
+window.setModalAvail = function (value) {
+  modalAvail = value;
+  document.getElementById('availYes').className = 'avail-opt' + (value ? ' sel-green' : '');
+  document.getElementById('availNo').className  = 'avail-opt' + (!value ? ' sel-red' : '');
+};
+
+function renderItemPhotoPreview(photoURL) {
+  const picker = document.getElementById('itemPhotoPicker');
+  const wrap   = document.getElementById('itemPhotoPreviewWrap');
+  if (photoURL) {
+    picker.classList.add('hidden');
+    wrap.classList.remove('hidden');
+    document.getElementById('itemPhotoPreview').src = photoURL;
+  } else {
+    picker.classList.remove('hidden');
+    wrap.classList.add('hidden');
+    document.getElementById('itemPhotoPreview').src = '';
+  }
+}
+
+window.handleItemPhoto = async function (event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const dataUrl = await processPhotoFile(file);
+  if (!dataUrl) return;
+  itemPhotoDraft = dataUrl;
+  renderItemPhotoPreview(dataUrl);
+};
+
+window.removeItemPhoto = function () {
+  itemPhotoDraft = null;
+  renderItemPhotoPreview(null);
+};
+
+window.saveItem = async function () {
+  const name  = document.getElementById('iName').value.trim();
+  const price = Number(document.getElementById('iPrice').value);
+  const emoji = document.getElementById('iEmoji').value.trim() || '🍽️';
+  const desc  = document.getElementById('iDesc').value.trim();
+
+  if (!name) { showToast('Item name is required', 'error'); return; }
+  if (!Number.isFinite(price) || price < 0) { showToast('Enter a valid price', 'error'); return; }
+
+  const btn = document.getElementById('saveItemBtn');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Saving…';
+
+  try {
+    const data = {
+      storeId,
+      storeCode, // stall codename — Firestore rules use this to verify ownership
+      name,
+      price,
+      emoji,
+      desc,
+      available: modalAvail,
+      updatedAt: serverTimestamp()
+    };
+    // Only touch photoURL when the vendor actually changed it.
+    if (itemPhotoDraft !== undefined) data.photoURL = itemPhotoDraft;
+
+    if (editingItemId) {
+      await updateDoc(doc(db, 'menu_items', editingItemId), data);
+      showToast('✓ Item updated — live now', 'success');
+    } else {
+      data.createdAt = serverTimestamp();
+      if (data.photoURL === undefined) data.photoURL = null;
+      await addDoc(collection(db, 'menu_items'), data);
+      showToast('✓ Item added — live now', 'success');
+    }
+    document.getElementById('itemModal').classList.remove('open');
+  } catch (err) {
+    console.error('Save item failed:', err);
+    showToast('Could not save — try again', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════
+   STORE MODAL — edit profile
+══════════════════════════════════════════════════════════ */
+window.openStoreModal = function () {
+  storePhotoDraft = undefined;
+  const s = storeDisplay();
+  document.getElementById('sName').value  = s.name;
+  document.getElementById('sEmoji').value = storeData.emoji || '';
+  document.getElementById('sDesc').value  = storeData.desc || '';
+  renderStorePhotoPreview(s.photoURL);
+  document.getElementById('storeModal').classList.add('open');
+};
+
+window.closeStoreModal = function (e) {
+  if (!e || e.target === document.getElementById('storeModal')) {
+    document.getElementById('storeModal').classList.remove('open');
+  }
+};
+
+function renderStorePhotoPreview(photoURL) {
+  const picker = document.getElementById('storePhotoPicker');
+  const wrap   = document.getElementById('storePhotoPreviewWrap');
+  if (photoURL) {
+    picker.classList.add('hidden');
+    wrap.classList.remove('hidden');
+    document.getElementById('storePhotoPreview').src = photoURL;
+  } else {
+    picker.classList.remove('hidden');
+    wrap.classList.add('hidden');
+    document.getElementById('storePhotoPreview').src = '';
+  }
+}
+
+window.handleStorePhoto = async function (event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const dataUrl = await processPhotoFile(file);
+  if (!dataUrl) return;
+  storePhotoDraft = dataUrl;
+  renderStorePhotoPreview(dataUrl);
+};
+
+window.removeStorePhoto = function () {
+  storePhotoDraft = null;
+  renderStorePhotoPreview(null);
+};
+
+window.saveStore = async function () {
+  const name  = document.getElementById('sName').value.trim();
+  const emoji = document.getElementById('sEmoji').value.trim();
+  const desc  = document.getElementById('sDesc').value.trim();
+
+  if (!name) { showToast('Store name is required', 'error'); return; }
+
+  const btn = document.getElementById('saveStoreBtn');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Saving…';
+
+  try {
+    // Profile overrides merged into the same stores/{id} doc that holds
+    // the closed flag — home.html reads both from this one doc.
+    // (updateDoc, not setDoc: the doc is created by the seed page with
+    // the stall's codename, and rules forbid changing that code.)
+    const data = { name, desc, updatedAt: serverTimestamp() };
+    if (emoji) data.emoji = emoji;
+    if (storePhotoDraft !== undefined) data.photoURL = storePhotoDraft;
+    await updateDoc(doc(db, 'stores', String(storeId)), data);
+    showToast('✓ Store updated — live now', 'success');
+    document.getElementById('storeModal').classList.remove('open');
+  } catch (err) {
+    console.error('Save store failed:', err);
+    showToast('Could not save — try again', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════
+   PHOTOS — client-side resize → base64 data URL in Firestore
+   (same approach as profile pictures: no Cloud Storage plan
+   needed, and each photo lives on its own doc so the 1MB
+   per-document limit is never a problem).
+══════════════════════════════════════════════════════════ */
+function resizeImageToBlob(file, maxDim = 640, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let { width, height } = img;
+      if (width > height && width > maxDim) {
+        height = Math.round(height * (maxDim / width));
+        width = maxDim;
+      } else if (height >= width && height > maxDim) {
+        width = Math.round(width * (maxDim / height));
+        height = maxDim;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error('Could not process image')),
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Could not read image')); };
+    img.src = objectUrl;
+  });
+}
+
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Could not read image'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function processPhotoFile(file) {
+  if (!file.type.startsWith('image/')) {
+    showToast('Please choose an image file', 'error');
+    return null;
+  }
+  if (file.size > 12 * 1024 * 1024) {
+    showToast('That image is too large — please choose one under 12MB', 'error');
+    return null;
+  }
+  try {
+    let blob = await resizeImageToBlob(file, 640, 0.82);
+    if (blob.size > 700 * 1024) blob = await resizeImageToBlob(file, 480, 0.72);
+    if (blob.size > 700 * 1024) {
+      showToast('That photo is too detailed to save — try a simpler one', 'error');
+      return null;
+    }
+    return await blobToDataURL(blob);
+  } catch (err) {
+    console.error('Photo processing failed:', err);
+    showToast('Could not process that photo — try another', 'error');
+    return null;
+  }
+}
+
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c0164fbaca641d',t:'MTc4OTU2Mzk3Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

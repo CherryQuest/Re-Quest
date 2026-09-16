@@ -487,6 +487,16 @@
     .menu-img-badge {
       position: absolute; top: 8px; right: 8px;
     }
+    /* Live vendor menus: item/store photos fill their tile, and
+       sold-out items render greyed with a badge (see renderMenu). */
+    .menu-img img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .menu-card.sold-out { opacity: .8; }
+    .menu-card.sold-out .menu-img { filter: grayscale(.55); }
+    .store-img img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
     .menu-body { padding: 12px 14px; }
     .menu-name { font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; line-height: 1.3; }
     .menu-desc { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -1655,7 +1665,7 @@
   <div class="store-menu-header">
     <div class="store-menu-emoji" id="storeMenuEmoji">🍱</div>
     <div>
-      <div class="store-menu-name" id="storeMenuName">Store</div>
+      <div class="store-menu-name"><span id="storeMenuName">Store</span><span class="badge badge-green hidden" id="storeLiveBadge" style="margin-left:8px;font-size:0.62rem">🔴 Live</span></div>
       <div class="store-menu-desc" id="storeMenuDesc">Store description</div>
     </div>
   </div>
@@ -2075,6 +2085,7 @@
 <!-- ══════════════════════════════════════════════════════════
      JAVASCRIPT — Firebase v9 Modular SDK
 ══════════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script type="module">
 
 /* ── Firebase Imports ──────────────────────────────────── */
@@ -2132,6 +2143,24 @@ let avatarUploading = false; // true while a new profile picture is mid-upload
 // Live map of store closure states synced from Firestore:
 // { [storeId]: { closed: bool, closedBy: string, closedAt: Timestamp } }
 let storeStatuses = {};
+
+/* ── Live vendor menus ─────────────────────────────────────
+   Written by vendor.html into the `menu_items` collection.
+   Keyed by storeId: { [storeId]: liveItem[] }. A store switches
+   to its live menu only once it has at least one live item —
+   otherwise the hardcoded MENU below is used as fallback, so
+   stalls without a vendor yet keep working exactly as before. */
+let liveMenus = {};
+let liveMenusReady = false;
+
+/* ── Stall codenames (admin sets one on users/{uid}.vendorStore to
+   grant that account vendor access to a stall). Must match STALL_CODES
+   in vendor.html and CODE_BY_ID in seed-menus.html. */
+const STORE_CODES_BY_ID = {
+  1:'AZ', 2:'KK', 3:'SV', 4:'SY', 5:'KRT', 6:'EB', 7:'WC', 8:'AF',
+  9:'BB', 10:'CG', 11:'CR', 12:'DT', 13:'FT', 14:'HO', 15:'JC', 16:'LV',
+  17:'MT', 18:'MC', 19:'PR', 20:'RS', 21:'TK'
+};
 
 // Convenience — avoids scattering role checks everywhere
 function isAdmin() { return userProfile?.role === 'admin'; }
@@ -2559,6 +2588,46 @@ onAuthStateChanged(auth, async (user) => {
     storeStatuses = {};
     snap.forEach(d => { storeStatuses[d.id] = d.data(); });
     renderStores(); // re-render cards with updated badges / overlays
+  });
+
+  // Live vendor menus — the moment a vendor adds/edits an item, changes
+  // a price, or marks something sold out in vendor.html, every connected
+  // customer's menu updates without a refresh. On failure we silently
+  // keep the hardcoded MENU as fallback.
+  onSnapshot(query(collection(db, 'menu_items'), limit(1000)), (snap) => {
+    liveMenus = {};
+    snap.forEach(d => {
+      const m = d.data();
+      const sid = String(m.storeId);
+      // Ignore live items whose stall code doesn't match this store —
+      // a vendor can only write their own code (enforced by Firestore
+      // rules), so a mismatched item can never render in the wrong menu.
+      // Items from before the codename system carry no code and are kept.
+      if (m.storeCode && m.storeCode !== STORE_CODES_BY_ID[m.storeId]) return;
+      if (!liveMenus[sid]) liveMenus[sid] = [];
+      liveMenus[sid].push({
+        uid: 'live_' + d.id,
+        docId: d.id,
+        storeId: m.storeId,
+        name: m.name || 'Unnamed item',
+        price: Number(m.price) || 0,
+        desc: m.desc || '',
+        emoji: m.emoji || '🍽️',
+        photoURL: m.photoURL || null,
+        available: m.available !== false,
+        live: true
+      });
+    });
+    // Stable order: available items first, then alphabetical.
+    Object.values(liveMenus).forEach(list => list.sort((a, b) =>
+      ((b.available !== false) - (a.available !== false)) || a.name.localeCompare(b.name)
+    ));
+    liveMenusReady = true;
+    renderStores();
+    if (selectedStore) renderMenu();
+  }, (err) => {
+    console.warn('Live menu listener error (using built-in menu):', err);
+    liveMenusReady = true;
   });
 
   // Render store list
@@ -3191,16 +3260,46 @@ window.goToPage = function (id) {
 /* ═══════════════════════════════════════════════════════════
    MENU RENDERING
 ══════════════════════════════════════════════════════════ */
+/* ── Unified menu lookup: live Firestore items + hardcoded fallback ──
+   Every item the customer can see carries a string `uid`:
+   live Firestore items → 'live_<docId>', hardcoded items → 'm<id>'.
+   Cart / modal functions all key off uid via findMenuItem(). */
+function getStoreMenu(storeId) {
+  const live = liveMenus[String(storeId)];
+  if (live && live.length > 0) return live;
+  return MENU.filter(m => m.storeId === storeId)
+    .map(m => ({ ...m, uid: 'm' + m.id, available: true, live: false, photoURL: null }));
+}
+function findMenuItem(uid) {
+  for (const sid in liveMenus) {
+    const hit = liveMenus[sid].find(i => i.uid === uid);
+    if (hit) return hit;
+  }
+  const m = MENU.find(x => ('m' + x.id) === uid);
+  return m ? { ...m, uid, available: true, live: false, photoURL: null } : null;
+}
+/* Vendor-editable store profile overrides (name/emoji/desc/photo) from
+   the stores/{id} doc win over the hardcoded STORES values. */
+function storeProfile(store) {
+  const s = storeStatuses[String(store.id)] || {};
+  return {
+    name: s.name || store.name,
+    emoji: s.emoji || store.emoji,
+    desc: s.desc || store.desc,
+    photoURL: s.photoURL || null,
+    closed: s.closed === true
+  };
+}
+
 function renderMenu() {
   const grid = document.getElementById('menuGrid');
   if (!selectedStore) { grid.innerHTML = ''; return; }
 
-  const items = MENU.filter(m => {
-    const matchStore  = m.storeId === selectedStore.id;
+  const items = getStoreMenu(selectedStore.id).filter(m => {
     const matchSearch = searchQuery === '' ||
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.desc.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchStore && matchSearch;
+    return matchSearch;
   });
 
   if (items.length === 0) {
@@ -3213,16 +3312,19 @@ function renderMenu() {
   }
 
   grid.innerHTML = items.map(item => `
-    <div class="menu-card" onclick="openMenuModal(${item.id})">
+    <div class="menu-card ${item.available ? '' : 'sold-out'}" onclick="openMenuModal('${item.uid}')">
       <div class="menu-img" style="background:${selectedStore.color}">
-        <span style="font-size:2.8rem">${item.emoji}</span>
+        ${item.photoURL
+          ? `<img src="${item.photoURL}" alt="${item.name}" loading="lazy" />`
+          : `<span style="font-size:2.8rem">${item.emoji}</span>`}
+        ${item.available ? '' : `<div class="menu-img-badge"><span class="badge badge-red">Sold out</span></div>`}
       </div>
       <div class="menu-body">
         <div class="menu-name">${item.name}</div>
         <div class="menu-desc">${item.desc}</div>
         <div class="menu-footer">
           <span class="menu-price">₱${item.price}</span>
-          <button class="add-btn" onclick="event.stopPropagation();addToCart(${item.id})">+</button>
+          ${item.available ? `<button class="add-btn" onclick="event.stopPropagation();addToCart('${item.uid}')">+</button>` : ''}
         </div>
       </div>
     </div>
@@ -3257,6 +3359,7 @@ function renderStores() {
   grid.innerHTML = stores.map(store => {
     const status = storeStatuses[String(store.id)] || {};
     const closed = status.closed === true;
+    const prof = storeProfile(store);
 
     // Closed overlay — shown to everyone when store is closed
     const closedOverlay = closed ? `
@@ -3281,11 +3384,11 @@ function renderStores() {
         ${closedOverlay}
         ${adminToggle}
         <div class="store-img" style="background:${store.color}">
-          <span>${store.emoji}</span>
+          ${prof.photoURL ? `<img src="${prof.photoURL}" alt="${prof.name}" loading="lazy" />` : `<span>${prof.emoji}</span>`}
         </div>
         <div class="store-body">
-          <div class="store-name">${store.name}</div>
-          <div class="store-meta">${store.desc}</div>
+          <div class="store-name">${prof.name}</div>
+          <div class="store-meta">${prof.desc}</div>
         </div>
       </div>`;
   }).join('');
@@ -3311,9 +3414,17 @@ window.openStore = function (id) {
   selectedStore = store;
   searchQuery = '';
 
-  document.getElementById('storeMenuEmoji').textContent = store.emoji;
-  document.getElementById('storeMenuName').textContent  = store.name;
-  document.getElementById('storeMenuDesc').textContent  = store.desc;
+  const prof = storeProfile(store);
+  document.getElementById('storeMenuEmoji').textContent = prof.emoji;
+  document.getElementById('storeMenuName').textContent  = prof.name;
+  document.getElementById('storeMenuDesc').textContent  = prof.desc;
+
+  // "🔴 Live" badge when this stall's menu is vendor-managed
+  const liveBadge = document.getElementById('storeLiveBadge');
+  if (liveBadge) {
+    const hasLive = (liveMenus[String(id)] || []).length > 0;
+    liveBadge.classList.toggle('hidden', !hasLive);
+  }
 
   // Show a "CLOSED" banner inside the menu page for admins who browse in anyway
   const closedBanner = document.getElementById('storeClosedBanner');
@@ -3356,29 +3467,40 @@ window.adminToggleStore = async function (storeId) {
 };
 
 /* ── Menu Modal ────────────────────────────────────────── */
-window.openMenuModal = function (id) {
-  const item   = MENU.find(m => m.id === id);
+window.openMenuModal = function (uid) {
+  const item   = findMenuItem(uid);
   if (!item) return;
-  const inCart = cart.find(c => c.id === id);
+  const inCart = cart.find(c => c.uid === uid);
+  const storeName = selectedStore ? storeProfile(selectedStore).name : '';
 
   document.getElementById('menuModalContent').innerHTML = `
     <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:4rem;margin-bottom:8px">${item.emoji}</div>
-      <div class="badge badge-orange" style="margin:0 auto 8px">${item.cat}</div>
+      ${item.photoURL
+        ? `<img src="${item.photoURL}" alt="${item.name}" style="width:100%;height:180px;object-fit:cover;border-radius:var(--radius);margin-bottom:12px" />`
+        : `<div style="font-size:4rem;margin-bottom:8px">${item.emoji}</div>`}
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;flex-wrap:wrap">
+        ${storeName ? `<span class="badge badge-gray">${storeName}</span>` : ''}
+        ${item.live ? `<span class="badge badge-green">🔴 Live menu</span>` : ''}
+        ${item.available ? '' : `<span class="badge badge-red">Sold out</span>`}
+      </div>
       <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:6px">${item.name}</h3>
       <p style="color:var(--muted);font-size:0.88rem;line-height:1.5">${item.desc}</p>
     </div>
+    ${item.available ? `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:14px 16px;background:var(--bg);border-radius:var(--radius-sm)">
       <span style="font-size:1.4rem;font-weight:800;color:var(--orange)">₱${item.price}</span>
       <div class="qty-ctrl">
-        <button class="qty-btn" onclick="modalQtyChange(${id},-1)">−</button>
+        <button class="qty-btn" onclick="modalQtyChange(-1)">−</button>
         <span class="qty-num" id="modalQty">${inCart ? inCart.qty : 1}</span>
-        <button class="qty-btn" onclick="modalQtyChange(${id},1)">+</button>
+        <button class="qty-btn" onclick="modalQtyChange(1)">+</button>
       </div>
     </div>
-    <button class="btn btn-primary w-full btn-lg" onclick="addToCartFromModal(${id})">
+    <button class="btn btn-primary w-full btn-lg" onclick="addToCartFromModal('${uid}')">
       Add to Order — ₱${item.price}
-    </button>
+    </button>` : `
+    <div class="text-center" style="background:var(--bg);color:var(--muted);font-weight:600;font-size:0.85rem;padding:14px;border-radius:var(--radius-sm)">
+      😔 Sold out right now — check back later.
+    </div>`}
   `;
   document.getElementById('menuModal').classList.add('open');
 };
@@ -3387,7 +3509,7 @@ window.closeMenuModal = function (e) {
   document.getElementById('menuModal').classList.remove('open');
 };
 
-window.modalQtyChange = function (id, delta) {
+window.modalQtyChange = function (delta) {
   const el = document.getElementById('modalQty');
   let v = parseInt(el.textContent) + delta;
   if (v < 1) v = 1;
@@ -3395,10 +3517,11 @@ window.modalQtyChange = function (id, delta) {
   el.textContent = v;
 };
 
-window.addToCartFromModal = function (id) {
+window.addToCartFromModal = function (uid) {
   const qty      = parseInt(document.getElementById('modalQty').textContent);
-  const item     = MENU.find(m => m.id === id);
-  const existing = cart.find(c => c.id === id);
+  const item     = findMenuItem(uid);
+  if (!item || !item.available) return;
+  const existing = cart.find(c => c.uid === uid);
   if (existing) existing.qty = qty;
   else cart.push({ ...item, qty });
   updateAllCartCounts();
@@ -3409,9 +3532,10 @@ window.addToCartFromModal = function (id) {
 /* ═══════════════════════════════════════════════════════════
    CART
 ══════════════════════════════════════════════════════════ */
-window.addToCart = function (id) {
-  const item     = MENU.find(m => m.id === id);
-  const existing = cart.find(c => c.id === id);
+window.addToCart = function (uid) {
+  const item     = findMenuItem(uid);
+  if (!item || !item.available) return;
+  const existing = cart.find(c => c.uid === uid);
   if (existing) existing.qty++;
   else cart.push({ ...item, qty: 1 });
   updateAllCartCounts();
@@ -3421,7 +3545,7 @@ window.addToCart = function (id) {
 window.quickAdd = function (name, emoji, price) {
   const existing = cart.find(c => c.name === name);
   if (existing) existing.qty++;
-  else cart.push({ id: Date.now(), name, emoji, price, qty: 1 });
+  else cart.push({ id: Date.now(), uid: 'q' + Date.now(), name, emoji, price, qty: 1 });
   updateAllCartCounts();
   showToast(`✓ ${name} added to cart`, 'success');
 };
@@ -3552,6 +3676,80 @@ function renderConfirmPage() {
 /* ═══════════════════════════════════════════════════════════
    PLACE ORDER — saves to Firestore orders collection
 ══════════════════════════════════════════════════════════ */
+/* ── Runner email alerts (EmailJS) ──────────────────
+   SETUP (one time, ~10 min — see EMAIL_SETUP.md):
+   1. Create a free EmailJS account + connect your Gmail.
+   2. Make the "New order" template from the guide.
+   3. Paste the 3 IDs + your runner page URL below, set enabled: true.
+   Until then this stays dormant and ordering works exactly as before. */
+const EMAIL_ALERTS = {
+  enabled: true,
+  publicKey:  'mQF2B5SK9jy-PWUkr',
+  serviceId:  'service_nlo5l1e',
+  templateId: 'template_mbrylkt',
+  runnerUrl:  'https://cherryquest.github.io/Re-Quest/runner.html'
+};
+
+function stallName(id) {
+  const s = (typeof STORES !== 'undefined' ? STORES : []).find(s => s.id === id);
+  return s ? s.name : null;
+}
+
+/* Fire-and-forget: email every runner's Gmail about a new food order.
+   One email per order (all runners in To:) — never blocks or
+   breaks ordering; all failures are silent. */
+function notifyRunnersOfOrder(orderId, order) {
+  try {
+    if (!EMAIL_ALERTS.enabled) return;
+    if (!EMAIL_ALERTS.publicKey || EMAIL_ALERTS.publicKey.indexOf('PASTE_') === 0) return;
+    if (typeof emailjs === 'undefined') { console.warn('EmailJS not loaded — skipping runner emails'); return; }
+    emailjs.init({ publicKey: EMAIL_ALERTS.publicKey });
+
+    getDocs(query(collection(db, 'users'), where('role', '==', 'runner'), limit(100)))
+      .then(snap => {
+        const emails = [];
+        snap.forEach(d => {
+          const em = (d.data().email || '').trim();
+          if (em && emails.indexOf(em) === -1) emails.push(em);
+        });
+        if (emails.length === 0) return; // no runners registered yet
+
+        // Group items by stall for a readable email.
+        const byStall = {};
+        (order.items || []).forEach(it => {
+          const key = stallName(it.storeId) || 'Re:Quest';
+          if (!byStall[key]) byStall[key] = [];
+          byStall[key].push(`${it.qty}× ${it.name} — ₱${(Number(it.price) || 0) * (Number(it.qty) || 1)}`);
+        });
+        const stalls = Object.keys(byStall);
+        const lines = [];
+        stalls.forEach(s => {
+          lines.push(`▶ ${s}`);
+          byStall[s].forEach(l => lines.push(`   ${l}`));
+        });
+        const itemCount = (order.items || []).reduce((s, i) => s + (Number(i.qty) || 1), 0);
+
+        return emailjs.send(EMAIL_ALERTS.serviceId, EMAIL_ALERTS.templateId, {
+          to_email:      emails.join(', '),
+          order_id:      String(orderId).slice(-6).toUpperCase(),
+          stall_list:    stalls.join(', '),
+          items_text:    lines.join('\n'),
+          item_count:    itemCount,
+          total:         `₱${Number(order.total).toFixed(2)}`,
+          customer_name: order.customerName || '',
+          phone:         order.phoneNumber || '',
+          location:      order.location || '',
+          runner_url:    EMAIL_ALERTS.runnerUrl,
+          placed_at:     new Date().toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        });
+      })
+      .then(() => console.log('Runner alert email sent'))
+      .catch(err => console.warn('Runner email failed (order unaffected):', err));
+  } catch (err) {
+    console.warn('Runner email failed (order unaffected):', err);
+  }
+}
+
 window.placeOrder = async function () {
   if (cart.length === 0) { showToast('Your cart is empty', 'error'); return; }
 
@@ -3571,6 +3769,7 @@ window.placeOrder = async function () {
     emoji:     item.emoji,
     price:     item.price,
     qty:       item.qty,
+    storeId:   item.storeId || null, // kept so runner emails can name the stalls
     lineTotal: item.price * item.qty
   }));
 
@@ -3605,6 +3804,8 @@ window.placeOrder = async function () {
 
     renderReceipt(docRef.id, { customerName, phoneNumber, location, items, subtotal, deliveryFee, extraFee, total });
     subscribeToReceiptOrder(docRef.id);
+    // Email every runner's Gmail (fire-and-forget — never blocks ordering).
+    notifyRunnersOfOrder(docRef.id, { customerName, phoneNumber, location, items, total });
 
     // Clear cart and form
     cart = [];
@@ -4506,6 +4707,27 @@ window.openRunnerModal = function () {
 
 window.closeRunnerModal = function (e) {
   if (!e || e.target === document.getElementById('runnerModal')) {
+    document.getElementById('runnerModal').classList.remove('open');
+  }
+};
+
+/* ══════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c0446eceb2a835',t:'MTc4OTU2NTg2Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
+| e.target === document.getElementById('runnerModal')) {
     document.getElementById('runnerModal').classList.remove('open');
   }
 };
