@@ -530,9 +530,10 @@
 <!-- LOADING SCREEN -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-video-wrap">
-    <video autoplay muted playsinline loop preload="auto" disablepictureinpicture disableremoteplayback webkit-playsinline x5-playsinline>
+    <video autoplay="autoplay" muted="muted" playsinline="playsinline" loop="loop" preload="auto" disablepictureinpicture="true" disableremoteplayback="true" webkit-playsinline="true" x5-playsinline="true">
       <source src="logo-animation.mp4" type="video/mp4" />
     </video>
+    <div class="loading-video-shield"></div>
   </div>
   <div class="loading-bar"><div class="loading-fill"></div></div>
   <div class="loading-sub">Vendor Portal</div>
@@ -2027,5 +2028,32 @@ async function processPhotoFile(file) {
 
 </script>
 <script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c0b32ffac8e472',t:'MTc4OTU3MDM5OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","spa":2}' crossorigin="anonymous"></script>
+
+<script>
+(function() {
+  function kickstartLoadingVideo() {
+    var v = document.querySelector('#loadingScreen video');
+    if (!v) return;
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute('muted', '');
+    v.setAttribute('playsinline', '');
+    v.setAttribute('webkit-playsinline', '');
+    var p = v.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch(function() {
+        // Retry on first user interaction if blocked
+        window.addEventListener('touchstart', function() { v.play(); }, { once: true });
+      });
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', kickstartLoadingVideo);
+  } else {
+    kickstartLoadingVideo();
+  }
+})();
+</script>
+
 </body>
 </html>

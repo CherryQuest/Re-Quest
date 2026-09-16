@@ -390,9 +390,10 @@
 <!-- LOADING SCREEN -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-video-wrap">
-    <video autoplay muted playsinline loop preload="auto" disablepictureinpicture disableremoteplayback webkit-playsinline x5-playsinline>
+    <video autoplay="autoplay" muted="muted" playsinline="playsinline" loop="loop" preload="auto" disablepictureinpicture="true" disableremoteplayback="true" webkit-playsinline="true" x5-playsinline="true">
       <source src="logo-animation.mp4" type="video/mp4" />
     </video>
+    <div class="loading-video-shield"></div>
   </div>
   <div class="loading-tag">Runner Portal</div>
   <div class="loading-bar"><div class="loading-fill"></div></div>
@@ -1263,5 +1264,32 @@ function showToast(msg, type = '') {
 }
 
 </script>
+
+<script>
+(function() {
+  function kickstartLoadingVideo() {
+    var v = document.querySelector('#loadingScreen video');
+    if (!v) return;
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute('muted', '');
+    v.setAttribute('playsinline', '');
+    v.setAttribute('webkit-playsinline', '');
+    var p = v.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch(function() {
+        // Retry on first user interaction if blocked
+        window.addEventListener('touchstart', function() { v.play(); }, { once: true });
+      });
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', kickstartLoadingVideo);
+  } else {
+    kickstartLoadingVideo();
+  }
+})();
+</script>
+
 </body>
 </html>
