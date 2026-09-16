@@ -399,6 +399,13 @@
         <input type="password" class="form-input" placeholder="Re-enter your password" id="signupPassConfirm" autocomplete="new-password" />
         <div class="field-error" id="signupPassConfirmError"></div>
       </div>
+      <div class="form-group" style="margin-top:14px;margin-bottom:6px">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:0.83rem;line-height:1.45;color:var(--text)">
+          <input type="checkbox" id="signupTerms" style="margin-top:2.5px;width:17px;height:17px;accent-color:var(--orange);cursor:pointer;flex-shrink:0" />
+          <span>I have read and agree to the <a href="#" onclick="openTermsModal(event)" style="color:var(--orange);font-weight:700;text-decoration:underline">Re:Quest Terms &amp; Conditions</a>.</span>
+        </label>
+        <div class="field-error" id="signupTermsError"></div>
+      </div>
       <button class="btn btn-primary w-full btn-lg" id="signupSubmitBtn" type="submit">Create Account →</button>
     </form>
 
@@ -555,6 +562,28 @@ window.handleForgotPassword = async function (event) {
     btn.textContent = 'Send Reset Link';
   }
   return false;
+};
+
+
+window.openTermsModal = function (e) {
+  if (e) e.preventDefault();
+  const m = document.getElementById('termsModal');
+  if (m) m.style.display = 'flex';
+};
+
+window.closeTermsModal = function (e) {
+  if (!e || e.target === document.getElementById('termsModal') || e.target.closest('.btn') || e.target.closest('.btn-icon')) {
+    const m = document.getElementById('termsModal');
+    if (m) m.style.display = 'none';
+  }
+};
+
+window.acceptTermsFromModal = function () {
+  const cb = document.getElementById('signupTerms');
+  if (cb) cb.checked = true;
+  clearFieldError('signupTerms');
+  const m = document.getElementById('termsModal');
+  if (m) m.style.display = 'none';
 };
 
 function clearErrors() {
@@ -723,6 +752,12 @@ window.handleSignup = async function (event) {
   if (!passConfirm) { setFieldError('signupPassConfirm', 'Please confirm your password'); hasError = true; }
   else if (pass && passConfirm && pass !== passConfirm) { setFieldError('signupPassConfirm', 'Passwords do not match'); hasError = true; }
 
+  const termsAccepted = document.getElementById('signupTerms')?.checked;
+  if (!termsAccepted) {
+    setFieldError('signupTerms', 'You must agree to the Terms & Conditions to sign up');
+    hasError = true;
+  }
+
   if (hasError) {
     showToast('Please fix the errors below', 'error');
     return false;
@@ -749,6 +784,8 @@ window.handleSignup = async function (event) {
       yearLevel,
       section,
       role: 'customer',
+      termsAccepted: true,
+      termsAcceptedAt: serverTimestamp(),
       createdAt: serverTimestamp()
     });
 
@@ -837,5 +874,57 @@ if (isConfigured) {
   });
 }
 </script>
-</body>
+
+<!-- ══════════════════════════════════════════
+     MODAL: TERMS AND CONDITIONS
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="termsModal" onclick="closeTermsModal(event)" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);">
+  <div class="modal-box" onclick="event.stopPropagation()" style="background:var(--surface);width:100%;max-width:580px;max-height:85vh;border-radius:var(--radius);border:1px solid var(--border);display:flex;flex-direction:column;box-shadow:var(--shadow-lg);overflow:hidden;animation:termsPopIn .2s ease;">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)">
+      <div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--text);margin:0">📄 Terms and Conditions</h3>
+        <p style="font-size:0.75rem;color:var(--muted);margin:2px 0 0">Ateneo de Zamboanga University Senior High School</p>
+      </div>
+      <button type="button" class="btn-icon" onclick="closeTermsModal()" style="border:none;background:var(--bg);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .15s">✕</button>
+    </div>
+    <div style="padding:20px;overflow-y:auto;flex:1;font-size:0.84rem;line-height:1.65;color:var(--text);background:var(--surface)">
+      <div style="background:var(--orange-light);border:1px solid rgba(252,76,2,0.25);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;color:var(--orange);font-weight:600;font-size:0.8rem">
+        📌 Re:Quest is exclusively for current AdZU SHS students, faculty, and authorized staff.
+      </div>
+
+      <h4 style="font-size:0.92rem;font-weight:800;color:var(--orange);margin:14px 0 6px">1. User Eligibility &amp; Account Registration</h4>
+      <p style="margin-bottom:8px"><strong>1.1 Institutional Scope:</strong> Access to Re:Quest is strictly restricted to current students, faculty, and authorized staff of Ateneo de Zamboanga University Senior High School (AdZU SHS). Registration requires a valid, active official institutional email address (<strong>@adzu.edu.ph</strong>).</p>
+      <p style="margin-bottom:8px"><strong>1.2 Verification &amp; Authenticity:</strong> Each student or staff member is entitled to exactly one (1) primary account. The creation of alternative, duplicate, pseudonymous, or proxy accounts is strictly prohibited.</p>
+      <p style="margin-bottom:8px"><strong>1.3 Full User Accountability:</strong> Users hold 100% full legal, financial, and disciplinary accountability for all activities, transactions, communications, and content posted under their registered account.</p>
+      <p style="margin-bottom:8px"><strong>1.4 Non-Transferability:</strong> Re:Quest accounts cannot be sold, leased, shared, or transferred. Any action taken by your account is conclusively presumed to be executed by you.</p>
+
+      <h4 style="font-size:0.92rem;font-weight:800;color:var(--orange);margin:14px 0 6px">2. Limitation of Liability &amp; Risk</h4>
+      <p style="margin-bottom:8px">Re:Quest is a campus facilitation platform. Users acknowledge that peer transactions are conducted at their own discretion and risk. Re:Quest and its developers shall not be liable for damaged items, delayed deliveries, or personal peer disputes.</p>
+
+      <h4 style="font-size:0.92rem;font-weight:800;color:var(--orange);margin:14px 0 6px">3. Borrowing &amp; Rental Terms (Re:Quest SOS)</h4>
+      <p style="margin-bottom:8px"><strong>3.1 Prompt Settlement:</strong> Borrowers must settle agreed fees immediately upon returning the item.</p>
+      <p style="margin-bottom:8px"><strong>3.2 Care of Property:</strong> The borrower assumes full responsibility from receipt until return. Any loss, damage, or theft must be fully compensated to the owner.</p>
+      <p style="margin-bottom:8px"><strong>3.3 Timely Return:</strong> Items must be returned on or before the agreed time. Late returns are subject to penalties.</p>
+
+      <h4 style="font-size:0.92rem;font-weight:800;color:var(--orange);margin:14px 0 6px">4. Runner Delivery &amp; Prohibited Items</h4>
+      <p style="margin-bottom:8px"><strong>4.1 Campus-Only Delivery:</strong> Orders and item pickups are restricted to authorized campus grounds and cafeteria stalls.</p>
+      <p style="margin-bottom:8px"><strong>4.2 Strictly Prohibited Items:</strong> Requesting or transporting illegal substances, alcoholic drinks, tobacco/vape products, weapons, sharp objects (knives, hazardous tools), or anything in violation of the AdZU Student Handbook is strictly prohibited and results in immediate disciplinary referral.</p>
+
+      <h4 style="font-size:0.92rem;font-weight:800;color:var(--orange);margin:14px 0 6px">5. Communication &amp; Freedom Wall (Re:Lay / Re:Post)</h4>
+      <p style="margin-bottom:8px">All messaging and community wall posts must adhere to school standards. Cyberbullying, profanity, harassment, defamation, threats, hate speech, or sharing another person's personal private info without consent is grounds for immediate termination.</p>
+
+      <h4 style="font-size:0.92rem;font-weight:800;color:var(--orange);margin:14px 0 6px">6. Discipline &amp; OPD Referral</h4>
+      <p style="margin-bottom:8px">Re:Quest Management reserves the right to suspend or permanently ban accounts and refer incidents directly to the <strong>Office of the Prefect of Discipline (OPD)</strong> for official university disciplinary sanctions.</p>
+
+      <h4 style="font-size:0.92rem;font-weight:800;color:var(--orange);margin:14px 0 6px">7. Data Privacy</h4>
+      <p style="margin-bottom:8px">We collect only necessary information (name, student ID, AdZU email, phone, grade level) for platform safety. Data is never sold or shared with third parties, but may be disclosed to authorized AdZU authorities (including OPD) if formal investigation warrants.</p>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:var(--surface)">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeTermsModal()">Close</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="acceptTermsFromModal()">I Agree &amp; Understand</button>
+    </div>
+  </div>
+</div>
+
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c0c8fd682bfcaa',t:'MTc4OTU3MTI5MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
