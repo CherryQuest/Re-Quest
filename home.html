@@ -749,6 +749,26 @@
     }
     .cart-myorders-link:hover .myorders-dot { background: #fff; }
 
+    /* Order type toggle buttons */
+    .order-type-btn {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      color: var(--text);
+      padding: 12px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .order-type-btn:hover { border-color: var(--orange); }
+    .order-type-btn.active {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+    }
+
     .myorders-filter-row {
       padding: 14px 20px; background: var(--surface);
       border-bottom: 1px solid var(--border); overflow-x: auto;
@@ -1943,6 +1963,21 @@
       </div>
     </div>
 
+    <!-- Fulfillment Method: Delivery vs Self-Pickup -->
+    <div class="confirm-section">
+      <div class="confirm-section-title">Fulfillment Option</div>
+      <div class="confirm-section-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">
+          <button type="button" class="btn order-type-btn active" id="optDeliveryBtn" onclick="setOrderType('delivery')">
+            🚴 Delivery <span style="font-size:0.75rem;display:block;opacity:.8;font-weight:400">₱15 fee · to your room</span>
+          </button>
+          <button type="button" class="btn order-type-btn" id="optPickupBtn" onclick="setOrderType('pickup')">
+            🛍️ Self-Pickup <span style="font-size:0.75rem;display:block;opacity:.8;font-weight:400">FREE · claim at stall</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Customer Details (pre-filled from account) -->
     <div class="confirm-section">
       <div class="confirm-section-title">Your Details</div>
@@ -1958,8 +1993,8 @@
           <label class="form-label">Contact Number</label>
           <input type="tel" class="form-input" placeholder="09XXXXXXXXX" id="confirmPhone" />
         </div>
-        <div class="form-group">
-          <label class="form-label">Delivery Location / Room</label>
+        <div class="form-group" id="confirmLocationGroup">
+          <label class="form-label" id="confirmLocationLabel">Delivery Location / Room</label>
           <input type="text" class="form-input" placeholder="e.g. Rm 201, SHS Building" id="confirmLocation" />
         </div>
       </div>
@@ -2135,7 +2170,8 @@ const db      = getFirestore(app);
 let currentUser   = null;
 let userProfile   = null;
 let cart          = [];
-let selectedStore = null;   // the store currently being viewed on pageMenu
+let selectedStore = null;
+let orderType     = 'delivery'; // 'delivery' or 'pickup'   // the store currently being viewed on pageMenu
 let searchQuery   = '';
 let storeSearchQuery = '';  // search text on the pageStores stall list
 let avatarUploading = false; // true while a new profile picture is mid-upload
@@ -3577,9 +3613,9 @@ window.openMyOrders = function () {
 /* ── Fee calculation helper ────────────────────────────── */
 function computeFees() {
   const subtotal    = cart.reduce((a, b) => a + b.price * b.qty, 0);
-  const deliveryFee = 15;
-  // +₱5 if cart has more than 2 distinct item types
-  const extraFee    = cart.length > 2 ? 5 : 0;
+  const deliveryFee = orderType === 'pickup' ? 0 : 15;
+  // +₱5 if cart has more than 2 distinct item types (only for delivery runner orders)
+  const extraFee    = (orderType === 'delivery' && cart.length > 2) ? 5 : 0;
   const total       = subtotal + deliveryFee + extraFee;
   return { subtotal, deliveryFee, extraFee, total };
 }
@@ -3646,6 +3682,36 @@ window.goToConfirm = function () {
 /* ═══════════════════════════════════════════════════════════
    CONFIRM PAGE
 ══════════════════════════════════════════════════════════ */
+window.setOrderType = function (type) {
+  orderType = type;
+  const delBtn = document.getElementById('optDeliveryBtn');
+  const pickBtn = document.getElementById('optPickupBtn');
+  const locGroup = document.getElementById('confirmLocationGroup');
+  const locLabel = document.getElementById('confirmLocationLabel');
+  const locInput = document.getElementById('confirmLocation');
+  const feeRow = document.getElementById('confirmDeliveryFeeRow');
+  const feeLabel = document.getElementById('confirmDeliveryFeeLabel');
+  const receiptSubNote = document.getElementById('confirmReceiptSubNote');
+
+  if (delBtn) delBtn.classList.toggle('active', type === 'delivery');
+  if (pickBtn) pickBtn.classList.toggle('active', type === 'pickup');
+
+  if (type === 'pickup') {
+    if (locLabel) locLabel.textContent = 'Pickup Note / Est. Time (optional)';
+    if (locInput) locInput.placeholder = 'e.g. Picking up in ~10 mins';
+    if (feeLabel) feeLabel.textContent = '🚗 Service & Delivery Fee (Pickup)';
+  } else {
+    if (locLabel) locLabel.textContent = 'Delivery Location / Room';
+    if (locInput) {
+      const section = userProfile?.section;
+      locInput.placeholder = section ? `e.g. ${section} Room or Building` : 'e.g. Rm 201, SHS Building';
+    }
+    if (feeLabel) feeLabel.textContent = '🚗 Service & Delivery Fee';
+  }
+
+  renderConfirmPage();
+};
+
 function renderConfirmPage() {
   const { subtotal, deliveryFee, extraFee, total } = computeFees();
 
@@ -3661,7 +3727,7 @@ function renderConfirmPage() {
   `).join('');
 
   document.getElementById('confirmSubtotal').textContent    = `₱${subtotal.toFixed(2)}`;
-  document.getElementById('confirmDeliveryFee').textContent = `₱${deliveryFee.toFixed(2)}`;
+  document.getElementById('confirmDeliveryFee').textContent = orderType === 'pickup' ? 'FREE' : `₱${deliveryFee.toFixed(2)}`;
   document.getElementById('confirmTotal').textContent       = `₱${total.toFixed(2)}`;
   document.getElementById('confirmTotalBtn').textContent    = `₱${total.toFixed(2)}`;
 
@@ -3771,11 +3837,20 @@ window.placeOrder = async function () {
 
   const customerName = document.getElementById('confirmName').value.trim();
   const phoneNumber  = document.getElementById('confirmPhone').value.trim();
-  const location     = document.getElementById('confirmLocation').value.trim();
+  let location       = document.getElementById('confirmLocation').value.trim();
 
-  if (!customerName || !phoneNumber || !location) {
-    showToast('Please fill in your name, contact number, and location', 'error');
+  if (!customerName || !phoneNumber) {
+    showToast('Please fill in your name and contact number', 'error');
     return;
+  }
+
+  if (orderType === 'delivery' && !location) {
+    showToast('Please enter your delivery location / room', 'error');
+    return;
+  }
+
+  if (orderType === 'pickup') {
+    location = location ? `[Self-Pickup] ${location}` : '[Self-Pickup] Claim at Cafeteria Stall';
   }
 
   const { subtotal, deliveryFee, extraFee, total } = computeFees();
@@ -3809,19 +3884,20 @@ window.placeOrder = async function () {
       yearLevel: userProfile?.yearLevel  || '',
       section:   userProfile?.section    || '',
       // ── Order data ────────────────────────────────────────
+      orderType,
       items,
       subtotal,
       deliveryFee,
       extraFee,
       total,
-      status:    'pending',
+      status:    orderType === 'pickup' ? 'ready_for_pickup' : 'pending',
       createdAt: serverTimestamp()
     });
 
     renderReceipt(docRef.id, { customerName, phoneNumber, location, items, subtotal, deliveryFee, extraFee, total });
     subscribeToReceiptOrder(docRef.id);
     // Email every runner's Gmail (fire-and-forget — never blocks ordering).
-    notifyRunnersOfOrder(docRef.id, { customerName, phoneNumber, location, items, total });
+    if (orderType === 'delivery') { notifyRunnersOfOrder(docRef.id, { customerName, phoneNumber, location, items, total }); }
 
     // Clear cart and form
     cart = [];
@@ -3856,7 +3932,7 @@ function renderReceipt(orderId, order) {
   document.getElementById('receiptPhone').textContent      = order.phoneNumber;
   document.getElementById('receiptLocation').textContent   = order.location;
   document.getElementById('receiptSubtotal').textContent   = `₱${order.subtotal.toFixed(2)}`;
-  document.getElementById('receiptDeliveryFee').textContent = `₱${order.deliveryFee.toFixed(2)}`;
+  document.getElementById('receiptDeliveryFee').textContent = order.deliveryFee === 0 ? 'FREE (Pickup)' : `₱${order.deliveryFee.toFixed(2)}`;
   document.getElementById('receiptTotal').textContent      = `₱${order.total.toFixed(2)}`;
 
   const receiptExtraRow = document.getElementById('receiptExtraFeeRow');
@@ -4057,6 +4133,7 @@ function updateMyOrdersDot() {
 function myOrderStatusBadge(o) {
   const status = o.status || 'pending';
   if (status === 'delivered') return `<span class="badge badge-green">✅ Delivered</span>`;
+  if (status === 'ready_for_pickup') return `<span class="badge badge-green">🛍️ Ready for Pickup</span>`;
   if (status === 'accepted')  return `<span class="badge badge-blue">🏃 Accepted</span>`;
   return `<span class="badge badge-yellow">⏳ Pending</span>`;
 }
@@ -4085,6 +4162,8 @@ function myOrderCardHtml(o) {
     footRight = `<span class="myorder-note">🏃 ${escapeHtml(o.riderName || 'A runner')} is on the way</span>`;
   } else if (status === 'delivered') {
     footRight = `<span class="myorder-note myorder-note-done">✓ Delivered</span>`;
+  } else if (status === 'ready_for_pickup') {
+    footRight = `<span class="myorder-note" style="color:var(--success)">🛍️ Claim directly at stall</span>`;
   }
 
   // Admin-only: force-delete button (any status, any user's order)
@@ -4741,5 +4820,5 @@ function showToast(msg, type = '') {
 }
 
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c0986dfe33de23',t:'MTc4OTU2OTMwMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3c0a3416f80bdab',t:'MTc4OTU2OTc0Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
